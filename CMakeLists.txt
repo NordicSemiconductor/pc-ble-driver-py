@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.0)
+cmake_minimum_required(VERSION 2.8.3)
 
 # Name of the project
 project (pc-ble-driver-py)
@@ -12,7 +12,7 @@ include_directories(${PC_BLE_DRIVER_INCLUDE_DIR})
 
 # This line will tell CMake that we're building a shared library
 # named after the project's name
-add_library(${PROJECT_NAME} SHARED empty.cpp)
+add_library(${PROJECT_NAME} SHARED src/empty.cpp)
 
 # Build the pc-ble-driver as a static library
 add_definitions(
