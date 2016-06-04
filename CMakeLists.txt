@@ -12,8 +12,10 @@ include_directories(${PC_BLE_DRIVER_INCLUDE_DIR})
 
 # This line will tell CMake that we're building a shared library
 # named after the project's name
-add_library(${PROJECT_NAME} SHARED src/empty.cpp)
+#add_library(${PROJECT_NAME} SHARED src/empty.cpp pc-ble-driver)
+
+add_library(${PROJECT_NAME} SHARED $<TARGET_OBJECTS:pc-ble-driver-obj>)
 
 # Essential library files to link to a node addon,
 # you should add this line in every CMake.js based project.
-target_link_libraries(${PROJECT_NAME} pc-ble-driver)
+target_link_libraries(${PROJECT_NAME} PRIVATE ${Boost_LIBRARIES})
