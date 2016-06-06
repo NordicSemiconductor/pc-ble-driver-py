@@ -50,19 +50,17 @@ SWIG in `c:\swig\swigwin-x.y.z`:
 
 [Python Windows Downloads](https://www.python.org/downloads/windows/)
 
-
 Install Microsoft Visual Studio. The following versions supported are:
 
 * Visual Studio 2013 (MSVC 12.0)
 * Visual Studio 2015 (MSVC 14.0)
 
-Open a Microsoft Visual Studio Command Prompt and issue the following commands:
+Open a Microsoft Visual Studio Command Prompt and issue the following from the root folder of the repository:
 
-    > cd %BOOST_ROOT%
-    > bootstrap.bat
-    > b2 toolset=msvc-VV.V address-model=[32,64] link=static --with-thread --with-system --with-regex --with-date_time --with-chrono
+    > cmake -G "Visual Studio XX"
+    > msbuild ALL_BUILD.vcxproj
 
-**Note**: Select 32 or 64-bit with the `address-model=` option.
+**Note**: Select Visual Sutio 12 or 14 `-G "Visual Studio XX"` option.
 
 **Note**: Refer to the [compiler list](http://www.boost.org/build/doc/html/bbv2/reference/tools.html#bbv2.reference.tools.compilers) of the Boost documentation 
 to find the version of the MSVC that you need to provide using the `toolset=` option.
@@ -71,8 +69,12 @@ to find the version of the MSVC that you need to provide using the `toolset=` op
 
 Install the required packages to build Boost:
 
-    sudo apt-get install cmake swig libudev-dev
+    $ sudo apt-get install install cmake swig libudev-dev python python-dev
 
+Then change to the root folder of the repository and issue the following commands:
+
+    $ cmake -G "Unix Makefiles"
+    $ make
 
 ### OS X 10.11 and later
 
@@ -80,4 +82,9 @@ Install cmake and swig with Homebrew with the `brew` command on a terminal:
 
     $ brew install boost
     $ brew install swig
+
+Then change to the root folder of the repository and issue the following commands:
+
+    $ cmake -G "Unix Makefiles"
+    $ make
 
