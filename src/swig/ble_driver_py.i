@@ -31,6 +31,16 @@
 // Requires special handling
 %ignore sd_rpc_open;
 
+// Ignored for now, should be readded later
+%ignore sd_ble_l2cap_cid_register;
+%ignore sd_ble_l2cap_cid_unregister;
+%ignore sd_ble_l2cap_tx;
+%ignore sd_ble_gattc_attr_info_discover;
+%ignore sd_ble_gatts_initial_user_handle_get;
+%ignore sd_ble_gatts_attr_get;
+%ignore sd_ble_evt_get;
+%ignore sd_rpc_log_handler_severity_filter_set;
+
 // Grab the definitions
 %include "config/platform.h"
 %include "adapter.h"
@@ -68,7 +78,6 @@
     }
     $1 = $input;
 }
-
 %rename(sd_rpc_open) sd_rpc_open_py;
 extern uint32_t sd_rpc_open_py(PyObject *adapter, PyObject *py_status_handler, PyObject *py_evt_handler, PyObject *py_log_handler);
 
@@ -269,53 +278,4 @@ fail:
     return NULL;
 }
 %}
-
-
-
-/*
-SWIGINTERN PyObject *_wrap_sd_rpc_open(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
-  PyObject *resultobj = 0;
-  adapter_t *arg1 = (adapter_t *) 0 ;
-  sd_rpc_status_handler_t arg2 = (sd_rpc_status_handler_t) 0 ;
-  sd_rpc_evt_handler_t arg3 = (sd_rpc_evt_handler_t) 0 ;
-  sd_rpc_log_handler_t arg4 = (sd_rpc_log_handler_t) 0 ;
-  void *argp1 = 0 ;
-  int res1 = 0 ;
-  PyObject * obj0 = 0 ;
-  PyObject * obj1 = 0 ;
-  PyObject * obj2 = 0 ;
-  PyObject * obj3 = 0 ;
-  uint32_t result;
-  
-  if (!PyArg_ParseTuple(args,(char *)"OOOO:sd_rpc_open",&obj0,&obj1,&obj2,&obj3)) SWIG_fail;
-  res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_adapter_t, 0 |  0 );
-  if (!SWIG_IsOK(res1)) {
-    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "sd_rpc_open" "', argument " "1"" of type '" "adapter_t *""'"); 
-  }
-  arg1 = reinterpret_cast< adapter_t * >(argp1);
-  {
-    int res = SWIG_ConvertFunctionPtr(obj1, (void**)(&arg2), SWIGTYPE_p_f_p_adapter_t_enum_sd_rpc_app_status_t_p_q_const__char__void);
-    if (!SWIG_IsOK(res)) {
-      SWIG_exception_fail(SWIG_ArgError(res), "in method '" "sd_rpc_open" "', argument " "2"" of type '" "sd_rpc_status_handler_t""'"); 
-    }
-  }
-  {
-    int res = SWIG_ConvertFunctionPtr(obj2, (void**)(&arg3), SWIGTYPE_p_f_p_adapter_t_p_ble_evt_t__void);
-    if (!SWIG_IsOK(res)) {
-      SWIG_exception_fail(SWIG_ArgError(res), "in method '" "sd_rpc_open" "', argument " "3"" of type '" "sd_rpc_evt_handler_t""'"); 
-    }
-  }
-  {
-    int res = SWIG_ConvertFunctionPtr(obj3, (void**)(&arg4), SWIGTYPE_p_f_p_adapter_t_enum_sd_rpc_log_severity_t_p_q_const__char__void);
-    if (!SWIG_IsOK(res)) {
-      SWIG_exception_fail(SWIG_ArgError(res), "in method '" "sd_rpc_open" "', argument " "4"" of type '" "sd_rpc_log_handler_t""'"); 
-    }
-  }
-  result = (uint32_t)sd_rpc_open(arg1,arg2,arg3,arg4);
-  resultobj = SWIG_From_unsigned_SS_int(static_cast< unsigned int >(result));
-  return resultobj;
-fail:
-  return NULL;
-}
-*/
 
