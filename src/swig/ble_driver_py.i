@@ -79,7 +79,7 @@
     $1 = $input;
 }
 %rename(sd_rpc_open) sd_rpc_open_py;
-extern uint32_t sd_rpc_open_py(PyObject *adapter, PyObject *py_status_handler, PyObject *py_evt_handler, PyObject *py_log_handler);
+extern PyObject* sd_rpc_open_py(PyObject *adapter, PyObject *py_status_handler, PyObject *py_evt_handler, PyObject *py_log_handler);
 
 /* Event callback handling */
 %{
