@@ -62,9 +62,6 @@ Open a Microsoft Visual Studio Command Prompt and issue the following from the r
 
 **Note**: Select Visual Sutio 12 or 14 `-G "Visual Studio XX"` option.
 
-**Note**: Refer to the [compiler list](http://www.boost.org/build/doc/html/bbv2/reference/tools.html#bbv2.reference.tools.compilers) of the Boost documentation 
-to find the version of the MSVC that you need to provide using the `toolset=` option.
-
 ### Ubuntu Linux
 
 Install the required packages to build Boost:
