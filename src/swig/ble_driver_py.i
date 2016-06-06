@@ -250,7 +250,6 @@ PyObject* sd_rpc_open_py(PyObject *adapter, PyObject *py_status_handler, PyObjec
     adapter_t *arg1 = (adapter_t *) 0;
     void *argp1 = 0 ;
     int res1 = 0 ;
-    PyObject * obj0 = 0;
     uint32_t result;
  
     res1 = SWIG_ConvertPtr(adapter, &argp1,SWIGTYPE_p_adapter_t, 0 |  0 );
