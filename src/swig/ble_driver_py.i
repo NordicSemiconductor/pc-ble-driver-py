@@ -29,8 +29,7 @@
 %}
 
 // Requires special handling
-%ignore sd_rpc_evt_handler_set;
-%ignore sd_rpc_log_handler_set;
+%ignore sd_rpc_open;
 
 // Grab the definitions
 %include "config/platform.h"
@@ -70,21 +69,19 @@
     $1 = $input;
 }
 
-%rename(sd_rpc_log_handler_set) sd_rpc_log_handler_set_py;
-extern void sd_rpc_log_handler_set_py(PyObject *pyfunc);
-
-%rename(sd_rpc_evt_handler_set) sd_rpc_evt_handler_set_py;
-extern void sd_rpc_evt_handler_set_py(PyObject *pyfunc);
+%rename(sd_rpc_open) sd_rpc_open_py;
+extern uint32_t sd_rpc_open_py(PyObject *adapter, PyObject *py_status_handler, PyObject *py_evt_handler, PyObject *py_log_handler);
 
 /* Event callback handling */
 %{
 static PyObject *my_pyevtcallback = NULL;
 
-static void PythonEvtCallBack(ble_evt_t *ble_event)
+static void PythonEvtCallBack(adapter_t *adapter, ble_evt_t *ble_event)
 {
     PyObject *func;
     PyObject *arglist;
-    PyObject *resultobj;
+    PyObject *adapter_obj;
+    PyObject *ble_evt_obj;
     PyGILState_STATE gstate;
     ble_evt_t* copied_ble_event;
 
@@ -117,46 +114,42 @@ static void PythonEvtCallBack(ble_evt_t *ble_event)
     // Handling of Python Global Interpretor Lock (GIL)
     gstate = PyGILState_Ensure();
 
+    adapter_obj = SWIG_NewPointerObj(SWIG_as_voidptr(adapter), SWIGTYPE_p_adapter_t, 0 |  0 );
     // Create a Python object that points to the copied event, let the interpreter take care of
     // memory management of the copied event by setting the SWIG_POINTER_OWN flag.
-    resultobj = SWIG_NewPointerObj(SWIG_as_voidptr(copied_ble_event), SWIGTYPE_p_ble_evt_t, SWIG_POINTER_OWN);
-    arglist = Py_BuildValue("(O)", resultobj);
+    ble_evt_obj = SWIG_NewPointerObj(SWIG_as_voidptr(copied_ble_event), SWIGTYPE_p_ble_evt_t, SWIG_POINTER_OWN);
+    arglist = Py_BuildValue("(OO)", adapter_obj, ble_evt_obj);
 
     PyEval_CallObject(func, arglist);
 
-    Py_XDECREF(resultobj);
+    Py_XDECREF(adapter_obj);
+    Py_XDECREF(ble_evt_obj);
     Py_DECREF(arglist);
 
     PyGILState_Release(gstate);
 }
 %}
 
+/* Status callback handling */
 %{
-// Set a Python function object as a callback function
-void sd_rpc_evt_handler_set_py(PyObject *pyfunc)
-{
-    Py_XDECREF(my_pyevtcallback);  /* Remove any existing callback object */
-    Py_XINCREF(pyfunc);
-    my_pyevtcallback = pyfunc;
-    sd_rpc_evt_handler_set(PythonEvtCallBack);
-}
-%}
+static PyObject *my_pystatuscallback = NULL;
 
-/* Log callback handling */
-
-%{
-static PyObject *my_pylogcallback = NULL;
-
-static void PythonLogCallBack(sd_rpc_log_severity_t severity, const char * log_message)
+static void PythonStatusCallBack(adapter_t *adapter, sd_rpc_app_status_t status_code, const char * status_message)
 {
     PyObject *func;
     PyObject *arglist;
     PyObject *result;
-    PyObject *message_obj;
-    PyObject *severity_obj;
+    PyObject *adapter_obj;
+    PyObject *status_code_obj;
+    PyObject *status_message_obj;
     PyGILState_STATE gstate;
 
-    func = my_pylogcallback;
+    func = my_pystatuscallback;
+
+    if(my_pystatuscallback == NULL) {
+        printf("Callback not set, returning\n");
+        return;
+    }
 
     // For information regarding GIL and copying of data, please look at
     // function PythonEvtCallBack.
@@ -169,14 +162,67 @@ static void PythonLogCallBack(sd_rpc_log_severity_t severity, const char * log_m
 
     gstate = PyGILState_Ensure();
 
+    adapter_obj = SWIG_NewPointerObj(SWIG_as_voidptr(adapter), SWIGTYPE_p_adapter_t, 0 |  0 );
+    status_code_obj = SWIG_From_int((int)(status_code));
+
+    // SWIG_Python_str_FromChar boils down to PyString_FromString which does a copy of log_message string
+    status_message_obj = SWIG_Python_str_FromChar((const char *)status_message);
+    arglist = Py_BuildValue("(OOO)", adapter_obj, status_code_obj, status_message_obj);
+
+    result = PyEval_CallObject(func, arglist);
+
+    Py_XDECREF(adapter_obj);
+    Py_XDECREF(status_code_obj);
+    Py_XDECREF(status_message_obj);
+    Py_DECREF(arglist);
+    Py_XDECREF(result);
+
+    PyGILState_Release(gstate);
+}
+%}
+
+/* Log callback handling */
+%{
+static PyObject *my_pylogcallback = NULL;
+
+static void PythonLogCallBack(adapter_t *adapter, sd_rpc_log_severity_t severity, const char * log_message)
+{
+    PyObject *func;
+    PyObject *arglist;
+    PyObject *result;
+    PyObject *adapter_obj;
+    PyObject *severity_obj;
+    PyObject *message_obj;
+    PyGILState_STATE gstate;
+
+    func = my_pylogcallback;
+
+    if(my_pylogcallback == NULL) {
+        printf("Callback not set, returning\n");
+        return;
+    }
+
+    // For information regarding GIL and copying of data, please look at
+    // function PythonEvtCallBack.
+
+#if DEBUG
+    unsigned long int tr;
+    tr = (unsigned long int)pthread_self();
+    printf("XXXX-XX-XX XX:XX:XX,XXX BIND tid:0x%lX\n", tr);
+#endif // DEBUG
+
+    gstate = PyGILState_Ensure();
+
+    adapter_obj = SWIG_NewPointerObj(SWIG_as_voidptr(adapter), SWIGTYPE_p_adapter_t, 0 |  0 );
     severity_obj = SWIG_From_int((int)(severity));
 
     // SWIG_Python_str_FromChar boils down to PyString_FromString which does a copy of log_message string
     message_obj = SWIG_Python_str_FromChar((const char *)log_message);
-    arglist = Py_BuildValue("(OO)", severity_obj, message_obj);
+    arglist = Py_BuildValue("(OOO)", adapter_obj, severity_obj, message_obj);
 
     result = PyEval_CallObject(func, arglist);
 
+    Py_XDECREF(adapter_obj);
     Py_XDECREF(message_obj);
     Py_XDECREF(severity_obj);
     Py_DECREF(arglist);
@@ -187,11 +233,89 @@ static void PythonLogCallBack(sd_rpc_log_severity_t severity, const char * log_m
 %}
 
 %{
-void sd_rpc_log_handler_set_py(PyObject *pyfunc)
+// Open the RPC and set Python function objects as a callback functions
+PyObject* sd_rpc_open_py(PyObject *adapter, PyObject *py_status_handler, PyObject *py_evt_handler, PyObject *py_log_handler)
 {
+
+    PyObject *resultobj = 0;
+    adapter_t *arg1 = (adapter_t *) 0;
+    void *argp1 = 0 ;
+    int res1 = 0 ;
+    PyObject * obj0 = 0;
+    uint32_t result;
+ 
+    res1 = SWIG_ConvertPtr(adapter, &argp1,SWIGTYPE_p_adapter_t, 0 |  0 );
+    if (!SWIG_IsOK(res1)) {
+      SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "sd_rpc_open" "', argument " "1"" of type '" "adapter_t *""'"); 
+    }
+
+    arg1 = reinterpret_cast< adapter_t * >(argp1);
+
+    Py_XDECREF(my_pystatuscallback);  /* Remove any existing callback object */
+    Py_XDECREF(my_pyevtcallback);  /* Remove any existing callback object */
     Py_XDECREF(my_pylogcallback); /* Remove any existing callback object */
-    Py_XINCREF(pyfunc);
-    my_pylogcallback = pyfunc;
-    sd_rpc_log_handler_set(PythonLogCallBack);
+    Py_XINCREF(py_status_handler);
+    Py_XINCREF(py_evt_handler);
+    Py_XINCREF(py_log_handler);
+    my_pystatuscallback = py_status_handler;
+    my_pyevtcallback = py_evt_handler;
+    my_pylogcallback = py_log_handler;
+    
+    result = sd_rpc_open(arg1, PythonStatusCallBack, PythonEvtCallBack, PythonLogCallBack);
+    resultobj = SWIG_From_unsigned_SS_int(static_cast< unsigned int >(result));
+    return resultobj;
+
+fail:
+    return NULL;
 }
 %}
+
+
+
+/*
+SWIGINTERN PyObject *_wrap_sd_rpc_open(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0;
+  adapter_t *arg1 = (adapter_t *) 0 ;
+  sd_rpc_status_handler_t arg2 = (sd_rpc_status_handler_t) 0 ;
+  sd_rpc_evt_handler_t arg3 = (sd_rpc_evt_handler_t) 0 ;
+  sd_rpc_log_handler_t arg4 = (sd_rpc_log_handler_t) 0 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  PyObject * obj0 = 0 ;
+  PyObject * obj1 = 0 ;
+  PyObject * obj2 = 0 ;
+  PyObject * obj3 = 0 ;
+  uint32_t result;
+  
+  if (!PyArg_ParseTuple(args,(char *)"OOOO:sd_rpc_open",&obj0,&obj1,&obj2,&obj3)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_adapter_t, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "sd_rpc_open" "', argument " "1"" of type '" "adapter_t *""'"); 
+  }
+  arg1 = reinterpret_cast< adapter_t * >(argp1);
+  {
+    int res = SWIG_ConvertFunctionPtr(obj1, (void**)(&arg2), SWIGTYPE_p_f_p_adapter_t_enum_sd_rpc_app_status_t_p_q_const__char__void);
+    if (!SWIG_IsOK(res)) {
+      SWIG_exception_fail(SWIG_ArgError(res), "in method '" "sd_rpc_open" "', argument " "2"" of type '" "sd_rpc_status_handler_t""'"); 
+    }
+  }
+  {
+    int res = SWIG_ConvertFunctionPtr(obj2, (void**)(&arg3), SWIGTYPE_p_f_p_adapter_t_p_ble_evt_t__void);
+    if (!SWIG_IsOK(res)) {
+      SWIG_exception_fail(SWIG_ArgError(res), "in method '" "sd_rpc_open" "', argument " "3"" of type '" "sd_rpc_evt_handler_t""'"); 
+    }
+  }
+  {
+    int res = SWIG_ConvertFunctionPtr(obj3, (void**)(&arg4), SWIGTYPE_p_f_p_adapter_t_enum_sd_rpc_log_severity_t_p_q_const__char__void);
+    if (!SWIG_IsOK(res)) {
+      SWIG_exception_fail(SWIG_ArgError(res), "in method '" "sd_rpc_open" "', argument " "4"" of type '" "sd_rpc_log_handler_t""'"); 
+    }
+  }
+  result = (uint32_t)sd_rpc_open(arg1,arg2,arg3,arg4);
+  resultobj = SWIG_From_unsigned_SS_int(static_cast< unsigned int >(result));
+  return resultobj;
+fail:
+  return NULL;
+}
+*/
+
