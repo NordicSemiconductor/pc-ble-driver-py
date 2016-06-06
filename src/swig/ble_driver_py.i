@@ -33,6 +33,8 @@
 %ignore sd_rpc_log_handler_set;
 
 // Grab the definitions
+%include "config/platform.h"
+%include "adapter.h"
 %include "ble.h"
 %include "ble_err.h"
 %include "ble_gap.h"

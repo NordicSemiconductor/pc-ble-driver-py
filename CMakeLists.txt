@@ -21,11 +21,7 @@ set(PYTHON_MODULE ${PC_BLE_DRIVER_PROJECT_NAME})
 include_directories(${PYTHON_INCLUDE_PATH})
 
 set(CMAKE_SWIG_FLAGS "-threads")
-
-# Add definitions used by compiler when compiling source files
-add_definitions(
-    -DSD_RPC_EXPORTS
-)
+set(CMAKE_SWIG_FLAGS "-DPC_BLE_DRIVER_STATIC")
 
 set(SWIG_SRC_FILE src/swig/ble_driver_py.i)
 
