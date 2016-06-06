@@ -10,7 +10,7 @@
  *
  */
 
-%module s130_nrf51_ble_driver
+%module pc_ble_driver
 
 %include "stdint.i"
 %include "carrays.i"
@@ -33,19 +33,19 @@
 %ignore sd_rpc_log_handler_set;
 
 // Grab the definitions
-%include "nrf_svc.h"
-%include "sd_rpc.h"
 %include "ble.h"
-%include "nrf_error.h"
 %include "ble_err.h"
 %include "ble_gap.h"
 %include "ble_gatt.h"
 %include "ble_gatts.h"
 %include "ble_gattc.h"
+%include "ble_hci.h"
 %include "ble_l2cap.h"
 %include "ble_ranges.h"
 %include "ble_types.h"
-%include "ble_hci.h"
+%include "nrf_error.h"
+%include "sd_rpc.h"
+%include "sd_rpc_types.h"
 
 %pointer_functions(uint8_t, uint8)
 %pointer_functions(uint16_t, uint16)
@@ -56,6 +56,7 @@
 %array_class(ble_gattc_include_t, ble_gattc_include_array);
 %array_class(ble_gattc_char_t, ble_gattc_char_array);
 %array_class(ble_gattc_desc_t, ble_gattc_desc_array);
+%array_class(ble_gattc_attr_info_t, ble_gattc_attr_info_array);
 %array_class(ble_gattc_handle_value_t, ble_gattc_handle_value_array);
 
 // Grab a Python function object as a Python object.

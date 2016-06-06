@@ -22,9 +22,14 @@ include_directories(${PYTHON_INCLUDE_PATH})
 
 set(CMAKE_SWIG_FLAGS "-threads")
 
-set(SWIG_SRC_FILE swig/ble_driver_py.i)
+# Add definitions used by compiler when compiling source files
+add_definitions(
+    -DSD_RPC_EXPORTS
+)
 
-find_library(_SHARED_LIB NAMES ${PC_BLE_DRIVER_SHARED_LIB} PATHS ${CMAKE_BINARY_DIR})
+set(SWIG_SRC_FILE src/swig/ble_driver_py.i)
+
+#find_library(_SHARED_LIB NAMES ${PC_BLE_DRIVER_SHARED_LIB} PATHS ${CMAKE_BINARY_DIR})
 
 # Create a directory to put the generated output from SWIG
 file(MAKE_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/swig")
@@ -35,4 +40,4 @@ swig_add_module(${PYTHON_MODULE} python ${SWIG_SRC_FILE})
 
 set_source_files_properties(${SWIG_SRC_FILE} PROPERTIES CPLUSCPLUS ON)
 
-swig_link_libraries(${PYTHON_MODULE} ${PYTHON_LIBRARIES} ${_SHARED_LIB})
+swig_link_libraries(${PYTHON_MODULE} ${PYTHON_LIBRARIES} ${PC_BLE_DRIVER_SHARED_LIB})
