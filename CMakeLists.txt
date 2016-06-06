@@ -32,8 +32,8 @@ file(MAKE_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/swig")
 
 set_property(SOURCE  ${SWIG_SRC_FILE} PROPERTY SWIG_FLAGS "-Wall")
 
+set_property(SOURCE ${SWIG_SRC_FILE} PROPERTY CPLUSPLUS ON)
 swig_add_module(${PYTHON_MODULE} python ${SWIG_SRC_FILE})
 
-set_source_files_properties(${SWIG_SRC_FILE} PROPERTIES CPLUSCPLUS ON)
 
 swig_link_libraries(${PYTHON_MODULE} ${PYTHON_LIBRARIES} ${PC_BLE_DRIVER_SHARED_LIB})
