@@ -10,17 +10,29 @@ add_subdirectory(pc-ble-driver)
 # Include folders
 include_directories(${PC_BLE_DRIVER_INCLUDE_DIR})
 
-# This line will tell CMake that we're building a shared library
-# named after the project's name
+# SWIG
+find_package(SWIG REQUIRED)
+include(${SWIG_USE_FILE})
 
-add_library(${PROJECT_NAME} SHARED $<TARGET_OBJECTS:pc-ble-driver-obj>)
+find_package(PythonLibs REQUIRED)
 
-if(APPLE)
-    target_link_libraries(${PROJECT_NAME} PRIVATE "-framework CoreFoundation")
-    target_link_libraries(${PROJECT_NAME} PRIVATE "-framework IOKit")
-    set_property(TARGET ${PROJECT_NAME} PROPERTY MACOSX_RPATH ON)
-endif()
+set(PYTHON_MODULE ${PC_BLE_DRIVER_PROJECT_NAME})
 
-# Essentgal library files to link to a node addon,
-# you should add this line in every CMake.js based project.
-target_link_libraries(${PROJECT_NAME} PRIVATE ${Boost_LIBRARIES})
+include_directories(${PYTHON_INCLUDE_PATH})
+
+set(CMAKE_SWIG_FLAGS "-threads")
+
+set(SWIG_SRC_FILE swig/ble_driver_py.i)
+
+find_library(_SHARED_LIB NAMES ${PC_BLE_DRIVER_SHARED_LIB} PATHS ${CMAKE_BINARY_DIR})
+
+# Create a directory to put the generated output from SWIG
+file(MAKE_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/swig")
+
+set_property(SOURCE  ${SWIG_SRC_FILE} PROPERTY SWIG_FLAGS "-Wall")
+
+swig_add_module(${PYTHON_MODULE} python ${SWIG_SRC_FILE})
+
+set_source_files_properties(${SWIG_SRC_FILE} PROPERTIES CPLUSCPLUS ON)
+
+swig_link_libraries(${PYTHON_MODULE} ${PYTHON_LIBRARIES} ${_SHARED_LIB})

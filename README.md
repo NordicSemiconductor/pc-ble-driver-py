@@ -26,6 +26,7 @@ To build this project you will need the following tools:
 
 * [CMake](https://cmake.org/) (>=2.8.12)
 * [SWIG](http://www.swig.org/)
+* [Python](https://www.python.org/) (>= 2.7 && <= 3.0)
 * A C/C++ toolchain (should already have been installed to build Boost)
 
 See the following sections for platform-specific instructions on the installation of the dependencies.
@@ -40,21 +41,15 @@ See the following sections for platform-specific instructions on the installatio
 
 [SWIG Downloads](http://www.swig.org/download.html)
 
-Then extract it into a folder of your choice.
+Then extract it into a folder of your choice. Append the SWIG folder to your PATH, for example if you have installed
+SWIG in `c:\swig\swigwin-x.y.z`:
 
+    PATH=%PATH%;c:\swig\swigwin-x.y.z;
 
-#### Building pc-ble-driver-py with MinGW
+* Install the latest Python 2 Release by downloading the installer from:
 
-- Download the [MinGW] (http://sourceforge.net/projects/mingw-w64/files/Toolchains%20targetting%20Win32/Personal%20Builds/mingw-builds/4.8.2/threads-posix/dwarf/) Compiler Suite.
-- Install the MinGW Compiler Suite according to the [instructions](http://www.mingw.org/wiki/InstallationHOWTOforMinGW).
+[Python Windows Downloads](https://www.python.org/downloads/windows/)
 
-Open a MinGW terminal and issue the following commands:
-
-    $ cd $BOOST_ROOT
-    $ ./bootstrap.sh
-    $ ./b2 toolset=gcc address-model=32 link=static --with-thread --with-system --with-regex --with-date_time --with-chrono
-
-#### Building pc-ble-driver-py with Visual Studio
 
 Install Microsoft Visual Studio. The following versions supported are:
 
