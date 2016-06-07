@@ -14,7 +14,7 @@ include_directories(${PC_BLE_DRIVER_INCLUDE_DIR})
 find_package(SWIG REQUIRED)
 include(${SWIG_USE_FILE})
 
-find_package(PythonLibs REQUIRED)
+find_package(PythonLibs 2.7 REQUIRED)
 
 set(PYTHON_MODULE ${PC_BLE_DRIVER_PROJECT_NAME})
 

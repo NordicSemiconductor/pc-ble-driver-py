@@ -16,6 +16,9 @@ The example shows how to initialize library and configure the nRF51 to start adv
 # Add location of binding library to path
 import sys
 sys.path.append("../..")
+sys.path.append("../../lib")
+sys.path.append("../../..")
+sys.path.append("../../../Debug")
 
 import platform
 import ctypes
@@ -24,22 +27,10 @@ SERIAL_PORT = ""
 
 if platform.system() == "Windows":
     # Load the DLL into memory (instead of copying to current directory)
-    ctypes.cdll.LoadLibrary('../../../driver/lib/s130_nrf51_ble_driver')
-
-    SERIAL_PORT = "COM1"
-
-if platform.system() == "Darwin":
-    SERIAL_PORT = "/dev/tty.usbmodem00000"
-
-if platform.system() == "Linux":
-    # Load the DLL into memory (instead of copying to current directory)
-    ctypes.cdll.LoadLibrary('../../../driver/lib/libs130_nrf51_ble_driver.so')
-
-    SERIAL_PORT = "/dev/ttyACM0"
-
+    ctypes.cdll.LoadLibrary('../../../pc-ble-driver/Debug/pc_ble_driver_shared.dll') 
 # Import the binding library
-import s130_nrf51_ble_driver as ble_driver
-import ble_driver_util as util
+import pc_ble_driver    as ble_driver
+import ble_driver_util  as util
 
 import traceback
 from time import sleep
@@ -48,7 +39,7 @@ connection_handle = None
 advertisement_timed_out = False
 
 
-def log_message_handler(severity, log_message):
+def log_message_handler(m_adapter, severity, log_message):
     unused = severity
     try:
         print "Log: {}".format(log_message)
@@ -56,7 +47,7 @@ def log_message_handler(severity, log_message):
         print "Exception: {}".format(str(ex))
 
 
-def ble_evt_handler(ble_event):
+def ble_evt_handler(m_adapter, ble_event):
     global connection_handle
     global advertisement_timed_out
     try:
@@ -109,13 +100,21 @@ def ble_evt_handler(ble_event):
         print traceback.extract_tb(sys.exc_info()[2])
 
 
-def init_ble_stack():
+def init_ble_stack(m_adapter):
     ble_enable_params = ble_driver.ble_enable_params_t()
     ble_enable_params.gatts_enable_params.attr_tab_size = ble_driver.BLE_GATTS_ATTR_TAB_SIZE_DEFAULT
     ble_enable_params.gatts_enable_params.service_changed = False
+    ble_enable_params.gap_enable_params.periph_conn_count = 1;
+    ble_enable_params.gap_enable_params.central_conn_count = 7;
+    ble_enable_params.gap_enable_params.central_sec_count = 1;
+    ble_enable_params.common_enable_params.p_conn_bw_counts = None;
+    ble_enable_params.common_enable_params.vs_uuid_count = 10;
 
-    error_code = ble_driver.sd_ble_enable(ble_enable_params)
-
+    error_code = ble_driver.sd_ble_enable(m_adapter, ble_enable_params, None)
+    print ""
+    print error_code
+    print ble_driver.NRF_SUCCESS
+    print ""
     if error_code == ble_driver.NRF_SUCCESS:
         return error_code
 
@@ -124,10 +123,12 @@ def init_ble_stack():
         return ble_driver.NRF_SUCCESS
 
     print "Failed to enable BLE stack"
+    print str(error_code)
+    print "Oko"
     return error_code
 
 
-def set_adv_data():
+def set_adv_data(m_adapter):
     device_name = "Example"
     device_name_utf8 = [ord(character) for character in list(device_name)]
 
@@ -143,7 +144,7 @@ def set_adv_data():
     # To get the correct pointer type, call cast() on the array object.
     data_array_pointer = data_array.cast()
 
-    error_code = ble_driver.sd_ble_gap_adv_data_set(data_array_pointer, data_length, None, 0)
+    error_code = ble_driver.sd_ble_gap_adv_data_set(m_adapter, data_array_pointer, data_length, None, 0)
 
     if error_code != ble_driver.NRF_SUCCESS:
         print "Failed to set advertisement data. Error code: 0x{0:02X}".format(error_code)
@@ -152,7 +153,7 @@ def set_adv_data():
     print "Advertising data set"
 
 
-def start_advertising():
+def start_advertising(m_adapter):
     adv_params = ble_driver.ble_gap_adv_params_t()
 
     adv_params.type = ble_driver.BLE_GAP_ADV_TYPE_ADV_IND
@@ -162,7 +163,7 @@ def start_advertising():
     adv_params.interval = util.msec_to_units(40, util.UNIT_0_625_MS)
     adv_params.timeout = 180  # Advertising timeout 180 seconds
 
-    error_code = ble_driver.sd_ble_gap_adv_start(adv_params)
+    error_code = ble_driver.sd_ble_gap_adv_start(m_adapter, adv_params)
 
     if error_code != ble_driver.NRF_SUCCESS:
         print "Failed to start advertising. Error code: 0x{0:02X}".format(error_code)
@@ -170,32 +171,40 @@ def start_advertising():
 
     print "Started advertising"
 
+def status_handler(adapter, status_code, status_message):
+    pass
 
 def main(serial_port):
     print "Serial port used: {}".format(serial_port)
-    ble_driver.sd_rpc_serial_port_name_set(serial_port)
-    ble_driver.sd_rpc_serial_baud_rate_set(115200)
-    ble_driver.sd_rpc_evt_handler_set(ble_evt_handler)
-    ble_driver.sd_rpc_log_handler_set(log_message_handler)
+    phy = ble_driver.sd_rpc_physical_layer_create_uart('COM68',
+                                                       115200,
+                                                       ble_driver.SD_RPC_FLOW_CONTROL_NONE,
+                                                       ble_driver.SD_RPC_PARITY_NONE);
 
-    error_code = ble_driver.sd_rpc_open()
+    data_link_layer = ble_driver.sd_rpc_data_link_layer_create_bt_three_wire(phy, 100);
+
+    transport_layer = ble_driver.sd_rpc_transport_layer_create(data_link_layer, 100);
+
+    m_adapter = ble_driver.sd_rpc_adapter_create(transport_layer);
+    adapter     = None
+    error_code  = ble_driver.sd_rpc_open(m_adapter, status_handler, ble_evt_handler, log_message_handler)
 
     if error_code != ble_driver.NRF_SUCCESS:
         print "Failed to open the nRF51 BLE Driver"
         return
 
-    error_code = init_ble_stack()
+    error_code = init_ble_stack(m_adapter)
 
     if error_code != ble_driver.NRF_SUCCESS:
         return
 
-    set_adv_data()
-    start_advertising()
+    set_adv_data(m_adapter)
+    start_advertising(m_adapter)
 
     while not advertisement_timed_out:
         sleep(1)
 
-    ble_driver.sd_rpc_close()
+    ble_driver.sd_rpc_close(m_adapter)
 
     print "Closing"
 

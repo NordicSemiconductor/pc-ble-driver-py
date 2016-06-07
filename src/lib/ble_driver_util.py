@@ -8,7 +8,7 @@
 # the file.
 
 try:
-    import s130_nrf51_ble_driver as ble_driver
+    import pc_ble_driver    as ble_driver
 except Exception:
     print "Error. No ble_driver module found."
 
