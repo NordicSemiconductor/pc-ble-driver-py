@@ -69,7 +69,7 @@ The results of the build will be placed in `build\outdir`.
 
 Install the required packages to build Boost:
 
-    $ sudo apt-get install install cmake swig libudev-dev python python-dev
+    $ sudo apt-get install cmake swig libudev-dev python python-dev
 
 Then change to the root folder of the repository and issue the following commands:
 
