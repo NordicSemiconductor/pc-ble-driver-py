@@ -3,6 +3,10 @@ cmake_minimum_required(VERSION 2.8.12)
 # Name of the project
 project (pc-ble-driver-py)
 
+set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
+set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
+
 # All projects depending on pc-ble-driver need to include this first
 include(pc-ble-driver/cmake/pc-ble-driver.cmake)
 add_subdirectory(pc-ble-driver)
