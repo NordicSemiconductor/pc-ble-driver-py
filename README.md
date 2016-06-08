@@ -67,7 +67,7 @@ The results of the build will be placed in `build\outdir`.
 
 ### Ubuntu Linux
 
-Install the required packages to build Boost:
+Install the required packages to build the bindings:
 
     $ sudo apt-get install cmake swig libudev-dev python python-dev
 
@@ -83,7 +83,7 @@ The results of the build will be placed in `build/outdir`.
 
 Install cmake and swig with Homebrew with the `brew` command on a terminal:
 
-    $ brew install boost
+    $ brew install cmake
     $ brew install swig
 
 Then change to the root folder of the repository and issue the following commands:
