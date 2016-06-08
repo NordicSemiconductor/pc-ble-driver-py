@@ -16,6 +16,8 @@
 %include "carrays.i"
 %include "cpointer.i"
 
+// Ignore nested structures warning
+#pragma SWIG nowarn=312
 
 // Includes used in this transformation
 %{

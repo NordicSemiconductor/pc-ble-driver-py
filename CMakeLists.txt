@@ -42,7 +42,6 @@ set(SWIG_SRC_FILE ${CMAKE_CURRENT_LIST_DIR}/src/swig/pc_ble_driver.i)
 
 set_property(SOURCE  ${SWIG_SRC_FILE} APPEND PROPERTY SWIG_FLAGS "-threads")
 set_property(SOURCE  ${SWIG_SRC_FILE} APPEND PROPERTY SWIG_FLAGS "-DPC_BLE_DRIVER_STATIC")
-set_property(SOURCE  ${SWIG_SRC_FILE} APPEND PROPERTY SWIG_FLAGS "-Wall")
 
 # Use release lib of Python even when building with DEBUG
 add_definitions(
