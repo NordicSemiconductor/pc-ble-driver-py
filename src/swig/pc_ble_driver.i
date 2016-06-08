@@ -31,14 +31,12 @@
 // Requires special handling
 %ignore sd_rpc_open;
 
-// Ignored for now, should be readded later
+// Ignore L2CAP APIs that will be replaced by L2CAP CoCs
 %ignore sd_ble_l2cap_cid_register;
 %ignore sd_ble_l2cap_cid_unregister;
 %ignore sd_ble_l2cap_tx;
-%ignore sd_ble_gatts_initial_user_handle_get;
-%ignore sd_ble_gatts_attr_get;
+// Ignore event getter, handled by the connectivity device
 %ignore sd_ble_evt_get;
-%ignore sd_rpc_log_handler_severity_filter_set;
 
 // Grab the definitions
 %include "config/platform.h"
