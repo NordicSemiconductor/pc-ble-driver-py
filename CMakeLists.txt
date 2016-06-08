@@ -33,7 +33,7 @@ set(PYTHON_MODULE ${PC_BLE_DRIVER_PROJECT_NAME})
 
 include_directories(${PYTHON_INCLUDE_PATH})
 
-set(SWIG_SRC_FILE src/swig/ble_driver_py.i)
+set(SWIG_SRC_FILE src/swig/pc_ble_driver.i)
 
 #find_library(_SHARED_LIB NAMES ${PC_BLE_DRIVER_SHARED_LIB} PATHS ${CMAKE_BINARY_DIR})
 
