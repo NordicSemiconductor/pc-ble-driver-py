@@ -35,7 +35,6 @@
 %ignore sd_ble_l2cap_cid_register;
 %ignore sd_ble_l2cap_cid_unregister;
 %ignore sd_ble_l2cap_tx;
-%ignore sd_ble_gattc_attr_info_discover;
 %ignore sd_ble_gatts_initial_user_handle_get;
 %ignore sd_ble_gatts_attr_get;
 %ignore sd_ble_evt_get;
