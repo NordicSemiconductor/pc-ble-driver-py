@@ -57,10 +57,13 @@ Install Microsoft Visual Studio. The following versions supported are:
 
 Open a Microsoft Visual Studio Command Prompt and issue the following from the root folder of the repository:
 
-    > cmake -G "Visual Studio XX"
+    > cd build
+    > cmake -G "Visual Studio XX" ..
     > msbuild ALL_BUILD.vcxproj
 
 **Note**: Select Visual Sutio 12 or 14 `-G "Visual Studio XX"` option.
+
+The results of the build will be placed in `build\outdir`.
 
 ### Ubuntu Linux
 
@@ -70,8 +73,11 @@ Install the required packages to build Boost:
 
 Then change to the root folder of the repository and issue the following commands:
 
-    $ cmake -G "Unix Makefiles"
+    $ cd build
+    $ cmake -G "Unix Makefiles" ..
     $ make
+
+The results of the build will be placed in `build/outdir`.
 
 ### OS X 10.11 and later
 
@@ -82,6 +88,9 @@ Install cmake and swig with Homebrew with the `brew` command on a terminal:
 
 Then change to the root folder of the repository and issue the following commands:
 
-    $ cmake -G "Unix Makefiles"
+    $ cd build
+    $ cmake -G "Unix Makefiles" ..
     $ make
+
+The results of the build will be placed in `build/outdir`.
 
