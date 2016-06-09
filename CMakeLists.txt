@@ -51,4 +51,11 @@ add_definitions(
 set_property(SOURCE ${SWIG_SRC_FILE} PROPERTY CPLUSPLUS ON)
 swig_add_module(${PYTHON_MODULE} python ${SWIG_SRC_FILE})
 
+# These are the files required for the pc_ble_driver Python module:
+
+# _pc_ble_driver.pyd
+# pc_ble_driver.py
+# pc_ble_driver.pyc
+# pc_ble_driver_shared.dll
+
 swig_link_libraries(${PYTHON_MODULE} ${PYTHON_LIBRARIES} ${PC_BLE_DRIVER_SHARED_LIB})
