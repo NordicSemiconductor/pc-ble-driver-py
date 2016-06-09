@@ -53,9 +53,14 @@ swig_add_module(${PYTHON_MODULE} python ${SWIG_SRC_FILE})
 
 # These are the files required for the pc_ble_driver Python module:
 
-# _pc_ble_driver.pyd
+# Windows
 # pc_ble_driver.py
-# pc_ble_driver.pyc
+# _pc_ble_driver.pyd
 # pc_ble_driver_shared.dll
+
+# Linux
+# pc_ble_driver.py
+# _pc_ble_driver.so
+# libpc_ble_driver_shared.so
 
 swig_link_libraries(${PYTHON_MODULE} ${PYTHON_LIBRARIES} ${PC_BLE_DRIVER_SHARED_LIB})
