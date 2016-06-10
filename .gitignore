@@ -1,0 +1,5 @@
+python/**/*.dll
+python/**/*.pyd
+python/**/*.so
+python/**/*.dylib
+python/**/lib/**/*.py
