@@ -33,7 +33,7 @@ set(PYTHON_MODULE ${PC_BLE_DRIVER_PROJECT_NAME})
 
 include_directories(${PYTHON_INCLUDE_PATH})
 
-set(SWIG_SRC_FILE ${CMAKE_CURRENT_LIST_DIR}/src/swig/pc_ble_driver.i)
+set(SWIG_SRC_FILE ${CMAKE_CURRENT_LIST_DIR}/swig/pc_ble_driver.i)
 
 #find_library(_SHARED_LIB NAMES ${PC_BLE_DRIVER_SHARED_LIB} PATHS ${CMAKE_BINARY_DIR})
 
@@ -69,3 +69,10 @@ swig_add_module(${PYTHON_MODULE} python ${SWIG_SRC_FILE})
 # libpc_ble_driver_shared.dylib
 
 swig_link_libraries(${PYTHON_MODULE} ${PYTHON_LIBRARIES} ${PC_BLE_DRIVER_SHARED_LIB})
+
+set(PY_PACKAGE_DIR ${CMAKE_CURRENT_LIST_DIR}/python)
+set(PY_MODULE_DIR ${PY_PACKAGE_DIR}/pc_ble_driver_py)
+
+#add_custom_command(TARGET ${PYTHON_MODULE} POST_BUILD
+#    COMMAND ${CMAKE_COMMAND} -E copy ${PC_BLE_DRIVER_PY_OUTDIR} ${PY_MODULE_DIR}
+#)
