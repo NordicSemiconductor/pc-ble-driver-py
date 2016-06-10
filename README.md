@@ -58,10 +58,12 @@ Install Microsoft Visual Studio. The following versions supported are:
 Open a Microsoft Visual Studio Command Prompt and issue the following from the root folder of the repository:
 
     > cd build
-    > cmake -G "Visual Studio XX" ..
+    > cmake -G "Visual Studio XX <Win64>" -DARCH:STRING=<x86_32,x86_64> ..
     > msbuild ALL_BUILD.vcxproj
 
 **Note**: Select Visual Sutio 12 or 14 `-G "Visual Studio XX"` option.
+**Note**: Add `Win64` to the `-G` option if you have a 64-bit version of Visual Studio.
+**Note**: Select the target architecture (32 or 64-bit) using the `-DARCH` option.
 
 The results of the build will be placed in `build\outdir`.
 
