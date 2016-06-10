@@ -43,6 +43,7 @@ class BLEEvtID(Enum):
     gap_evt_connected       = driver.BLE_GAP_EVT_CONNECTED
     gap_evt_disconnected    = driver.BLE_GAP_EVT_DISCONNECTED
     gap_evt_adv_report      = driver.BLE_GAP_EVT_ADV_REPORT
+    gap_evt_timeout         = driver.BLE_GAP_EVT_TIMEOUT
     evt_tx_complete         = driver.BLE_EVT_TX_COMPLETE
     gattc_evt_write_rsp     = driver.BLE_GATTC_EVT_WRITE_RSP
     gattc_evt_hvx           = driver.BLE_GATTC_EVT_HVX
@@ -91,6 +92,14 @@ class BLEGapRoles(Enum):
     invalid = driver.BLE_GAP_ROLE_INVALID
     periph  = driver.BLE_GAP_ROLE_PERIPH
     central = driver.BLE_GAP_ROLE_CENTRAL
+
+
+
+class BLEGapTimeoutSrc(Enum):
+    advertising     = driver.BLE_GAP_TIMEOUT_SRC_ADVERTISING
+    securitu_req    = driver.BLE_GAP_TIMEOUT_SRC_SECURITY_REQUEST
+    scan            = driver.BLE_GAP_TIMEOUT_SRC_SCAN
+    conn            = driver.BLE_GAP_TIMEOUT_SRC_CONN
 
 
 
@@ -565,6 +574,11 @@ class PCBLEDriver(object):
 
             self.on_gap_evt_disconnected(conn_handle    = ble_event.evt.gap_evt.conn_handle,
                                          reason         = BLEHCI(disconnected_evt.reason))
+
+        elif evt_id == BLEEvtID.gap_evt_timeout:
+            self.on_gap_evt_timeout(conn_handle = ble_event.evt.gap_evt.conn_handle,
+                                    src         = BLEGapTimeoutSrc(ble_event.evt.gap_evt.timeout.src))
+            
 
         elif evt_id == BLEEvtID.gap_evt_adv_report:
             adv_report_evt  = ble_event.evt.gap_evt.adv_report
