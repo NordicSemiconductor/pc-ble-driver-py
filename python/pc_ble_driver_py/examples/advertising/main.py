@@ -7,9 +7,10 @@
 # WARRANTY of ANY KIND is provided. This heading must NOT be removed from
 # the file.
 
-
+import sys
 from PCBLEDriver import PCBLEDriver, BLEAdvData
 
+SERIAL_PORT = "unknown"
 
 def main(serial_port):
     print "Serial port used: {}".format(serial_port)

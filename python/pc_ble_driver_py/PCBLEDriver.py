@@ -5,21 +5,70 @@ from queue      import Queue
 from functools  import wraps
 
 import sys
-sys.path.append("../..")
-sys.path.append("../../lib")
-sys.path.append("../../..")
-sys.path.append("../../../Debug")
 import ctypes
+import os
 import platform
-ctypes.cdll.LoadLibrary('../../../pc-ble-driver/Debug/pc_ble_driver_shared.dll')
+import imp
+import importlib
 
-import pc_ble_driver    as driver
-import ble_driver_util  as util
+#import pc_ble_driver    as driver
 
+SWIG_MODULE_NAME = "pc_ble_driver"
+SHLIB_NAME = "pc_ble_driver_shared"
+SHLIB_FOLDER = "lib"
 
 logger  = logging.getLogger(__name__)
 logging.basicConfig()
 
+# Load pc_ble_driver
+this_dir, this_file = os.path.split(__file__)
+
+if sys.maxsize > 2**32:
+    shlib_arch = 'x86_64'
+else:
+    shlib_arch = 'x86_32'
+
+shlib_prefix = ""
+if sys.platform.lower().startswith('win'):
+    shlib_plat = 'win'
+    shlib_postfix = ".dll"
+elif sys.platform.lower().startswith('linux'):
+    shlib_plat = 'linux'
+    shlib_prefix = "lib"
+    shlib_postfix = ".so"
+elif sys.platform.startswith('dar'):
+    shlib_plat = 'osx'
+    shlib_prefix = "lib"
+    shlib_postfix = ".dylib"
+    # OS X uses a single library for both archs
+    shlib_arch = ""
+else:
+    raise RuntimeError("Unknown platform, no shared library available.")
+
+shlib_name = '{}{}{}'.format(shlib_prefix, SHLIB_NAME, shlib_postfix)
+shlib_path = os.path.join(os.path.abspath(this_dir), SHLIB_FOLDER, shlib_plat, shlib_arch, shlib_name)
+swig_module_path = os.path.join(os.path.abspath(this_dir), SHLIB_FOLDER, shlib_plat, shlib_arch, "{}{}".format(SWIG_MODULE_NAME, ".py"))
+
+logger.info('Shared library path: {}'.format(shlib_path))
+logger.info('Swig module path: {}'.format(swig_module_path))
+
+if not os.path.exists(shlib_path):
+    raise RuntimeError('Failed to locate the pc_ble_driver shared library: {}.'.format(shlib_path))
+
+if not os.path.exists(swig_module_path):
+    raise RuntimeError('Failed to locate the pc_ble_driver SWIG module: {}.'.format(swig_module_path))
+
+# Note for the future: with Python 3 we're better off using importlib
+try:
+    fp, pathname, description = imp.find_module(SWIG_MODULE_NAME, [os.path.dirname(swig_module_path)])
+except ImportError:
+    raise RuntimeError('Unable to find module: {}'.format(SWIG_MODULE_NAME))
+
+if fp is not None:
+    try:
+        driver = imp.load_module(SWIG_MODULE_NAME, fp, pathname, description)
+    finally:
+        fp.close()
 
 class NordicSemiException(Exception):
     """
@@ -367,6 +416,9 @@ class BLEUUID(object):
 
 class PCBLEDriver(object):
     def __init__(self, serial_port, baud_rate=115200):
+        
+
+        # Initialize this module
         self.evts_q         = Queue()
         phy_layer           = driver.sd_rpc_physical_layer_create_uart(serial_port,
                                                                        baud_rate,

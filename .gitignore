@@ -2,4 +2,5 @@ python/**/*.dll
 python/**/*.pyd
 python/**/*.so
 python/**/*.dylib
+python/**/*.pyc
 python/**/lib/**/*.py
