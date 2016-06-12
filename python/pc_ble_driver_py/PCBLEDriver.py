@@ -20,6 +20,8 @@ SHLIB_FOLDER = "lib"
 logger  = logging.getLogger(__name__)
 logging.basicConfig()
 
+logger.setLevel(logging.DEBUG)
+
 # Load pc_ble_driver
 this_dir, this_file = os.path.split(__file__)
 
@@ -69,6 +71,8 @@ if fp is not None:
         driver = imp.load_module(SWIG_MODULE_NAME, fp, pathname, description)
     finally:
         fp.close()
+
+import PCBLEDriverTypes as util
 
 class NordicSemiException(Exception):
     """
