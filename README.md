@@ -66,6 +66,7 @@ Open a Microsoft Visual Studio Command Prompt and issue the following from the r
     > msbuild ALL_BUILD.vcxproj
 
 **Note**: Select Visual Sutio 12 or 14 `-G "Visual Studio XX"` option.
+
 **Note**: Add `Win64` to the `-G` option to build a 64-bit version of the driver.
 
 The results of the build will be placed in `build\outdir`.
