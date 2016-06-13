@@ -33,23 +33,28 @@ set(PYTHON_MODULE ${PC_BLE_DRIVER_PROJECT_NAME})
 
 include_directories(${PYTHON_INCLUDE_PATH})
 
-set(SWIG_SRC_FILE ${CMAKE_CURRENT_LIST_DIR}/swig/pc_ble_driver.i)
+set(SWIG_I_FILE ${CMAKE_CURRENT_LIST_DIR}/swig/pc_ble_driver.i)
 
 #find_library(_SHARED_LIB NAMES ${PC_BLE_DRIVER_SHARED_LIB} PATHS ${CMAKE_BINARY_DIR})
 
 # Create a directory to put the generated output from SWIG
 #file(MAKE_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/swig")
 
-set_property(SOURCE  ${SWIG_SRC_FILE} APPEND PROPERTY SWIG_FLAGS "-threads")
-set_property(SOURCE  ${SWIG_SRC_FILE} APPEND PROPERTY SWIG_FLAGS "-DPC_BLE_DRIVER_STATIC")
+set_property(SOURCE  ${SWIG_I_FILE} APPEND PROPERTY SWIG_FLAGS "-threads")
+set_property(SOURCE  ${SWIG_I_FILE} APPEND PROPERTY SWIG_FLAGS "-DPC_BLE_DRIVER_STATIC")
 
 # Use release lib of Python even when building with DEBUG
 add_definitions(
     -DSWIG_PYTHON_INTERPRETER_NO_DEBUG
 )
 
-set_property(SOURCE ${SWIG_SRC_FILE} PROPERTY CPLUSPLUS ON)
-swig_add_module(${PYTHON_MODULE} python ${SWIG_SRC_FILE})
+set_property(SOURCE ${SWIG_I_FILE} PROPERTY CPLUSPLUS OFF)
+
+set(SWIG_C_SRC_FILES ${PC_BLE_DRIVER_PY_OUTDIR}/${PYTHON_MODULE}PYTHON_wrap.c)
+SET_SOURCE_FILES_PROPERTIES(SWIG_C_SRC_FILES PROPERTIES LANGUAGE CXX)
+
+message(STATUS real_name=${SWIG_MODULE_pc_ble_driver_REAL_NAME})
+swig_add_module(${PYTHON_MODULE} python ${SWIG_I_FILE})
 
 # These are the files required for the pc_ble_driver Python module:
 
