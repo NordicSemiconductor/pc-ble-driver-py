@@ -62,12 +62,14 @@ Install Microsoft Visual Studio. The following versions supported are:
 Open a Microsoft Visual Studio Command Prompt and issue the following from the root folder of the repository:
 
     > cd build
-    > cmake -G "Visual Studio XX <Win64>" ..
+    > cmake -G "Visual Studio XX <Win64>" <-DBOOST_LIBRARYDIR:STRING="<Boost libs path>>" ..
     > msbuild ALL_BUILD.vcxproj
 
 **Note**: Select Visual Sutio 12 or 14 `-G "Visual Studio XX"` option.
 
 **Note**: Add `Win64` to the `-G` option to build a 64-bit version of the driver.
+
+**Note**: Optionally select the location of the Boost libraries with the `-DBOOST_LIBRARYDIR` option.
 
 The results of the build will be placed in `build\outdir`.
 
@@ -77,9 +79,9 @@ Building for 32-bit Python with 64-bit Visual Studio 15:
 
     > cmake -G "Visual Studio 14" ..
 
-Building for 64-bit Python with 64-bit Visual Studio 15:
+Building for 64-bit Python with 64-bit Visual Studio 15 pointing to a 64-bit Boost build:
 
-    > cmake -G "Visual Studio 14 Win64" ..
+    > cmake -G "Visual Studio 14 Win64" -DBOOST_LIBRARYDIR:STRING="c:\boost\boost_1_61_0\stage\x64"..
 
 ### Ubuntu Linux
 
@@ -90,12 +92,14 @@ Install the required packages to build the bindings:
 Then change to the root folder of the repository and issue the following commands:
 
     $ cd build
-    > cmake -G "Unix Makefiles" -DARCH:STRING=<x86_32,x86_64> ..
+    > cmake -G "Unix Makefiles" -DARCH:STRING=<x86_32,x86_64> <-DBOOST_LIBRARYDIR:STRING="<Boost libs path>>" ..
     $ make
 
 The results of the build will be placed in `build/outdir`.
 
-**Note**: Select the target architecture (32 or 64-bit) using the `-DARCH` option.
+**Note**: Optionally select the target architecture (32 or 64-bit) using the `-DARCH` option.
+
+**Note**: Optionally select the location of the Boost libraries with the `-DBOOST_LIBRARYDIR` option.
 
 ### OS X 10.11 and later
 

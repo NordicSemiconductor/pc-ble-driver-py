@@ -16,9 +16,6 @@
 %include "carrays.i"
 %include "cpointer.i"
 
-// Ignore nested structures warning
-#pragma SWIG nowarn=312
-
 // Includes used in this transformation
 %{
 #include "sd_rpc.h"
@@ -256,7 +253,7 @@ PyObject* sd_rpc_open_py(PyObject *adapter, PyObject *py_status_handler, PyObjec
       SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "sd_rpc_open" "', argument " "1"" of type '" "adapter_t *""'"); 
     }
 
-    arg1 = reinterpret_cast< adapter_t * >(argp1);
+    arg1 = (adapter_t * ) (argp1);
 
     Py_XDECREF(my_pystatuscallback);  /* Remove any existing callback object */
     Py_XDECREF(my_pyevtcallback);  /* Remove any existing callback object */
@@ -269,7 +266,7 @@ PyObject* sd_rpc_open_py(PyObject *adapter, PyObject *py_status_handler, PyObjec
     my_pylogcallback = py_log_handler;
     
     result = sd_rpc_open(arg1, PythonStatusCallBack, PythonEvtCallBack, PythonLogCallBack);
-    resultobj = SWIG_From_unsigned_SS_int(static_cast< unsigned int >(result));
+    resultobj = SWIG_From_unsigned_SS_int((unsigned int) (result));
     return resultobj;
 
 fail:

@@ -37,11 +37,12 @@ setup(
         'Operating System :: Microsoft :: Windows',
         'Operating System :: POSIX :: Linux',
 
-        'Topic :: Software Development :: Build Tools',
-        'Topic :: Software Development :: Debuggers',
+        'Topic :: System :: Networking',
+        'Topic :: System :: Hardware :: Hardware Drivers',
         'Topic :: Software Development :: Embedded Systems',
         
-        'License :: OSI Approved :: BSD License',
+        'License :: Other/Proprietary License',
+        #'License :: OSI Approved :: BSD License',
 
         'Programming Language :: Python :: 2.7',
     ],
