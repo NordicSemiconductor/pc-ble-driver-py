@@ -8,12 +8,12 @@
 # the file.
 
 import sys
-from PCBLEDriver import PCBLEDriver, BLEAdvData
+sys.path.append('../../')
 
-SERIAL_PORT = "unknown"
+from PCBLEDriver import PCBLEDriver, BLEAdvData, BLEEvtID
 
 def main(serial_port):
-    print "Serial port used: {}".format(serial_port)
+    print("Serial port used: {}".format(serial_port))
     driver = PCBLEDriver(serial_port=serial_port)
     driver.open()
     driver.ble_enable()
@@ -21,9 +21,12 @@ def main(serial_port):
     driver.ble_gap_adv_data_set(adv_data)
     driver.ble_gap_adv_start()
     driver.wait_for_event(evt = BLEEvtID.gap_evt_timeout, timeout=200)
-    print "Closing"
+    print("Closing")
     driver.close()
 
 if __name__ == "__main__":
-    main(sys.argv[1] if len(sys.argv) == 2 else SERIAL_PORT)
+    if len(sys.argv) == 2:
+        main(sys.argv[1])
+    else:
+        print("No connectivity serial port.")
     quit()
