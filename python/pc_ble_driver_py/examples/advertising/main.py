@@ -8,7 +8,7 @@
 # the file.
 
 import sys
-from PCBLEDriver import PCBLEDriver, BLEAdvData
+from PCBLEDriver import PCBLEDriver, BLEAdvData, BLEEvtID
 
 SERIAL_PORT = "unknown"
 

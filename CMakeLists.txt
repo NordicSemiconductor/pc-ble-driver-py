@@ -51,7 +51,12 @@ add_definitions(
 set_property(SOURCE ${SWIG_I_FILE} PROPERTY CPLUSPLUS OFF)
 
 set(SWIG_C_SRC_FILES ${PC_BLE_DRIVER_PY_OUTDIR}/${PYTHON_MODULE}PYTHON_wrap.c)
-SET_SOURCE_FILES_PROPERTIES(SWIG_C_SRC_FILES PROPERTIES LANGUAGE CXX)
+set_source_files_properties(SWIG_C_SRC_FILES PROPERTIES LANGUAGE CXX)
+#set_source_files_properties(
+#    ${SWIG_C_SRC_FILES}
+#    PROPERTIES
+#    COMPILE_FLAGS "${CMAKE_CXX_FLAGS} -m32"
+#)
 
 message(STATUS real_name=${SWIG_MODULE_pc_ble_driver_REAL_NAME})
 swig_add_module(${PYTHON_MODULE} python ${SWIG_I_FILE})
