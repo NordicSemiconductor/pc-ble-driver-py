@@ -76,7 +76,7 @@ def NordicSemiErrorCheck(func):
     def wrapper(*args, **kwargs):
         err_code = func(*args, **kwargs)
         if err_code != driver.NRF_SUCCESS:
-            raise NordicSemiException('Failed to {}. Error code: 0x{0:02X}'.format(func.__name__, err_code))
+            raise NordicSemiException('Failed to {}. Error code: {}'.format(func.__name__, err_code))
     return wrapper
 
 
