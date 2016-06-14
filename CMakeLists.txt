@@ -44,9 +44,12 @@ set_property(SOURCE  ${SWIG_I_FILE} APPEND PROPERTY SWIG_FLAGS "-threads")
 set_property(SOURCE  ${SWIG_I_FILE} APPEND PROPERTY SWIG_FLAGS "-DPC_BLE_DRIVER_STATIC")
 
 # Use release lib of Python even when building with DEBUG
-add_definitions(
-    -DSWIG_PYTHON_INTERPRETER_NO_DEBUG
-)
+add_definitions( -DSWIG_PYTHON_INTERPRETER_NO_DEBUG -DHAVE_ROUND=1)
+
+# Avoid warning on Windows
+if(WIN32)
+    add_definitions( -DHAVE_ROUND )
+endif()
 
 set_property(SOURCE ${SWIG_I_FILE} PROPERTY CPLUSPLUS OFF)
 
@@ -79,7 +82,7 @@ set(PY_MODULE_DIR ${PY_PACKAGE_DIR}/pc_ble_driver_py)
 
 set(PC_BLE_DRIVER_SHARED_LIB_PATH ${PC_BLE_DRIVER_PY_OUTDIR}/${CMAKE_SHARED_LIBRARY_PREFIX}${PC_BLE_DRIVER_SHARED_LIB}${CMAKE_SHARED_LIBRARY_SUFFIX})
 
-if(MSVC)
+if(WIN32)
     set(PY_MODULE_SHARED_LIB_DIR ${PY_MODULE_DIR}/lib/win/x86_${ARCH_BITS})
     set(SWIG_WRAPPER_SHARED_LIB_EXT pyd)
 elseif(APPLE)
