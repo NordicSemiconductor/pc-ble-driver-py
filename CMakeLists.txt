@@ -35,11 +35,6 @@ include_directories(${PYTHON_INCLUDE_PATH})
 
 set(SWIG_I_FILE ${CMAKE_CURRENT_LIST_DIR}/swig/pc_ble_driver.i)
 
-#find_library(_SHARED_LIB NAMES ${PC_BLE_DRIVER_SHARED_LIB} PATHS ${CMAKE_BINARY_DIR})
-
-# Create a directory to put the generated output from SWIG
-#file(MAKE_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/swig")
-
 set_property(SOURCE  ${SWIG_I_FILE} APPEND PROPERTY SWIG_FLAGS "-threads")
 set_property(SOURCE  ${SWIG_I_FILE} APPEND PROPERTY SWIG_FLAGS "-DPC_BLE_DRIVER_STATIC")
 
