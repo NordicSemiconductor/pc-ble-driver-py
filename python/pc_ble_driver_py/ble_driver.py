@@ -492,23 +492,50 @@ class BLEService(object):
 
 
 class SerialPortDescriptor(object):
-    def __init__(self, port, manufacturer = "", serial_number = "", pnp_id = "", location_id = "", vendor_id = "", product_id = ""):
+    def __init__(self, port = "", manufacturer = "", serial_number = "", pnp_id = "", location_id = "", vendor_id = "", product_id = ""):
+        self.port = port
         self.manufacturer = manufacturer
         self.serial_number = serial_number
         self.pnp_id = pnp_id
         self.location_id = location_id
         self.vendor_id = vendor_id
         self.product_id = product_id
-        
+
+    def to_c(self):
+        port_list = [0] * driver.SD_RPC_MAXPATHLEN
+        self.__port_array = util.list_to_uint8_array(port_list)
+        manufacturer_list = [0] * driver.SD_RPC_MAXPATHLEN
+        self.__manufacturer_array = util.list_to_uint8_array(manufacturer_list)
+        serial_number_list = [0] * driver.SD_RPC_MAXPATHLEN
+        self.__serial_number_array = util.list_to_uint8_array(serial_number_list)
+        pnp_id_list = [0] * driver.SD_RPC_MAXPATHLEN
+        self.__pnp_id_array = util.list_to_uint8_array(pnp_id_list)
+        location_id_list = [0] * driver.SD_RPC_MAXPATHLEN
+        self.__location_id_array = util.list_to_uint8_array(location_id_list)
+        vendor_id_list = [0] * driver.SD_RPC_MAXPATHLEN
+        self.__vendor_id_array = util.list_to_uint8_array(vendor_id_list)
+        product_id_list = [0] * driver.SD_RPC_MAXPATHLEN
+        self.__product_id_array = util.list_to_uint8_array(product_id_list)
+        desc                = driver.sdp_rpc_serial_port_desc_t()
+        desc.port           = self.__port_array.cast()
+        desc.manufacturer   = self.__manufacturer_array.cast()
+        desc.serial_number  = self.__serial_number_array.cast()
+        desc.pnp_id         = self.__pnp_id_array.cast()
+        desc.location_id    = self.__location_id_array.cast()
+        desc.vendor_id      = self.__vendor_id_array.cast()
+        desc.product_id     = self.__product_id_array.cast()
+        return desc
+
     @classmethod
     def from_c(cls, org):
-        return cls(port = org.port, 
-                   manufacturer = org.manufacturer, 
-                   serial_number = org.serialNumber, 
-                   pnp_id = org.pnpID, 
-                   location_id = org.locationID, 
-                   vendor_id = org.vendorId, 
-                   product_id = org.productId)
+        _port = util.uint8_array_to_list(org.port, driver.SD_RPC_MAXPATHLEN)
+        return cls(port = _port)
+                   #manufacturer = org.manufacturer,
+                   #serial_number = org.serialNumber,
+                   #pnp_id = org.pnpID,
+                   #location_id = org.locationID,
+                   #vendor_id = org.vendorId,
+                   #product_id = org.productId)
 
 class PCBLEObserver(object):
     def __init__(self, *args, **kwargs):
@@ -574,19 +601,19 @@ class PCBLEDriver(object):
     @classmethod
     def enum_serial_ports(cls):
         MAX_SERIAL_PORTS = 64
-        c_descs = [ driver.sdp_rpc_serial_port_desc_t() for i in range(MAX_SERIAL_PORTS)]
-        c_descs = util.list_to_serial_port_desc_array(c_descs)
+        c_descs = [ SerialPortDescriptor().to_c() for i in range(MAX_SERIAL_PORTS)]
+        c_desc_arr = util.list_to_serial_port_desc_array(descs)
 
         arr_len = driver.new_uint32()
         driver.uint32_assign(arr_len, MAX_SERIAL_PORTS)
 
-        err_code = driver.sd_rpc_serial_port_enum(c_descs, arr_len)
+        err_code = driver.sd_rpc_serial_port_enum(c_desc_arr, arr_len)
         if err_code != driver.NRF_SUCCESS:
             raise NordicSemiException('Failed to {}. Error code: {}'.format(func.__name__, err_code))
 
-        arr_len = driver.uint32_value(arr_len)
+        dlen = driver.uint32_value(arr_len)
 
-        descs = util.serial_port_desc_array_to_list(c_descs, arr_len)
+        descs = util.serial_port_desc_array_to_list(c_desc_arr, dlen)
         for d in descs:
             descs.append(SerialPortDescriptor.from_c(d))
         return descs
