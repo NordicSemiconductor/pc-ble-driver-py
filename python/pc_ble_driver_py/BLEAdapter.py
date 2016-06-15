@@ -57,7 +57,7 @@ class BLEAdapter(PCBLEDriver):
 
 
     def connect(self, address, scan_params=None, conn_params=None):
-        if  self.conn_in_progress:
+        if self.conn_in_progress:
             return
         self.ble_gap_connect(address=address, scan_params=scan_params, conn_params=conn_params)
         self.conn_in_progress = True

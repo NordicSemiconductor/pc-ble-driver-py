@@ -18,6 +18,7 @@ from PCBLEDriver    import BLEUUID, BLEEvtID, BLEAdvData, BLEGapScanParams, BLEG
 from BLEAdapter     import BLEAdapter
 
 TARGET_DEV_NAME = "Nordic_HRM"
+MAX_CONNECTION  = 2
 
 
 class HRCollector(BLEAdapter):
@@ -26,24 +27,18 @@ class HRCollector(BLEAdapter):
         self.conn_q = Queue()
 
 
-    def scan_params_setup(self):
-        return BLEGapScanParams(interval_ms = 200,
-                                window_ms   = 150,
-                                timeout_s   = 0x1000)
-
-
-    def conn_params_setup(self):
-        return BLEGapConnParams(min_conn_interval_ms = 30,
-                                max_conn_interval_ms = 60,
-                                conn_sup_timeout_ms  = 4000,
-                                slave_latency        = 0)
+    def ble_enable_params_setup(self):
+        return BLEEnableParams(vs_uuid_count      = 1,
+                               service_changed    = False,
+                               periph_conn_count  = 0,
+                               central_conn_count = MAX_CONNECTION,
+                               central_sec_count  = 0)
 
 
     def on_gap_evt_connected(self, conn_handle, peer_addr, own_addr, role, conn_params):
         super(HRCollector, self).on_gap_evt_connected(conn_handle, peer_addr, own_addr, role, conn_params)
         print('New connection: {}'.format(conn_handle))
         self.conn_q.put(conn_handle)
-        # self.ble_gap_scan_start()
 
 
     def on_gap_evt_timeout(self, conn_handle, src):
@@ -73,18 +68,19 @@ class HRCollector(BLEAdapter):
         if (dev_name == TARGET_DEV_NAME):
             self.connect(peer_addr)
 
+
     def on_notification(self, conn_handle, uuid, data):
         print('Connection: {}, {} = {}'.format(conn_handle, uuid, data))
 
 
 def main(serial_port):
-    print "Serial port used: {}".format(serial_port)
+    print('Serial port used: {}'.format(serial_port))
     collector = HRCollector(serial_port=serial_port)
     collector.open()
     collector.ble_enable()
-    collector.ble_gap_scan_start()
     try:
         while(True):
+            collector.ble_gap_scan_start()
             new_conn = collector.conn_q.get(timeout = 60)
             collector.service_discovery(new_conn)
             collector.enable_notification(new_conn, BLEUUID.Standard.battery_level)
