@@ -56,6 +56,7 @@
 
 %pointer_functions(uint8_t, uint8)
 %pointer_functions(uint16_t, uint16)
+%pointer_functions(uint32_t, uint32)
 
 %array_class(uint8_t, uint8_array);
 %array_class(uint16_t, uint16_array);
@@ -65,6 +66,7 @@
 %array_class(ble_gattc_desc_t, ble_gattc_desc_array);
 %array_class(ble_gattc_attr_info_t, ble_gattc_attr_info_array);
 %array_class(ble_gattc_handle_value_t, ble_gattc_handle_value_array);
+%array_class(sdp_rpc_serial_port_desc_t, sdp_rpc_serial_port_desc_array);
 
 // Grab a Python function object as a Python object.
 %typemap(in) PyObject *pyfunc {
