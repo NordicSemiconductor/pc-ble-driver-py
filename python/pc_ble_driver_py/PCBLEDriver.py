@@ -341,7 +341,7 @@ class BLEGattExecWriteFlag(Enum):
 class BLEGattcWriteParams(object):
     def __init__(self, write_op, flags, handle, data, offset):
         assert isinstance(write_op, BLEGattWriteOperation), 'Invalid argument type'
-        assert isinstance(flags, BLEGattExecWriteFlag), 'Invalid argument type'
+        assert isinstance(flags, BLEGattExecWriteFlag),     'Invalid argument type'
         self.write_op   = write_op
         self.flags      = flags
         self.handle     = handle
@@ -492,10 +492,58 @@ class BLEService(object):
 
 
 
+class PCBLEObserver(object):
+    def __init__(self, *args, **kwargs):
+        super(PCBLEObserver, self).__init__()
+        pass
+
+
+    def on_gap_evt_connected(self, context, conn_handle, peer_addr, own_addr, role, conn_params):
+        pass
+
+
+    def on_gap_evt_disconnected(self, context, conn_handle, reason):
+        pass
+
+
+    def on_gap_evt_timeout(self, context, conn_handle, src):
+        pass
+
+
+    def on_gap_evt_adv_report(self, context, conn_handle, peer_addr, rssi, adv_type, adv_data):
+        pass
+
+
+    def on_evt_tx_complete(self, context, conn_handle, count):
+        pass
+
+
+    def on_gattc_evt_write_rsp(self, context, conn_handle, status, error_handle, attr_handle, write_op, offset, data):
+        pass
+
+
+    def on_gattc_evt_hvx(self, context, conn_handle, status, error_handle, attr_handle, hvx_type, data):
+        pass
+
+
+    def on_gattc_evt_prim_srvc_disc_rsp(self, context, conn_handle, status, services):
+        pass
+
+
+    def on_gattc_evt_char_disc_rsp(self, context, conn_handle, status, characteristics):
+        pass
+
+
+    def on_gattc_evt_desc_disc_rsp(self, context, conn_handle, status, descriptions):
+        pass
+
+
+
 class PCBLEDriver(object):
     def __init__(self, serial_port, baud_rate=115200):
-        # Initialize this module
+        super(PCBLEDriver, self).__init__()
         self.evts_q         = Queue()
+        self.observers      = list()
         phy_layer           = driver.sd_rpc_physical_layer_create_uart(serial_port,
                                                                        baud_rate,
                                                                        driver.SD_RPC_FLOW_CONTROL_NONE,
@@ -516,6 +564,14 @@ class PCBLEDriver(object):
     @NordicSemiErrorCheck
     def close(self):
         return driver.sd_rpc_close(self.rpc_adapter)
+
+
+    def observer_register(self, observer):
+        self.observers.append(observer)
+
+
+    def observer_unregister(self, observer):
+        self.observers.append(observer)
 
 
     def wait_for_event(self, evt, timeout=20):
@@ -555,8 +611,10 @@ class PCBLEDriver(object):
 
 
     @NordicSemiErrorCheck
-    def ble_enable(self):
-        ble_enable_params = self.ble_enable_params_setup()
+    def ble_enable(self, ble_enable_params=None):
+        if not ble_enable_params:
+            ble_enable_params = self.ble_enable_params_setup()
+        assert isinstance(ble_enable_params, BLEEnableParams), 'Invalid argument type'
         return driver.sd_ble_enable(self.rpc_adapter, ble_enable_params.to_c(), None)
 
 
@@ -676,46 +734,6 @@ class PCBLEDriver(object):
                                                         handle_range)
 
 
-    def on_gap_evt_connected(self, conn_handle, peer_addr, own_addr, role, conn_params):
-        pass
-
-
-    def on_gap_evt_disconnected(self, conn_handle, reason):
-        pass
-
-
-    def on_gap_evt_timeout(self, conn_handle, src):
-        pass
-
-
-    def on_gap_evt_adv_report(self, conn_handle, peer_addr, rssi, adv_type, adv_data):
-        pass
-
-
-    def on_evt_tx_complete(self, conn_handle, count):
-        pass
-
-
-    def on_gattc_evt_write_rsp(self, conn_handle, status, error_handle, attr_handle, write_op, offset, data):
-        pass
-
-
-    def on_gattc_evt_hvx(self, conn_handle, status, error_handle, attr_handle, hvx_type, data):
-        pass
-
-
-    def on_gattc_evt_prim_srvc_disc_rsp(self, conn_handle, status, services):
-        pass
-
-
-    def on_gattc_evt_char_disc_rsp(self, conn_handle, status, characteristics):
-        pass
-
-
-    def on_gattc_evt_desc_disc_rsp(self, conn_handle, status, descriptions):
-        pass
-
-
     def status_handler(self, adapter, status_code, status_message):
         pass
 
@@ -736,64 +754,77 @@ class PCBLEDriver(object):
             if evt_id == BLEEvtID.gap_evt_connected:
                 connected_evt = ble_event.evt.gap_evt.params.connected
 
-                self.on_gap_evt_connected(conn_handle   = ble_event.evt.gap_evt.conn_handle,
-                                          peer_addr     = BLEGapAddr.from_c(connected_evt.peer_addr),
-                                          own_addr      = BLEGapAddr.from_c(connected_evt.own_addr),
-                                          role          = BLEGapRoles(connected_evt.role),
-                                          conn_params   = BLEGapConnParams.from_c(connected_evt.conn_params))
+                for obs in self.observers:
+                    obs.on_gap_evt_connected(context        = self,
+                                             conn_handle    = ble_event.evt.gap_evt.conn_handle,
+                                             peer_addr      = BLEGapAddr.from_c(connected_evt.peer_addr),
+                                             own_addr       = BLEGapAddr.from_c(connected_evt.own_addr),
+                                             role           = BLEGapRoles(connected_evt.role),
+                                             conn_params    = BLEGapConnParams.from_c(connected_evt.conn_params))
 
             elif evt_id == BLEEvtID.gap_evt_disconnected:
                 disconnected_evt = ble_event.evt.gap_evt.params.disconnected
 
-                self.on_gap_evt_disconnected(conn_handle    = ble_event.evt.gap_evt.conn_handle,
-                                             reason         = BLEHCI(disconnected_evt.reason))
+                for obs in self.observers:
+                    obs.on_gap_evt_disconnected(context     = self,
+                                                conn_handle = ble_event.evt.gap_evt.conn_handle,
+                                                reason      = BLEHCI(disconnected_evt.reason))
 
             elif evt_id == BLEEvtID.gap_evt_timeout:
                 timeout_evt = ble_event.evt.gap_evt.params.timeout
-                self.on_gap_evt_timeout(conn_handle = ble_event.evt.gap_evt.conn_handle,
-                                        src         = BLEGapTimeoutSrc(on_gap_evt_timeout.src))
+
+                for obs in self.observers:
+                    obs.on_gap_evt_timeout(context      = self,
+                                           conn_handle  = ble_event.evt.gap_evt.conn_handle,
+                                           src          = BLEGapTimeoutSrc(timeout_evt.src))
 
             elif evt_id == BLEEvtID.gap_evt_adv_report:
-                adv_report_evt  = ble_event.evt
-                adv_report_evt  = adv_report_evt.gap_evt
-                adv_report_evt  = adv_report_evt.params
-                adv_report_evt  = adv_report_evt.adv_report
-                adv_type = None
+                adv_report_evt  = ble_event.evt.gap_evt.params.adv_report
+                adv_type        = None
                 if not adv_report_evt.scan_rsp:
                     adv_type = BLEGapAdvType(adv_report_evt.type)
 
-                self.on_gap_evt_adv_report(conn_handle  = ble_event.evt.gap_evt.conn_handle,
-                                           peer_addr    = BLEGapAddr.from_c(adv_report_evt.peer_addr),
-                                           rssi         = adv_report_evt.rssi,
-                                           adv_type     = adv_type,
-                                           adv_data     = BLEAdvData.from_c(adv_report_evt))
+                for obs in self.observers:
+                    obs.on_gap_evt_adv_report(context       = self,
+                                              conn_handle   = ble_event.evt.gap_evt.conn_handle,
+                                              peer_addr     = BLEGapAddr.from_c(adv_report_evt.peer_addr),
+                                              rssi          = adv_report_evt.rssi,
+                                              adv_type      = adv_type,
+                                              adv_data      = BLEAdvData.from_c(adv_report_evt))
 
             elif evt_id == BLEEvtID.evt_tx_complete:
                 tx_complete_evt = ble_event.evt.common_evt.params.tx_complete
-                self.on_evt_tx_complete(conn_handle = ble_event.evt.common_evt.conn_handle,
-                                        count       = tx_complete_evt.count)
+
+                for obs in self.observers:
+                    obs.on_evt_tx_complete(context      = self,
+                                           conn_handle  = ble_event.evt.common_evt.conn_handle,
+                                           count        = tx_complete_evt.count)
 
             elif evt_id == BLEEvtID.gattc_evt_write_rsp:
                 write_rsp_evt   = ble_event.evt.gattc_evt.params.write_rsp
 
-                self.on_gattc_evt_write_rsp(conn_handle     = ble_event.evt.gattc_evt.conn_handle,
-                                            status          = BLEGattStatusCode(ble_event.evt.gattc_evt.gatt_status),
-                                            error_handle    = ble_event.evt.gattc_evt.error_handle,
-                                            attr_handle     = write_rsp_evt.handle,
-                                            write_op        = BLEGattWriteOperation(write_rsp_evt.write_op),
-                                            offset          = write_rsp_evt.offset,
-                                            data            = util.uint8_array_to_list(write_rsp_evt.data,
+                for obs in self.observers:
+                    obs.on_gattc_evt_write_rsp(context      = self,
+                                               conn_handle  = ble_event.evt.gattc_evt.conn_handle,
+                                               status       = BLEGattStatusCode(ble_event.evt.gattc_evt.gatt_status),
+                                               error_handle = ble_event.evt.gattc_evt.error_handle,
+                                               attr_handle  = write_rsp_evt.handle,
+                                               write_op     = BLEGattWriteOperation(write_rsp_evt.write_op),
+                                               offset       = write_rsp_evt.offset,
+                                               data         = util.uint8_array_to_list(write_rsp_evt.data,
                                                                                        write_rsp_evt.len))
 
             elif evt_id == BLEEvtID.gattc_evt_hvx:
                 hvx_evt = ble_event.evt.gattc_evt.params.hvx
 
-                self.on_gattc_evt_hvx(conn_handle     = ble_event.evt.gattc_evt.conn_handle,
-                                      status          = BLEGattStatusCode(ble_event.evt.gattc_evt.gatt_status),
-                                      error_handle    = ble_event.evt.gattc_evt.error_handle,
-                                      attr_handle     = hvx_evt.handle,
-                                      hvx_type        = BLEGattHVXType(hvx_evt.type),
-                                      data            = util.uint8_array_to_list(hvx_evt.data, hvx_evt.len))
+                for obs in self.observers:
+                    obs.on_gattc_evt_hvx(context        = self,
+                                         conn_handle    = ble_event.evt.gattc_evt.conn_handle,
+                                         status         = BLEGattStatusCode(ble_event.evt.gattc_evt.gatt_status),
+                                         error_handle   = ble_event.evt.gattc_evt.error_handle,
+                                         attr_handle    = hvx_evt.handle,
+                                         hvx_type       = BLEGattHVXType(hvx_evt.type),
+                                         data           = util.uint8_array_to_list(hvx_evt.data, hvx_evt.len))
 
             elif evt_id == BLEEvtID.gattc_evt_prim_srvc_disc_rsp:
                 prim_srvc_disc_rsp_evt = ble_event.evt.gattc_evt.params.prim_srvc_disc_rsp
@@ -802,9 +833,11 @@ class PCBLEDriver(object):
                 for s in util.service_array_to_list(prim_srvc_disc_rsp_evt.services, prim_srvc_disc_rsp_evt.count):
                     services.append(BLEService.from_c(s))
 
-                self.on_gattc_evt_prim_srvc_disc_rsp(conn_handle    = ble_event.evt.gattc_evt.conn_handle,
-                                                     status         = BLEGattStatusCode(ble_event.evt.gattc_evt.gatt_status),
-                                                     services       = services)
+                for obs in self.observers:
+                    obs.on_gattc_evt_prim_srvc_disc_rsp(context     = self,
+                                                        conn_handle = ble_event.evt.gattc_evt.conn_handle,
+                                                        status      = BLEGattStatusCode(ble_event.evt.gattc_evt.gatt_status),
+                                                        services    = services)
 
             elif evt_id == BLEEvtID.gattc_evt_char_disc_rsp:
                 char_disc_rsp_evt = ble_event.evt.gattc_evt.params.char_disc_rsp
@@ -813,9 +846,11 @@ class PCBLEDriver(object):
                 for ch in util.char_array_to_list(char_disc_rsp_evt.chars, char_disc_rsp_evt.count):
                     characteristics.append(BLECharacteristic.from_c(ch))
 
-                self.on_gattc_evt_char_disc_rsp(conn_handle     = ble_event.evt.gattc_evt.conn_handle,
-                                                status          = BLEGattStatusCode(ble_event.evt.gattc_evt.gatt_status),
-                                                characteristics = characteristics)
+                for obs in self.observers:
+                    obs.on_gattc_evt_char_disc_rsp(context          = self,
+                                                   conn_handle      = ble_event.evt.gattc_evt.conn_handle,
+                                                   status           = BLEGattStatusCode(ble_event.evt.gattc_evt.gatt_status),
+                                                   characteristics  = characteristics)
 
             elif evt_id == BLEEvtID.gattc_evt_desc_disc_rsp:
                 desc_disc_rsp_evt = ble_event.evt.gattc_evt.params.desc_disc_rsp
@@ -824,9 +859,11 @@ class PCBLEDriver(object):
                 for d in util.desc_array_to_list(desc_disc_rsp_evt.descs, desc_disc_rsp_evt.count):
                     descriptions.append(BLEDescriptor.from_c(d))
 
-                self.on_gattc_evt_desc_disc_rsp(conn_handle     = ble_event.evt.gattc_evt.conn_handle,
-                                                status          = BLEGattStatusCode(ble_event.evt.gattc_evt.gatt_status),
-                                                descriptions    = descriptions)
+                for obs in self.observers:
+                    obs.on_gattc_evt_desc_disc_rsp(context      = self,
+                                                   conn_handle  = ble_event.evt.gattc_evt.conn_handle,
+                                                   status       = BLEGattStatusCode(ble_event.evt.gattc_evt.gatt_status),
+                                                   descriptions = descriptions)
 
         except Exception as e:
             logger.error("Exception: {}".format(str(e)))

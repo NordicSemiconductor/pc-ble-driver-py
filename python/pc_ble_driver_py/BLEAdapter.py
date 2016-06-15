@@ -49,11 +49,23 @@ class DbConnection(object):
                 break
 
 
-class BLEAdapter(PCBLEDriver):
+
+class BLEAdapterObserver(PCBLEObserver):
+    def __init__(self, *args, **kwargs):
+        super(BLEAdapterObserver, self).__init__(args, kwargs)
+
+
+    def on_notification(self, context, conn_handle, uuid, data):
+        pass
+
+
+
+class BLEAdapter(PCBLEDriver, PCBLEObserver):
     def __init__(self, serial_port, baud_rate=115200):
         super(BLEAdapter, self).__init__(serial_port, baud_rate)
         self.conn_in_progress   = False
         self.db_conns           = dict()
+        self.observer_register(self)
 
 
     def connect(self, address, scan_params=None, conn_params=None):
@@ -110,7 +122,7 @@ class BLEAdapter(PCBLEDriver):
         if handle == None:
             raise NordicSemiException('CCCD not found')
 
-        write_params = BLEGattcWriteParams(BLEGattWriteOperation.write_req ,
+        write_params = BLEGattcWriteParams(BLEGattWriteOperation.write_req,
                                            BLEGattExecWriteFlag.prepared_cancel,
                                            handle,
                                            cccd_list,
@@ -120,21 +132,21 @@ class BLEAdapter(PCBLEDriver):
         self.wait_for_event(evt = BLEEvtID.gattc_evt_write_rsp)
 
 
-    def on_gap_evt_connected(self, conn_handle, peer_addr, own_addr, role, conn_params):
+    def on_gap_evt_connected(self, context, conn_handle, peer_addr, own_addr, role, conn_params):
         self.db_conns[conn_handle]  = DbConnection()
         self.conn_in_progress       = False
 
 
-    def on_gap_evt_disconnected(self, conn_handle, reason):
+    def on_gap_evt_disconnected(self, context, conn_handle, reason):
         del self.db_conns[conn_handle]
 
 
-    def on_gap_evt_timeout(self, conn_handle, src):
+    def on_gap_evt_timeout(self, context, conn_handle, src):
         if src == BLEGapTimeoutSrc.conn:
             self.conn_in_progress = False
 
 
-    def on_gattc_evt_prim_srvc_disc_rsp(self, conn_handle, status, services):
+    def on_gattc_evt_prim_srvc_disc_rsp(self, context, conn_handle, status, services):
         if status == BLEGattStatusCode.attribute_not_found:
             self.db_conns[conn_handle].serv_disc_q.put(None)
             return
@@ -145,7 +157,7 @@ class BLEAdapter(PCBLEDriver):
         self.db_conns[conn_handle].serv_disc_q.put(services)
 
 
-    def on_gattc_evt_char_disc_rsp(self, conn_handle, status, characteristics):
+    def on_gattc_evt_char_disc_rsp(self, context, conn_handle, status, characteristics):
         if status == BLEGattStatusCode.attribute_not_found:
             self.db_conns[conn_handle].char_disc_q.put(None)
             return
@@ -156,7 +168,7 @@ class BLEAdapter(PCBLEDriver):
         self.db_conns[conn_handle].char_disc_q.put(characteristics)
 
 
-    def on_gattc_evt_desc_disc_rsp(self, conn_handle, status, descriptions):
+    def on_gattc_evt_desc_disc_rsp(self, context, conn_handle, status, descriptions):
         if status == BLEGattStatusCode.attribute_not_found:
             self.db_conns[conn_handle].desc_disc_q.put(None)
             return
@@ -167,11 +179,7 @@ class BLEAdapter(PCBLEDriver):
         self.db_conns[conn_handle].desc_disc_q.put(descriptions)
 
 
-    def on_notification(self, conn_handle, uuid, data):
-        pass
-
-
-    def on_gattc_evt_hvx(self, conn_handle, status, error_handle, attr_handle, hvx_type, data):
+    def on_gattc_evt_hvx(self, context, conn_handle, status, error_handle, attr_handle, hvx_type, data):
         if status != BLEGattStatusCode.success:
             logger.error("Error. Description discovery failed. Status {}.".format(status))
             return
@@ -180,4 +188,7 @@ class BLEAdapter(PCBLEDriver):
             uuid = self.db_conns[conn_handle].get_char_uuid(attr_handle)
             if uuid == None:
                 raise NordicSemiException('UUID not found')
-            self.on_notification(conn_handle, uuid, data)
+
+            for obs in self.observers:
+                if issubclass(type(obs), BLEAdapterObserver):
+                    obs.on_notification(self, conn_handle, uuid, data)
