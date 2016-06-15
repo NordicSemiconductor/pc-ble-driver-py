@@ -12,8 +12,9 @@ import platform
 import imp
 import importlib
 
-
 logger  = logging.getLogger(__name__)
+logging.basicConfig()
+
 logger.setLevel(logging.DEBUG)
 
 # Load pc_ble_driver
@@ -57,8 +58,8 @@ except Exception as error:
 
 logger.info('Shared library folder: {}'.format(shlib_dir))
 
-sys.path.append(shlib_path)
-import pc_ble_driver    as driver
+sys.path.append(shlib_dir)
+import pc_ble_driver as driver
 import PCBLEDriverTypes as util
 
 class NordicSemiException(Exception):
