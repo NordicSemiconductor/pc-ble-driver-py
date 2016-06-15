@@ -75,7 +75,7 @@ def NordicSemiErrorCheck(func):
     def wrapper(*args, **kwargs):
         err_code = func(*args, **kwargs)
         if err_code != driver.NRF_SUCCESS:
-            raise NordicSemiException('Failed to {}. Error code: 0x{:02X}'.format(func.__name__, err_code))
+            raise NordicSemiException('Failed to {}. Error code: {}'.format(func.__name__, err_code))
 
     return wrapper
 
@@ -491,6 +491,24 @@ class BLEService(object):
             self.chars[-2].end_handle = char.handle_decl - 1
 
 
+class SerialPortDescriptor(object):
+    def __init__(self, port, manufacturer = "", serial_number = "", pnp_id = "", location_id = "", vendor_id = "", product_id = ""):
+        self.manufacturer = manufacturer
+        self.serial_number = serial_number
+        self.pnp_id = pnp_id
+        self.location_id = location_id
+        self.vendor_id = vendor_id
+        self.product_id = product_id
+        
+    @classmethod
+    def from_c(cls, org):
+        return cls(port = org.port, 
+                   manufacturer = org.manufacturer, 
+                   serial_number = org.serialNumber, 
+                   pnp_id = org.pnpID, 
+                   location_id = org.locationID, 
+                   vendor_id = org.vendorId, 
+                   product_id = org.productId)
 
 class PCBLEDriver(object):
     def __init__(self, serial_port, baud_rate=115200):
@@ -503,6 +521,27 @@ class PCBLEDriver(object):
         link_layer          = driver.sd_rpc_data_link_layer_create_bt_three_wire(phy_layer, 100)
         transport_layer     = driver.sd_rpc_transport_layer_create(link_layer, 100)
         self.rpc_adapter    = driver.sd_rpc_adapter_create(transport_layer)
+
+
+    @classmethod
+    def enum_serial_ports(cls):
+        MAX_SERIAL_PORTS = 64
+        c_descs = [ driver.sdp_rpc_serial_port_desc_t() for i in range(MAX_SERIAL_PORTS)]
+        c_descs = util.list_to_serial_port_desc_array(c_descs)
+
+        arr_len = driver.new_uint32()
+        driver.uint32_assign(arr_len, MAX_SERIAL_PORTS)
+
+        err_code = driver.sd_rpc_serial_port_enum(c_descs, arr_len)
+        if err_code != driver.NRF_SUCCESS:
+            raise NordicSemiException('Failed to {}. Error code: {}'.format(func.__name__, err_code))
+
+        arr_len = driver.uint32_value(arr_len)
+
+        descs = util.serial_port_desc_array_to_list(c_descs, arr_len)
+        for d in descs:
+            descs.append(SerialPortDescriptor.from_c(d))
+        return descs
 
 
     @NordicSemiErrorCheck
