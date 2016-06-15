@@ -602,7 +602,8 @@ class PCBLEDriver(object):
     def enum_serial_ports(cls):
         MAX_SERIAL_PORTS = 64
         c_descs = [ SerialPortDescriptor().to_c() for i in range(MAX_SERIAL_PORTS)]
-        c_desc_arr = util.list_to_serial_port_desc_array(descs)
+        #c_descs = [ driver.sdp_rpc_serial_port_desc_t() for i in range(MAX_SERIAL_PORTS)]
+        c_desc_arr = util.list_to_serial_port_desc_array(c_descs)
 
         arr_len = driver.new_uint32()
         driver.uint32_assign(arr_len, MAX_SERIAL_PORTS)
@@ -612,6 +613,7 @@ class PCBLEDriver(object):
             raise NordicSemiException('Failed to {}. Error code: {}'.format(func.__name__, err_code))
 
         dlen = driver.uint32_value(arr_len)
+        print "descriptor array length: {}".format(dlen)
 
         descs = util.serial_port_desc_array_to_list(c_desc_arr, dlen)
         for d in descs:
