@@ -29,6 +29,11 @@ def units_to_msec(units, resolution):
     time_ms = units * resolution / 1000
     return time_ms
 
+def char_array_to_list(array_pointer, length):
+    """Convert char_array to python list."""
+    data_array = ble_driver.char_array.frompointer(array_pointer)
+    data_list = _populate_list(data_array, length)
+    return data_list
 
 def uint8_array_to_list(array_pointer, length):
     """Convert uint8_array to python list."""
@@ -58,7 +63,7 @@ def include_array_to_list(array_pointer, length):
     return data_list
 
 
-def char_array_to_list(array_pointer, length):
+def ble_gattc_char_array_to_list(array_pointer, length):
     """Convert ble_gattc_char_array to python list."""
     data_array = ble_driver.ble_gattc_char_array.frompointer(array_pointer)
     data_list = _populate_list(data_array, length)
@@ -91,6 +96,11 @@ def _populate_list(data_array, length):
         data_list.append(data_array[i])
     return data_list
 
+def list_to_char_array(data_list):
+    """Convert python list to char_array."""
+
+    data_array = _populate_array(data_list, ble_driver.char_array)
+    return data_array
 
 def list_to_uint8_array(data_list):
     """Convert python list to uint8_array."""
@@ -120,7 +130,7 @@ def list_to_include_array(data_list):
     return data_array
 
 
-def list_to_char_array(data_list):
+def list_to_ble_gattc_char_array(data_list):
     """Convert python list to ble_gattc_char_array."""
 
     data_array = _populate_array(data_list, ble_driver.ble_gattc_char_array)

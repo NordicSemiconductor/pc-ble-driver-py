@@ -58,6 +58,7 @@
 %pointer_functions(uint16_t, uint16)
 %pointer_functions(uint32_t, uint32)
 
+%array_class(char, char_array);
 %array_class(uint8_t, uint8_array);
 %array_class(uint16_t, uint16_array);
 %array_class(ble_gattc_service_t, ble_gattc_service_array);
