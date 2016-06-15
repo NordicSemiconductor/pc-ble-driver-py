@@ -60,7 +60,7 @@ logger.info('Shared library folder: {}'.format(shlib_dir))
 
 sys.path.append(shlib_dir)
 import pc_ble_driver as driver
-import PCBLEDriverTypes as util
+import ble_driver_types as util
 
 class NordicSemiException(Exception):
     """
