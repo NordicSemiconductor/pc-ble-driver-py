@@ -17,6 +17,10 @@ logger  = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
 
 # Load pc_ble_driver
+
+SWIG_MODULE_NAME = "pc_ble_driver"
+SHLIB_NAME = "pc_ble_driver_shared"
+
 this_dir, this_file = os.path.split(__file__)
 
 if sys.maxsize > 2**32:
@@ -24,20 +28,34 @@ if sys.maxsize > 2**32:
 else:
     shlib_arch = 'x86_32'
 
+shlib_prefix = ""
 if sys.platform.lower().startswith('win'):
     shlib_plat = 'win'
+    shlib_postfix = ".dll"
 elif sys.platform.lower().startswith('linux'):
     shlib_plat = 'linux'
+    shlib_prefix = "lib"
+    shlib_postfix = ".so"
 elif sys.platform.startswith('dar'):
     shlib_plat = 'osx'
+    shlib_prefix = "lib"
+    shlib_postfix = ".dylib"
     # OS X uses a single library for both archs
     shlib_arch = ""
-else:
-    raise RuntimeError("Unknown platform, no shared library available.")
 
-shlib_path = os.path.join(os.path.abspath(this_dir), 'lib', shlib_plat, shlib_arch)
+shlib_file = '{}{}{}'.format(shlib_prefix, SHLIB_NAME, shlib_postfix)
+shlib_dir = os.path.join(os.path.abspath(this_dir), 'lib', shlib_plat, shlib_arch)
+shlib_path = os.path.join(shlib_dir, shlib_file)
 
-logger.info('Shared library path: {}'.format(shlib_path))
+if not os.path.exists(shlib_path):
+    raise RuntimeError('Failed to locate the pc_ble_driver shared library: {}.'.format(shlib_path))
+
+try:
+    _shlib = ctypes.cdll.LoadLibrary(shlib_path)
+except Exception as error:
+    raise RuntimeError("Could not load shared library {} : '{}'.".format(shlib_path, error))
+
+logger.info('Shared library folder: {}'.format(shlib_dir))
 
 sys.path.append(shlib_path)
 import pc_ble_driver    as driver
@@ -57,6 +75,7 @@ def NordicSemiErrorCheck(func):
         err_code = func(*args, **kwargs)
         if err_code != driver.NRF_SUCCESS:
             raise NordicSemiException('Failed to {}. Error code: 0x{:02X}'.format(func.__name__, err_code))
+
     return wrapper
 
 

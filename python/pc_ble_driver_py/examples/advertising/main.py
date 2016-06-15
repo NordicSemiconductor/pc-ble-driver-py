@@ -9,6 +9,7 @@
 
 import sys
 sys.path.append('../../')
+from PCBLEDriver import PCBLEDriver, BLEAdvData, BLEEvtID
 
 from PCBLEDriver import PCBLEDriver, BLEAdvData, BLEEvtID
 
