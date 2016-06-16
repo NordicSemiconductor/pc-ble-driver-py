@@ -592,7 +592,7 @@ class PCBLEDriver(object):
     @classmethod
     def enum_serial_ports(cls):
         MAX_SERIAL_PORTS = 64
-        c_descs = [ driver.sdp_rpc_serial_port_desc_t() for i in xrange(MAX_SERIAL_PORTS)]
+        c_descs = [ driver.sd_rpc_serial_port_desc_t() for i in range(MAX_SERIAL_PORTS)]
         c_desc_arr = util.list_to_serial_port_desc_array(c_descs)
 
         arr_len = driver.new_uint32()

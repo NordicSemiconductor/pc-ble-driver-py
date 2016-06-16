@@ -67,7 +67,7 @@
 %array_class(ble_gattc_desc_t, ble_gattc_desc_array);
 %array_class(ble_gattc_attr_info_t, ble_gattc_attr_info_array);
 %array_class(ble_gattc_handle_value_t, ble_gattc_handle_value_array);
-%array_class(sdp_rpc_serial_port_desc_t, sdp_rpc_serial_port_desc_array);
+%array_class(sd_rpc_serial_port_desc_t, sd_rpc_serial_port_desc_array);
 
 // Grab a Python function object as a Python object.
 %typemap(in) PyObject *pyfunc {

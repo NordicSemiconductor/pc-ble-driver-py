@@ -85,8 +85,8 @@ def handle_value_array_to_list(array_pointer, length):
 
 
 def serial_port_desc_array_to_list(array_pointer, length):
-    """Convert sdp_rpc_serial_port_desc_array to python list."""
-    data_array = ble_driver.sdp_rpc_serial_port_desc_array.frompointer(array_pointer)
+    """Convert sd_rpc_serial_port_desc_array to python list."""
+    data_array = ble_driver.sd_rpc_serial_port_desc_array.frompointer(array_pointer)
     data_list = _populate_list(data_array, length)
     return data_list
 
@@ -151,9 +151,9 @@ def list_to_handle_value_array(data_list):
     return data_array
 
 def list_to_serial_port_desc_array(data_list):
-    """Convert python list to sdp_rpc_serial_port_desc_array."""
+    """Convert python list to sd_rpc_serial_port_desc_array."""
 
-    data_array = _populate_array(data_list, ble_driver.sdp_rpc_serial_port_desc_array)
+    data_array = _populate_array(data_list, ble_driver.sd_rpc_serial_port_desc_array)
     return data_array
 
 def _populate_array(data_list, array_type):
