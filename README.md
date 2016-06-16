@@ -11,12 +11,17 @@ These bindings include two different components:
 * A shared library written in C that encapsulates the SoftDevice API and serializes it over UART.
 * A set of Python files generated with SWIG that present the shared library API to Python applications.
 
+To run the Python bindings you will need to set up your boards to be able to communicate with your computer.
+You can find additional information here:
+
+[Hardware setup](https://github.com/NordicSemiconductor/pc-ble-driver/tree/self_contained_driver#hardware-setup)
+
 # Compiling
 
 Before building pc-ble-driver-py you will need to have Boost installed and some of its libraries statically compiled.
 To install and compile Boost, please follow the instructions here:
 
-[Installing and building Boost](https://github.com/NordicSemiconductor/pc-ble-driver/tree/self_contained_driver#installing-and-building-boost)
+[Building Boost](https://github.com/NordicSemiconductor/pc-ble-driver/tree/self_contained_driver#building-boost)
 
 Assuming that you have built the Boost libraries and installed the tools required to do so, you can now build and install the Python bindings and the accompanying shared library.
 
