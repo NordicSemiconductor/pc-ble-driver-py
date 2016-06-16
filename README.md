@@ -106,7 +106,7 @@ The results of the build will be placed in `build/outdir`.
 
 **Note**: Optionally select the location of the Boost libraries with the `-DBOOST_LIBRARYDIR` option.
 
-### OS X 10.11 and later
+### macOS (OS X) 10.11 and later
 
 Install cmake and swig with Homebrew with the `brew` command on a terminal:
 
