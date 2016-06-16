@@ -14,48 +14,56 @@ from time   import sleep
 
 import sys
 sys.path.append('../../')
-from PCBLEDriver    import BLEUUID, BLEEnableParams, BLEEvtID, BLEAdvData, BLEGapScanParams, BLEGapConnParams, BLEGattStatusCode
-from BLEAdapter     import BLEAdapter, BLEAdapterObserver
+from ble_driver     import PCBLEDriver, PCBLEDriverObserver, BLEUUID, BLEEnableParams, BLEEvtID, BLEAdvData, BLEGapScanParams, BLEGapConnParams, BLEGattStatusCode
+from ble_adapter    import BLEAdapter, BLEAdapterObserver
 
 TARGET_DEV_NAME = "Nordic_HRM"
 CONNECTIONS     = 2
 
 
-class HRCollector(BLEAdapterObserver):
+class HRCollector(PCBLEDriverObserver, BLEAdapterObserver):
     def __init__(self, adapter):
+        super(HRCollector, self).__init__()
         self.adapter    = adapter
         self.conn_q     = Queue()
         self.adapter.observer_register(self)
+        self.adapter.driver.observer_register(self)
 
 
     def enable(self):
+        self.adapter.driver.open()
+
         ble_enable_params = BLEEnableParams(vs_uuid_count      = 1,
                                             service_changed    = False,
                                             periph_conn_count  = 0,
                                             central_conn_count = CONNECTIONS,
                                             central_sec_count  = 0)
-        self.adapter.ble_enable(ble_enable_params)
+        self.adapter.driver.ble_enable(ble_enable_params)
+
+
+    def disable(self):
+        self.adapter.driver.close()
 
 
     def connect_and_discover(self):
-        self.adapter.ble_gap_scan_start()
+        self.adapter.driver.ble_gap_scan_start()
         new_conn = self.conn_q.get(timeout = 60)
         self.adapter.service_discovery(new_conn)
         self.adapter.enable_notification(new_conn, BLEUUID.Standard.battery_level)
         self.adapter.enable_notification(new_conn, BLEUUID.Standard.heart_rate)
 
 
-    def on_gap_evt_connected(self, context, conn_handle, peer_addr, own_addr, role, conn_params):
+    def on_gap_evt_connected(self, pc_ble_driver, conn_handle, peer_addr, own_addr, role, conn_params):
         print('New connection: {}'.format(conn_handle))
         self.conn_q.put(conn_handle)
 
 
-    def on_gap_evt_timeout(self, context, conn_handle, src):
+    def on_gap_evt_timeout(self, pc_ble_driver, conn_handle, src):
         if src == BLEGapTimeoutSrc.scan:
-            context.ble_gap_scan_start()
+            pc_ble_driver.ble_gap_scan_start()
 
 
-    def on_gap_evt_adv_report(self, context, conn_handle, peer_addr, rssi, adv_type, adv_data):
+    def on_gap_evt_adv_report(self, pc_ble_driver, conn_handle, peer_addr, rssi, adv_type, adv_data):
         dev_name_list = None
         if BLEAdvData.Types.complete_local_name in adv_data.records:
             dev_name_list = adv_data.records[BLEAdvData.Types.complete_local_name]
@@ -72,24 +80,24 @@ class HRCollector(BLEAdapterObserver):
                                                                                     dev_name))
 
         if (dev_name == TARGET_DEV_NAME):
-            context.connect(peer_addr)
+            self.adapter.connect(peer_addr)
 
 
-    def on_notification(self, context, conn_handle, uuid, data):
+    def on_notification(self, ble_adapter, conn_handle, uuid, data):
         print('Connection: {}, {} = {}'.format(conn_handle, uuid, data))
 
 
 def main(serial_port):
     print('Serial port used: {}'.format(serial_port))
-    adapter = BLEAdapter(serial_port=serial_port)
-    adapter.open()
+    driver  = PCBLEDriver(serial_port=serial_port)
+    adapter = BLEAdapter(driver)
     collector = HRCollector(adapter)
     collector.enable()
     for i in range(CONNECTIONS):
         collector.connect_and_discover()
     sleep(30)
     print('Closing')
-    adapter.close()
+    collector.disable()
 
 
 if __name__ == "__main__":
