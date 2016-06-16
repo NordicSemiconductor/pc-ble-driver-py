@@ -420,7 +420,7 @@ class BLEUUID(object):
             raise NordicSemiException('Not vendor specific UUID {}'.format(self.value))
 
         uuid128_list = list()
-        for i in range(16):
+        for i in xrange(16):
             uuid128_list.append((self.value >> (8*i)) & 0xFF)
         self.__uuid128_array    = util.list_to_uint8_array(uuid128_list)
         uuid                    = driver.ble_uuid128_t()
@@ -592,7 +592,7 @@ class PCBLEDriver(object):
     @classmethod
     def enum_serial_ports(cls):
         MAX_SERIAL_PORTS = 64
-        c_descs = [ driver.sdp_rpc_serial_port_desc_t() for i in range(MAX_SERIAL_PORTS)]
+        c_descs = [ driver.sdp_rpc_serial_port_desc_t() for i in xrange(MAX_SERIAL_PORTS)]
         c_desc_arr = util.list_to_serial_port_desc_array(c_descs)
 
         arr_len = driver.new_uint32()

@@ -87,13 +87,29 @@ class HRCollector(PCBLEDriverObserver, BLEAdapterObserver):
         print('Connection: {}, {} = {}'.format(conn_handle, uuid, data))
 
 
+def item_choose(item_list):
+    for i, it in enumerate(item_list):
+        print('\t{} : {}'.format(i, it))
+    print ' '
+
+    while True:
+        try:
+            choice = int(raw_input('Enter your choice: '))
+            if ((choice >= 0) and (choice < len(item_list))):
+                break
+        except Exception:
+            pass
+        print ('\tTry again...')
+    return choice
+
+
 def main(serial_port):
     print('Serial port used: {}'.format(serial_port))
     driver  = PCBLEDriver(serial_port=serial_port)
     adapter = BLEAdapter(driver)
     collector = HRCollector(adapter)
     collector.enable()
-    for i in range(CONNECTIONS):
+    for i in xrange(CONNECTIONS):
         collector.connect_and_discover()
     sleep(30)
     print('Closing')
@@ -101,8 +117,13 @@ def main(serial_port):
 
 
 if __name__ == "__main__":
+    serial_port = None
     if len(sys.argv) == 2:
-        main(sys.argv[1])
+        serial_port = sys.argv[1]
     else:
-        print('Enter Connectivity COM Port')
+        descs       = PCBLEDriver.enum_serial_ports()
+        choices     = ['{}: {}'.format(d.port, d.serial_number) for d in descs]
+        choice      = item_choose(choices)
+        serial_port = descs[choice].port
+    main(serial_port)
     quit()
