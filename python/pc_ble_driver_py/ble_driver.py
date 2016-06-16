@@ -1,7 +1,7 @@
+import Queue
 import logging
 import traceback
 from enum       import Enum
-from Queue      import Queue
 from functools  import wraps
 from types      import NoneType
 
@@ -254,8 +254,39 @@ class BLEGapAddr(object):
 
 class BLEAdvData(object):
     class Types(Enum):
-        short_local_name    = driver.BLE_GAP_AD_TYPE_SHORT_LOCAL_NAME
-        complete_local_name = driver.BLE_GAP_AD_TYPE_COMPLETE_LOCAL_NAME
+        flags                               = driver.BLE_GAP_AD_TYPE_FLAGS
+        service_16bit_uuid_more_available   = driver.BLE_GAP_AD_TYPE_16BIT_SERVICE_UUID_MORE_AVAILABLE
+        service_16bit_uuid_complete         = driver.BLE_GAP_AD_TYPE_16BIT_SERVICE_UUID_COMPLETE
+        service_32bit_uuid_more_available   = driver.BLE_GAP_AD_TYPE_32BIT_SERVICE_UUID_MORE_AVAILABLE
+        service_32bit_uuid_complete         = driver.BLE_GAP_AD_TYPE_32BIT_SERVICE_UUID_COMPLETE
+        service_128bit_uuid_more_available  = driver.BLE_GAP_AD_TYPE_128BIT_SERVICE_UUID_MORE_AVAILABLE
+        service_128bit_uuid_complete        = driver.BLE_GAP_AD_TYPE_128BIT_SERVICE_UUID_COMPLETE
+        short_local_name                    = driver.BLE_GAP_AD_TYPE_SHORT_LOCAL_NAME
+        complete_local_name                 = driver.BLE_GAP_AD_TYPE_COMPLETE_LOCAL_NAME
+        tx_power_level                      = driver.BLE_GAP_AD_TYPE_TX_POWER_LEVEL
+        class_of_device                     = driver.BLE_GAP_AD_TYPE_CLASS_OF_DEVICE
+        simple_pairing_hash_c               = driver.BLE_GAP_AD_TYPE_SIMPLE_PAIRING_HASH_C
+        simple_pairing_randimizer_r         = driver.BLE_GAP_AD_TYPE_SIMPLE_PAIRING_RANDOMIZER_R
+        security_manager_tk_value           = driver.BLE_GAP_AD_TYPE_SECURITY_MANAGER_TK_VALUE
+        security_manager_oob_flags          = driver.BLE_GAP_AD_TYPE_SECURITY_MANAGER_OOB_FLAGS
+        slave_connection_interval_range     = driver.BLE_GAP_AD_TYPE_SLAVE_CONNECTION_INTERVAL_RANGE
+        solicited_sevice_uuids_16bit        = driver.BLE_GAP_AD_TYPE_SOLICITED_SERVICE_UUIDS_16BIT
+        solicited_sevice_uuids_128bit       = driver.BLE_GAP_AD_TYPE_SOLICITED_SERVICE_UUIDS_128BIT
+        service_data                        = driver.BLE_GAP_AD_TYPE_SERVICE_DATA
+        public_target_address               = driver.BLE_GAP_AD_TYPE_PUBLIC_TARGET_ADDRESS
+        random_target_address               = driver.BLE_GAP_AD_TYPE_RANDOM_TARGET_ADDRESS
+        appearance                          = driver.BLE_GAP_AD_TYPE_APPEARANCE
+        advertising_interval                = driver.BLE_GAP_AD_TYPE_ADVERTISING_INTERVAL
+        le_bluetooth_device_address         = driver.BLE_GAP_AD_TYPE_LE_BLUETOOTH_DEVICE_ADDRESS
+        le_role                             = driver.BLE_GAP_AD_TYPE_LE_ROLE
+        simple_pairng_hash_c256             = driver.BLE_GAP_AD_TYPE_SIMPLE_PAIRING_HASH_C256
+        simple_pairng_randomizer_r256       = driver.BLE_GAP_AD_TYPE_SIMPLE_PAIRING_RANDOMIZER_R256
+        service_data_32bit_uuid             = driver.BLE_GAP_AD_TYPE_SERVICE_DATA_32BIT_UUID
+        service_data_128bit_uuid            = driver.BLE_GAP_AD_TYPE_SERVICE_DATA_128BIT_UUID
+        uri                                 = driver.BLE_GAP_AD_TYPE_URI
+        information_3d_data                 = driver.BLE_GAP_AD_TYPE_3D_INFORMATION_DATA
+        manufacturer_specific_data          = driver.BLE_GAP_AD_TYPE_MANUFACTURER_SPECIFIC_DATA
+
 
 
     def __init__(self, **kwargs):
@@ -359,7 +390,7 @@ class BLEGattcWriteParams(object):
 
 
     def to_c(self):
-        self.__data_array       = util.list_to_uint8_array(self.data)
+        self.__data_array       = util.list_to_uint8_array(self.data) #TODO memory leak in C
         write_params            = driver.ble_gattc_write_params_t()
         write_params.p_value    = self.__data_array.cast()
         write_params.flags      = self.flags.value
@@ -371,10 +402,33 @@ class BLEGattcWriteParams(object):
         return write_params
 
 
-class BLEHCI(Enum):
-    success                             = driver.BLE_HCI_STATUS_CODE_SUCCESS
-    connection_timeout                  = driver.BLE_HCI_CONNECTION_TIMEOUT
-    remote_user_terminated_connection   = driver.BLE_HCI_REMOTE_USER_TERMINATED_CONNECTION
+class BLEHci(Enum):
+    success                                     = driver.BLE_HCI_STATUS_CODE_SUCCESS
+    unknown_btle_command                        = driver.BLE_HCI_STATUS_CODE_UNKNOWN_BTLE_COMMAND
+    unknown_connection_identifier               = driver.BLE_HCI_STATUS_CODE_UNKNOWN_CONNECTION_IDENTIFIER
+    authentication_failure                      = driver.BLE_HCI_AUTHENTICATION_FAILURE
+    pin_or_key_missing                          = driver.BLE_HCI_STATUS_CODE_PIN_OR_KEY_MISSING
+    memory_capacity_exceeded                    = driver.BLE_HCI_MEMORY_CAPACITY_EXCEEDED
+    connection_timeout                          = driver.BLE_HCI_CONNECTION_TIMEOUT
+    command_disallowed                          = driver.BLE_HCI_STATUS_CODE_COMMAND_DISALLOWED
+    invalid_btle_command_parameters             = driver.BLE_HCI_STATUS_CODE_INVALID_BTLE_COMMAND_PARAMETERS
+    remote_user_terminated_connection           = driver.BLE_HCI_REMOTE_USER_TERMINATED_CONNECTION
+    remote_dev_termination_due_to_low_resources = driver.BLE_HCI_REMOTE_DEV_TERMINATION_DUE_TO_LOW_RESOURCES
+    remote_dev_termination_due_to_power_off     = driver.BLE_HCI_REMOTE_DEV_TERMINATION_DUE_TO_POWER_OFF
+    local_host_terminated_connection            = driver.BLE_HCI_LOCAL_HOST_TERMINATED_CONNECTION
+    unsupported_remote_feature                  = driver.BLE_HCI_UNSUPPORTED_REMOTE_FEATURE
+    invalid_lmp_parameters                      = driver.BLE_HCI_STATUS_CODE_INVALID_LMP_PARAMETERS
+    unspecified_error                           = driver.BLE_HCI_STATUS_CODE_UNSPECIFIED_ERROR
+    lmp_response_timeout                        = driver.BLE_HCI_STATUS_CODE_LMP_RESPONSE_TIMEOUT
+    lmp_pdu_not_allowed                         = driver.BLE_HCI_STATUS_CODE_LMP_PDU_NOT_ALLOWED
+    instant_passed                              = driver.BLE_HCI_INSTANT_PASSED
+    pairintg_with_unit_key_unsupported          = driver.BLE_HCI_PAIRING_WITH_UNIT_KEY_UNSUPPORTED
+    differen_transaction_collision              = driver.BLE_HCI_DIFFERENT_TRANSACTION_COLLISION
+    controller_busy                             = driver.BLE_HCI_CONTROLLER_BUSY
+    conn_interval_unacceptable                  = driver.BLE_HCI_CONN_INTERVAL_UNACCEPTABLE
+    directed_advertiser_timeout                 = driver.BLE_HCI_DIRECTED_ADVERTISER_TIMEOUT
+    conn_terminated_due_to_mic_failure          = driver.BLE_HCI_CONN_TERMINATED_DUE_TO_MIC_FAILURE
+    conn_failed_to_be_established               = driver.BLE_HCI_CONN_FAILED_TO_BE_ESTABLISHED
 
 
 
@@ -389,18 +443,15 @@ class BLEUUID(object):
 
 
     def __init__(self, value):
+        self.type   = driver.BLE_UUID_TYPE_BLE # can be overwrite by BLEDriver.ble_vs_uuid_add()
+
         if isinstance(value, BLEUUID.Standard):
             self.value  = value
-            self.type   = driver.BLE_UUID_TYPE_BLE
-
         else:
             try:
                 self.value  = BLEUUID.Standard(value)
-                self.type   = driver.BLE_UUID_TYPE_BLE
-
             except(ValueError):
                 self.value  = value
-                self.type   = None
 
 
     def __str__(self):
@@ -416,13 +467,11 @@ class BLEUUID(object):
 
 
     def uuid128_to_c(self):
-        if isinstance(self.value, BLEUUID.Standard):
+        if not isinstance(self.value, list):
             raise NordicSemiException('Not vendor specific UUID {}'.format(self.value))
 
-        uuid128_list = list()
-        for i in xrange(16):
-            uuid128_list.append((self.value >> (8*i)) & 0xFF)
-        self.__uuid128_array    = util.list_to_uint8_array(uuid128_list)
+        lsb_list                = list(reversed(self.value))
+        self.__uuid128_array    = util.list_to_uint8_array(lsb_list)
         uuid                    = driver.ble_uuid128_t()
         uuid.uuid128            = self.__uuid128_array.cast()
         return uuid
@@ -528,57 +577,57 @@ class SerialPortDescriptor(object):
                    vendor_id = _vendor_id,
                    product_id = _product_id)
 
-class PCBLEDriverObserver(object):
+class BLEDriverObserver(object):
     def __init__(self, *args, **kwargs):
-        super(PCBLEDriverObserver, self).__init__()
+        super(BLEDriverObserver, self).__init__()
         pass
 
 
-    def on_gap_evt_connected(self, pc_ble_driver, conn_handle, peer_addr, own_addr, role, conn_params):
+    def on_gap_evt_connected(self, ble_driver, conn_handle, peer_addr, own_addr, role, conn_params):
         pass
 
 
-    def on_gap_evt_disconnected(self, pc_ble_driver, conn_handle, reason):
+    def on_gap_evt_disconnected(self, ble_driver, conn_handle, reason):
         pass
 
 
-    def on_gap_evt_timeout(self, pc_ble_driver, conn_handle, src):
+    def on_gap_evt_timeout(self, ble_driver, conn_handle, src):
         pass
 
 
-    def on_gap_evt_adv_report(self, pc_ble_driver, conn_handle, peer_addr, rssi, adv_type, adv_data):
+    def on_gap_evt_adv_report(self, ble_driver, conn_handle, peer_addr, rssi, adv_type, adv_data):
         pass
 
 
-    def on_evt_tx_complete(self, pc_ble_driver, conn_handle, count):
+    def on_evt_tx_complete(self, ble_driver, conn_handle, count):
         pass
 
 
-    def on_gattc_evt_write_rsp(self, pc_ble_driver, conn_handle, status, error_handle, attr_handle, write_op, offset, data):
+    def on_gattc_evt_write_rsp(self, ble_driver, conn_handle, status, error_handle, attr_handle, write_op, offset, data):
         pass
 
 
-    def on_gattc_evt_hvx(self, pc_ble_driver, conn_handle, status, error_handle, attr_handle, hvx_type, data):
+    def on_gattc_evt_hvx(self, ble_driver, conn_handle, status, error_handle, attr_handle, hvx_type, data):
         pass
 
 
-    def on_gattc_evt_prim_srvc_disc_rsp(self, pc_ble_driver, conn_handle, status, services):
+    def on_gattc_evt_prim_srvc_disc_rsp(self, ble_driver, conn_handle, status, services):
         pass
 
 
-    def on_gattc_evt_char_disc_rsp(self, pc_ble_driver, conn_handle, status, characteristics):
+    def on_gattc_evt_char_disc_rsp(self, ble_driver, conn_handle, status, characteristics):
         pass
 
 
-    def on_gattc_evt_desc_disc_rsp(self, pc_ble_driver, conn_handle, status, descriptions):
+    def on_gattc_evt_desc_disc_rsp(self, ble_driver, conn_handle, status, descriptions):
         pass
 
 
 
-class PCBLEDriver(object):
+class BLEDriver(object):
     def __init__(self, serial_port, baud_rate=115200):
-        super(PCBLEDriver, self).__init__()
-        self.evts_q         = Queue()
+        super(BLEDriver, self).__init__()
+        self.evts_q         = Queue.Queue()
         self.observers      = list()
         phy_layer           = driver.sd_rpc_physical_layer_create_uart(serial_port,
                                                                        baud_rate,
@@ -721,8 +770,8 @@ class PCBLEDriver(object):
 
 
     @NordicSemiErrorCheck
-    def ble_gap_disconnect(self, conn_handle, hci_status_code = BLEHCI.remote_user_terminated_connection):
-        assert isinstance(hci_status_code, BLEHCI), 'Invalid argument type'
+    def ble_gap_disconnect(self, conn_handle, hci_status_code = BLEHci.remote_user_terminated_connection):
+        assert isinstance(hci_status_code, BLEHci), 'Invalid argument type'
         return driver.sd_ble_gap_disconnect(self.rpc_adapter, 
                                                    conn_handle,
                                                    hci_status_code.value)
@@ -813,7 +862,7 @@ class PCBLEDriver(object):
                 connected_evt = ble_event.evt.gap_evt.params.connected
 
                 for obs in self.observers:
-                    obs.on_gap_evt_connected(pc_ble_driver  = self,
+                    obs.on_gap_evt_connected(ble_driver     = self,
                                              conn_handle    = ble_event.evt.gap_evt.conn_handle,
                                              peer_addr      = BLEGapAddr.from_c(connected_evt.peer_addr),
                                              own_addr       = BLEGapAddr.from_c(connected_evt.own_addr),
@@ -824,17 +873,17 @@ class PCBLEDriver(object):
                 disconnected_evt = ble_event.evt.gap_evt.params.disconnected
 
                 for obs in self.observers:
-                    obs.on_gap_evt_disconnected(pc_ble_driver   = self,
-                                                conn_handle     = ble_event.evt.gap_evt.conn_handle,
-                                                reason          = BLEHCI(disconnected_evt.reason))
+                    obs.on_gap_evt_disconnected(ble_driver  = self,
+                                                conn_handle = ble_event.evt.gap_evt.conn_handle,
+                                                reason      = BLEHci(disconnected_evt.reason))
 
             elif evt_id == BLEEvtID.gap_evt_timeout:
                 timeout_evt = ble_event.evt.gap_evt.params.timeout
 
                 for obs in self.observers:
-                    obs.on_gap_evt_timeout(pc_ble_driver    = self,
-                                           conn_handle      = ble_event.evt.gap_evt.conn_handle,
-                                           src              = BLEGapTimeoutSrc(timeout_evt.src))
+                    obs.on_gap_evt_timeout(ble_driver   = self,
+                                           conn_handle  = ble_event.evt.gap_evt.conn_handle,
+                                           src          = BLEGapTimeoutSrc(timeout_evt.src))
 
             elif evt_id == BLEEvtID.gap_evt_adv_report:
                 adv_report_evt  = ble_event.evt.gap_evt.params.adv_report
@@ -843,7 +892,7 @@ class PCBLEDriver(object):
                     adv_type = BLEGapAdvType(adv_report_evt.type)
 
                 for obs in self.observers:
-                    obs.on_gap_evt_adv_report(pc_ble_driver = self,
+                    obs.on_gap_evt_adv_report(ble_driver    = self,
                                               conn_handle   = ble_event.evt.gap_evt.conn_handle,
                                               peer_addr     = BLEGapAddr.from_c(adv_report_evt.peer_addr),
                                               rssi          = adv_report_evt.rssi,
@@ -854,29 +903,29 @@ class PCBLEDriver(object):
                 tx_complete_evt = ble_event.evt.common_evt.params.tx_complete
 
                 for obs in self.observers:
-                    obs.on_evt_tx_complete(pc_ble_driver    = self,
-                                           conn_handle      = ble_event.evt.common_evt.conn_handle,
-                                           count            = tx_complete_evt.count)
+                    obs.on_evt_tx_complete(ble_driver   = self,
+                                           conn_handle  = ble_event.evt.common_evt.conn_handle,
+                                           count        = tx_complete_evt.count)
 
             elif evt_id == BLEEvtID.gattc_evt_write_rsp:
                 write_rsp_evt   = ble_event.evt.gattc_evt.params.write_rsp
 
                 for obs in self.observers:
-                    obs.on_gattc_evt_write_rsp(pc_ble_driver    = self,
-                                               conn_handle      = ble_event.evt.gattc_evt.conn_handle,
-                                               status           = BLEGattStatusCode(ble_event.evt.gattc_evt.gatt_status),
-                                               error_handle     = ble_event.evt.gattc_evt.error_handle,
-                                               attr_handle      = write_rsp_evt.handle,
-                                               write_op         = BLEGattWriteOperation(write_rsp_evt.write_op),
-                                               offset           = write_rsp_evt.offset,
-                                               data             = util.uint8_array_to_list(write_rsp_evt.data,
-                                                                                           write_rsp_evt.len))
+                    obs.on_gattc_evt_write_rsp(ble_driver   = self,
+                                               conn_handle  = ble_event.evt.gattc_evt.conn_handle,
+                                               status       = BLEGattStatusCode(ble_event.evt.gattc_evt.gatt_status),
+                                               error_handle = ble_event.evt.gattc_evt.error_handle,
+                                               attr_handle  = write_rsp_evt.handle,
+                                               write_op     = BLEGattWriteOperation(write_rsp_evt.write_op),
+                                               offset       = write_rsp_evt.offset,
+                                               data         = util.uint8_array_to_list(write_rsp_evt.data,
+                                                                                       write_rsp_evt.len))
 
             elif evt_id == BLEEvtID.gattc_evt_hvx:
                 hvx_evt = ble_event.evt.gattc_evt.params.hvx
 
                 for obs in self.observers:
-                    obs.on_gattc_evt_hvx(pc_ble_driver  = self,
+                    obs.on_gattc_evt_hvx(ble_driver     = self,
                                          conn_handle    = ble_event.evt.gattc_evt.conn_handle,
                                          status         = BLEGattStatusCode(ble_event.evt.gattc_evt.gatt_status),
                                          error_handle   = ble_event.evt.gattc_evt.error_handle,
@@ -892,10 +941,10 @@ class PCBLEDriver(object):
                     services.append(BLEService.from_c(s))
 
                 for obs in self.observers:
-                    obs.on_gattc_evt_prim_srvc_disc_rsp(pc_ble_driver   = self,
-                                                        conn_handle     = ble_event.evt.gattc_evt.conn_handle,
-                                                        status          = BLEGattStatusCode(ble_event.evt.gattc_evt.gatt_status),
-                                                        services        = services)
+                    obs.on_gattc_evt_prim_srvc_disc_rsp(ble_driver  = self,
+                                                        conn_handle = ble_event.evt.gattc_evt.conn_handle,
+                                                        status      = BLEGattStatusCode(ble_event.evt.gattc_evt.gatt_status),
+                                                        services    = services)
 
             elif evt_id == BLEEvtID.gattc_evt_char_disc_rsp:
                 char_disc_rsp_evt = ble_event.evt.gattc_evt.params.char_disc_rsp
@@ -905,7 +954,7 @@ class PCBLEDriver(object):
                     characteristics.append(BLECharacteristic.from_c(ch))
 
                 for obs in self.observers:
-                    obs.on_gattc_evt_char_disc_rsp(pc_ble_driver    = self,
+                    obs.on_gattc_evt_char_disc_rsp(ble_driver       = self,
                                                    conn_handle      = ble_event.evt.gattc_evt.conn_handle,
                                                    status           = BLEGattStatusCode(ble_event.evt.gattc_evt.gatt_status),
                                                    characteristics  = characteristics)
@@ -918,10 +967,10 @@ class PCBLEDriver(object):
                     descriptions.append(BLEDescriptor.from_c(d))
 
                 for obs in self.observers:
-                    obs.on_gattc_evt_desc_disc_rsp(pc_ble_driver    = self,
-                                                   conn_handle      = ble_event.evt.gattc_evt.conn_handle,
-                                                   status           = BLEGattStatusCode(ble_event.evt.gattc_evt.gatt_status),
-                                                   descriptions     = descriptions)
+                    obs.on_gattc_evt_desc_disc_rsp(ble_driver   = self,
+                                                   conn_handle  = ble_event.evt.gattc_evt.conn_handle,
+                                                   status       = BLEGattStatusCode(ble_event.evt.gattc_evt.gatt_status),
+                                                   descriptions = descriptions)
 
         except Exception as e:
             logger.error("Exception: {}".format(str(e)))

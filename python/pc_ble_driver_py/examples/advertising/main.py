@@ -8,11 +8,11 @@
 # the file.
 
 import sys
-from ble_driver import PCBLEDriver, BLEAdvData, BLEEvtID
+from ble_driver import BLEDriver, BLEAdvData, BLEEvtID
 
 def main(serial_port):
     print("Serial port used: {}".format(serial_port))
-    driver = PCBLEDriver(serial_port=serial_port)
+    driver = BLEDriver(serial_port=serial_port)
     driver.open()
     driver.ble_enable()
     adv_data = BLEAdvData(complete_local_name='Example')
