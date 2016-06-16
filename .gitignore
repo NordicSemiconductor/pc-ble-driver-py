@@ -3,4 +3,6 @@ python/**/*.pyd
 python/**/*.so
 python/**/*.dylib
 python/**/*.pyc
+python/**/*.hex
+python/**/*.patch
 python/**/lib/**/*.py
