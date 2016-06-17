@@ -93,7 +93,7 @@ class BLEAdapter(BLEDriverObserver):
 
 
     def observer_unregister(self, observer):
-        self.observers.append(observer)
+        self.observers.remove(observer)
 
 
     def service_discovery(self, conn_handle, uuid=None):
