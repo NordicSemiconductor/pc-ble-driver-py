@@ -8,17 +8,36 @@
 # the file.
 
 import sys
-from ble_driver import BLEDriver, BLEAdvData, BLEEvtID
+from threading  import Condition, Lock
+from ble_driver import BLEDriver, BLEDriverObserver, BLEAdvData, BLEEvtID
+
+
+class TimeoutObserver(BLEDriverObserver):
+    def __init__(self):
+        self.cond = Condition(Lock())
+
+    def on_gap_evt_timeout(self, ble_driver, conn_handle, src):
+        with self.cond:
+            self.cond.notify_all()
+
+    def wait_for_timeout(self):
+        with self.cond:
+            self.cond.wait()
+
 
 def main(serial_port):
     print("Serial port used: {}".format(serial_port))
-    driver = BLEDriver(serial_port=serial_port)
+    driver      = BLEDriver(serial_port=serial_port)
+    observer    = TimeoutObserver()
+    adv_data    = BLEAdvData(complete_local_name='Example')
+
+    driver.observer_register(observer)
     driver.open()
     driver.ble_enable()
-    adv_data = BLEAdvData(complete_local_name='Example')
     driver.ble_gap_adv_data_set(adv_data)
     driver.ble_gap_adv_start()
-    driver.wait_for_event(evt = BLEEvtID.gap_evt_timeout, timeout=200)
+    observer.wait_for_timeout()
+
     print("Closing")
     driver.close()
 

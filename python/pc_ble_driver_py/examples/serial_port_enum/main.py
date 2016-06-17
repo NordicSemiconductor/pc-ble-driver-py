@@ -8,10 +8,10 @@
 # the file.
 
 import sys
-from ble_driver import PCBLEDriver, SerialPortDescriptor
+from ble_driver import BLEDriver, SerialPortDescriptor
 
 def main():
-    descs = PCBLEDriver.enum_serial_ports()
+    descs = BLEDriver.enum_serial_ports()
     print("enum_serial_ports: {} serial ports found".format(len(descs)))
     for i, d in enumerate(descs):
         print("\nSerial port #{}:".format(i))
