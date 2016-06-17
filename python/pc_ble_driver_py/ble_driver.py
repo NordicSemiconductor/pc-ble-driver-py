@@ -678,7 +678,7 @@ class BLEDriver(object):
 
 
     def observer_unregister(self, observer):
-        self.observers.append(observer)
+        self.observers.remove(observer)
 
 
     def wait_for_event(self, evt, timeout=20):
