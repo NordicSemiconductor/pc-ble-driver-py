@@ -43,9 +43,9 @@ py2 = sys.version_info[0] == 2
 py3 = sys.version_info[0] == 3
 
 if py2:
-    requirements = ['enum34', 'future']
+    requirements = ['enum34', 'wrapt', 'future']
 elif py3:
-    requirements = ['future']
+    requirements = ['wrapt', 'future']
 
 
 setup(
