@@ -16,6 +16,10 @@ You can find additional information here:
 
 [Hardware setup](https://github.com/NordicSemiconductor/pc-ble-driver/tree/self_contained_driver#hardware-setup)
 
+## License
+
+See the [license file](LICENSE) for details.
+
 # Compiling
 
 Before building pc-ble-driver-py you will need to have Boost installed and some of its libraries statically compiled.
