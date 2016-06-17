@@ -226,14 +226,14 @@ class BLEAdapter(BLEDriverObserver):
             return
 
         elif status != BLEGattStatusCode.success:
-            logger.error("Error. Description discovery failed. Status {}.".format(status))
+            logger.error("Error. Descriptor discovery failed. Status {}.".format(status))
             return
         self.db_conns[conn_handle].desc_disc_q.put(descriptions)
 
 
     def on_gattc_evt_hvx(self, ble_driver, conn_handle, status, error_handle, attr_handle, hvx_type, data):
         if status != BLEGattStatusCode.success:
-            logger.error("Error. Description discovery failed. Status {}.".format(status))
+            logger.error("Error. Handle value notification failed. Status {}.".format(status))
             return
 
         if hvx_type == BLEGattHVXType.notification:
