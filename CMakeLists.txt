@@ -65,7 +65,7 @@ swig_add_module(${PYTHON_MODULE} python ${SWIG_I_FILE})
 # _pc_ble_driver.so
 # libpc_ble_driver_shared.so
 
-# OS X
+# macOS / OS X
 # pc_ble_driver.py
 # _pc_ble_driver.so
 # libpc_ble_driver_shared.dylib
@@ -82,7 +82,7 @@ if(WIN32)
     set(PY_MODULE_SHARED_LIB_DIR ${PY_MODULE_DIR}/lib/win/x86_${ARCH_BITS})
     set(SWIG_WRAPPER_SHARED_LIB_EXT pyd)
 elseif(APPLE)
-    set(PY_MODULE_SHARED_LIB_DIR ${PY_MODULE_DIR}/lib/osx)
+    set(PY_MODULE_SHARED_LIB_DIR ${PY_MODULE_DIR}/lib/macos_osx)
     set(SWIG_WRAPPER_SHARED_LIB_EXT so)
 else()
     set(PY_MODULE_SHARED_LIB_DIR ${PY_MODULE_DIR}/lib/linux/x86_${ARCH_BITS})

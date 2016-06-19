@@ -72,7 +72,7 @@ Open a Microsoft Visual Studio Command Prompt and issue the following from the r
 
     > cd build
     > cmake -G "Visual Studio XX <Win64>" <-DBOOST_LIBRARYDIR="<Boost libs path>>" ..
-    > msbuild ALL_BUILD.vcxproj
+    > msbuild ALL_BUILD.vcxproj /p:Configuration=<CFG>
 
 **Note**: Select Visual Sutio 12 or 14 `-G "Visual Studio XX"` option.
 
@@ -80,7 +80,9 @@ Open a Microsoft Visual Studio Command Prompt and issue the following from the r
 
 **Note**: Optionally select the location of the Boost libraries with the `-DBOOST_LIBRARYDIR` option.
 
-The results of the build will be placed in `build\outdir`.
+**Note**: Optionally select the build configuration with the `/p:Configuration=` option. Typically `Debug`, `Release`, `MinSizeRel` and `RelWithDebInfo` are available.
+
+The results of the build will be placed in `build\outdir` and the distributable files will be copied to `python\pc_ble_driver_py\lib\win\x86_<arch>`.
 
 #### Examples
 
@@ -101,14 +103,16 @@ Install the required packages to build the bindings:
 Then change to the root folder of the repository and issue the following commands:
 
     $ cd build
-    > cmake -G "Unix Makefiles" <-DARCH=<x86_32,x86_64>> <-DBOOST_LIBRARYDIR="<Boost libs path>>" ..
+    > cmake -G "Unix Makefiles" -DCMAKE_BUILD_TYPE= <build_type> <-DARCH=<x86_32,x86_64>> <-DBOOST_LIBRARYDIR="<Boost libs path>>" ..
     $ make
 
-The results of the build will be placed in `build/outdir`.
+**Note**: Optionally Select the build configuration with the `-DCMAKE_BUILD_TYPE` option. Typically `Debug`, `Release`, `MinSizeRel` and `RelWithDebInfo` are available.
 
 **Note**: Optionally select the target architecture (32 or 64-bit) using the `-DARCH` option.
 
 **Note**: Optionally select the location of the Boost libraries with the `-DBOOST_LIBRARYDIR` option.
+
+The results of the build will be placed in `build/outdir` and the distributable files will be copied to `python/pc_ble_driver_py/lib/linux\x86_<arch>`.
 
 ### macOS (OS X) 10.11 and later
 
@@ -120,8 +124,9 @@ Install cmake and swig with Homebrew with the `brew` command on a terminal:
 Then change to the root folder of the repository and issue the following commands:
 
     $ cd build
-    $ cmake -G "Unix Makefiles" ..
+    $ cmake -G "Unix Makefiles" -DCMAKE_BUILD_TYPE= <build_type> ..
     $ make
 
-The results of the build will be placed in `build/outdir`.
+**Note**: Optionally Select the build configuration with the `-DCMAKE_BUILD_TYPE` option. Typically `Debug`, `Release`, `MinSizeRel` and `RelWithDebInfo` are available.
 
+The results of the build will be placed in `build/outdir` and the distributable files will be copied to `python/pc_ble_driver_py/lib/macos_osx`.
