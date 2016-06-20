@@ -116,7 +116,7 @@ add_custom_command(TARGET ${SWIG_MODULE_${PYTHON_MODULE}_REAL_NAME} POST_BUILD
 
 # Copy .hex files
 add_custom_command(TARGET ${SWIG_MODULE_${PYTHON_MODULE}_REAL_NAME} POST_BUILD
-    COMMAND ${CMAKE_COMMAND} -E copy ${PC_BLE_DRIVER_HEX_FILES} ${PY_MODULE_HEX_DIR}
+    COMMAND ${CMAKE_COMMAND} -E copy_directory ${PC_BLE_DRIVER_HEX_DIR} ${PY_MODULE_HEX_DIR}
 )
 
 # Generate build information file
