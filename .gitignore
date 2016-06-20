@@ -5,4 +5,5 @@ python/**/*.dylib
 python/**/*.pyc
 python/**/*.hex
 python/**/*.patch
+python/**/*.txt
 python/**/lib/**/*.py
