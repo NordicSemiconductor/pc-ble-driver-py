@@ -1,12 +1,14 @@
 # Python bindings for the nRF5 Bluetooth Low Energy GAP/GATT driver
 
-.. image:: https://img.shields.io/pypi/v/pc-ble-driver-py.svg
-    :target: https://pypi.python.org/pypi/pc-ble-driver-py
-    :alt: Latest Version
+|PyPIv| |PyPIl|
 
-.. image:: https://img.shields.io/pypi/l/pc-ble-driver-py.svg
-    :target: https://pypi.python.org/pypi/pc-ble-driver-py
-    :alt: License
+.. |PyPIv| image:: https://img.shields.io/pypi/v/pc-ble-driver-py.svg
+   :target: https://pypi.python.org/pypi/pc-ble-driver-py
+   :alt: Latest Version
+
+.. |PyPIv| image:: https://img.shields.io/pypi/l/pc-ble-driver-py.svg
+   :target: https://pypi.python.org/pypi/pc-ble-driver-py
+   :alt: License
 
 ## Introduction
 pc-ble-driver-py is a serialization library over serial port that provides Python bindings
