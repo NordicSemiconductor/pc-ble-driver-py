@@ -407,7 +407,7 @@ class BLEGattStatusCode(Enum):
 class BLEGattExecWriteFlag(Enum):
     prepared_cancel = driver.BLE_GATT_EXEC_WRITE_FLAG_PREPARED_CANCEL
     prepared_write  = driver.BLE_GATT_EXEC_WRITE_FLAG_PREPARED_WRITE
-    invalid         = 0x00
+    unused          = 0x00
 
 
 
