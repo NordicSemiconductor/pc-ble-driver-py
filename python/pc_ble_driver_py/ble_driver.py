@@ -365,6 +365,8 @@ class BLEAdvData(object):
         index           = 0
         while index < len(ad_list):
             ad_len  = ad_list[index]
+            if ad_len == 0:
+                break
             ad_type = ad_list[index + 1]
             offset  = index + 2
             try:
