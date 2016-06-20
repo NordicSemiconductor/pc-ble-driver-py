@@ -36,6 +36,7 @@
 #
 import Queue
 import logging
+import wrapt
 from threading  import Condition, Lock
 from ble_driver import *
 
@@ -45,9 +46,6 @@ logger.setLevel(logging.DEBUG)
 class DbConnection(object):
     def __init__(self):
         self.services     = list()
-        self.serv_disc_q  = Queue.Queue()
-        self.char_disc_q  = Queue.Queue()
-        self.desc_disc_q  = Queue.Queue()
 
 
     def get_char_value_handle(self, uuid):
@@ -96,19 +94,22 @@ class DbConnection(object):
 
 
 class EvtSync(object):
-    def __init__(self):
-        self.conds                                = dict()
-        self.conds[BLEEvtID.gattc_evt_write_rsp]  = Condition(Lock())
-        self.conds[BLEEvtID.evt_tx_complete]      = Condition(Lock())
+    def __init__(self, events):
+        self.conds = dict()
+        for evt in events:
+            self.conds[evt] = Condition(Lock())
+        self.data = None
 
 
-    def wait(self, evt):
+    def wait(self, evt, timeout = 5):
         with self.conds[evt]:
-            self.conds[evt].wait()
+            self.conds[evt].wait(timeout=timeout)
+            return self.data
 
 
-    def notify(self, evt):
+    def notify(self, evt, data=None):
         with self.conds[evt]:
+            self.data = data
             self.conds[evt].notify_all()
 
 
@@ -145,61 +146,75 @@ class BLEAdapter(BLEDriverObserver):
         self.conn_in_progress = True
 
 
-    @synchronized(observer_lock)
+    @wrapt.synchronized(observer_lock)
     def observer_register(self, observer):
         self.observers.append(observer)
 
 
-    @synchronized(observer_lock)
+    @wrapt.synchronized(observer_lock)
     def observer_unregister(self, observer):
         self.observers.remove(observer)
 
 
+    @NordicSemiErrorCheck(expected = BLEGattStatusCode.success)
     def service_discovery(self, conn_handle, uuid=None):
         self.driver.ble_gattc_prim_srvc_disc(conn_handle, uuid, 0x0001)
 
         while True:
-            services = self.db_conns[conn_handle].serv_disc_q.get(timeout=5)
-            if services:
-                self.db_conns[conn_handle].services.extend(services)
-            else:
-                break
+            response = self.evt_sync[conn_handle].wait(evt = BLEEvtID.gattc_evt_prim_srvc_disc_rsp)
 
-            if services[-1].end_handle == 0xFFFF:
+            if response['status'] == BLEGattStatusCode.success:
+                self.db_conns[conn_handle].services.extend(response['services'])
+            elif response['status'] == BLEGattStatusCode.attribute_not_found:
+                break
+            else:
+                return response['status']
+
+            if response['services'][-1].end_handle == 0xFFFF:
                 break
             else:
                 self.driver.ble_gattc_prim_srvc_disc(conn_handle,
                                                      uuid,
-                                                     services[-1].end_handle + 1)
+                                                     response['services'][-1].end_handle + 1)
 
         for s in self.db_conns[conn_handle].services:
             self.driver.ble_gattc_char_disc(conn_handle, s.start_handle, s.end_handle)
             while True:
-                chars = self.db_conns[conn_handle].char_disc_q.get(timeout=5)
-                if chars:
-                    map(s.char_add, chars)
-                else:
-                    break
+                response = self.evt_sync[conn_handle].wait(evt = BLEEvtID.gattc_evt_char_disc_rsp)
 
-                self.driver.ble_gattc_char_disc(conn_handle, chars[-1].handle_decl + 1, s.end_handle)
+                if response['status'] == BLEGattStatusCode.success:
+                    map(s.char_add, response['characteristics'])
+                elif response['status'] == BLEGattStatusCode.attribute_not_found:
+                    break
+                else:
+                    return response['status']
+
+                self.driver.ble_gattc_char_disc(conn_handle,
+                                                response['characteristics'][-1].handle_decl + 1,
+                                                s.end_handle)
 
             for ch in s.chars:
                 self.driver.ble_gattc_desc_disc(conn_handle, ch.handle_value, ch.end_handle)
                 while True:
-                    descs = self.db_conns[conn_handle].desc_disc_q.get(timeout=5)
-                    if descs:
-                        ch.descs.extend(descs)
-                    else:
-                        break
+                    response = self.evt_sync[conn_handle].wait(evt = BLEEvtID.gattc_evt_desc_disc_rsp)
 
-                    if descs[-1].handle == ch.end_handle:
+                    if response['status'] == BLEGattStatusCode.success:
+                        ch.descs.extend(response['descriptions'])
+                    elif response['status'] == BLEGattStatusCode.attribute_not_found:
+                        break
+                    else:
+                        return response['status']
+
+                    if response['descriptions'][-1].handle == ch.end_handle:
                         break
                     else:
                         self.driver.ble_gattc_desc_disc(conn_handle,
-                                                        descs[-1].handle + 1,
+                                                        response['descriptions'][-1].handle + 1,
                                                         ch.end_handle)
+        return BLEGattStatusCode.success
 
 
+    @NordicSemiErrorCheck(expected = BLEGattStatusCode.success)
     def enable_notification(self, conn_handle, uuid):
         cccd_list = [1, 0]
 
@@ -208,26 +223,29 @@ class BLEAdapter(BLEDriverObserver):
             raise NordicSemiException('CCCD not found')
 
         write_params = BLEGattcWriteParams(BLEGattWriteOperation.write_req,
-                                           BLEGattExecWriteFlag.prepared_cancel,
+                                           BLEGattExecWriteFlag.unused,
                                            handle,
                                            cccd_list,
                                            0)
 
         self.driver.ble_gattc_write(conn_handle, write_params)
-        self.evt_sync[conn_handle].wait(evt = BLEEvtID.gattc_evt_write_rsp)
+        result = self.evt_sync[conn_handle].wait(evt = BLEEvtID.gattc_evt_write_rsp)
+        return result['status']
 
 
+    @NordicSemiErrorCheck(expected = BLEGattStatusCode.success)
     def write_req(self, conn_handle, uuid, data):
         handle = self.db_conns[conn_handle].get_char_value_handle(uuid)
         if handle == None:
             raise NordicSemiException('Characteristic value handler not found')
         write_params = BLEGattcWriteParams(BLEGattWriteOperation.write_req,
-                                           BLEGattExecWriteFlag.prepared_cancel,
+                                           BLEGattExecWriteFlag.unused,
                                            handle,
                                            data,
                                            0)
         self.driver.ble_gattc_write(conn_handle, write_params)
-        self.evt_sync[conn_handle].wait(evt = BLEEvtID.gattc_evt_write_rsp)
+        result = self.evt_sync[conn_handle].wait(evt = BLEEvtID.gattc_evt_write_rsp)
+        return result['status']
 
 
     def write_cmd(self, conn_handle, uuid, data):
@@ -235,7 +253,7 @@ class BLEAdapter(BLEDriverObserver):
         if handle == None:
             raise NordicSemiException('Characteristic value handler not found')
         write_params = BLEGattcWriteParams(BLEGattWriteOperation.write_cmd,
-                                           BLEGattExecWriteFlag.prepared_cancel,
+                                           BLEGattExecWriteFlag.unused,
                                            handle,
                                            data,
                                            0)
@@ -245,7 +263,7 @@ class BLEAdapter(BLEDriverObserver):
 
     def on_gap_evt_connected(self, ble_driver, conn_handle, peer_addr, own_addr, role, conn_params):
         self.db_conns[conn_handle]  = DbConnection()
-        self.evt_sync[conn_handle]  = EvtSync()
+        self.evt_sync[conn_handle]  = EvtSync(events = BLEEvtID)
         self.conn_in_progress       = False
 
 
@@ -254,48 +272,27 @@ class BLEAdapter(BLEDriverObserver):
             self.conn_in_progress = False
 
 
-    def on_evt_tx_complete(self, ble_driver, conn_handle, count):
-        self.evt_sync[conn_handle].wait(evt = BLEEvtID.evt_tx_complete)
+    def on_evt_tx_complete(self, ble_driver, conn_handle, **kwargs):
+        self.evt_sync[conn_handle].notify(evt = BLEEvtID.evt_tx_complete, data = kwargs)
 
 
-    def on_gattc_evt_write_rsp(self, ble_driver, conn_handle, status, error_handle, attr_handle, write_op, offset, data):
-        self.evt_sync[conn_handle].notify(evt = BLEEvtID.gattc_evt_write_rsp)
+    def on_gattc_evt_write_rsp(self, ble_driver, conn_handle, **kwargs):
+        self.evt_sync[conn_handle].notify(evt = BLEEvtID.gattc_evt_write_rsp, data = kwargs)
 
 
-    def on_gattc_evt_prim_srvc_disc_rsp(self, ble_driver, conn_handle, status, services):
-        if status == BLEGattStatusCode.attribute_not_found:
-            self.db_conns[conn_handle].serv_disc_q.put(None)
-            return
-
-        elif status != BLEGattStatusCode.success:
-            logger.error("Error. Primary services discovery failed. Status {}.".format(status))
-            return
-        self.db_conns[conn_handle].serv_disc_q.put(services)
+    def on_gattc_evt_prim_srvc_disc_rsp(self, ble_driver, conn_handle, **kwargs):
+        self.evt_sync[conn_handle].notify(evt = BLEEvtID.gattc_evt_prim_srvc_disc_rsp, data = kwargs)
 
 
-    def on_gattc_evt_char_disc_rsp(self, ble_driver, conn_handle, status, characteristics):
-        if status == BLEGattStatusCode.attribute_not_found:
-            self.db_conns[conn_handle].char_disc_q.put(None)
-            return
-
-        elif status != BLEGattStatusCode.success:
-            logger.error("Error. Characteristic discovery failed. Status {}.".format(status))
-            return
-        self.db_conns[conn_handle].char_disc_q.put(characteristics)
+    def on_gattc_evt_char_disc_rsp(self, ble_driver, conn_handle, **kwargs):
+        self.evt_sync[conn_handle].notify(evt = BLEEvtID.gattc_evt_char_disc_rsp, data = kwargs)
 
 
-    def on_gattc_evt_desc_disc_rsp(self, ble_driver, conn_handle, status, descriptions):
-        if status == BLEGattStatusCode.attribute_not_found:
-            self.db_conns[conn_handle].desc_disc_q.put(None)
-            return
-
-        elif status != BLEGattStatusCode.success:
-            logger.error("Error. Descriptor discovery failed. Status {}.".format(status))
-            return
-        self.db_conns[conn_handle].desc_disc_q.put(descriptions)
+    def on_gattc_evt_desc_disc_rsp(self, ble_driver, conn_handle, **kwargs):
+        self.evt_sync[conn_handle].notify(evt = BLEEvtID.gattc_evt_desc_disc_rsp, data = kwargs)
 
 
-    @synchronized(observer_lock)
+    @wrapt.synchronized(observer_lock)
     def on_gattc_evt_hvx(self, ble_driver, conn_handle, status, error_handle, attr_handle, hvx_type, data):
         if status != BLEGattStatusCode.success:
             logger.error("Error. Handle value notification failed. Status {}.".format(status))

@@ -34,12 +34,12 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
+import wrapt
 import logging
+import functools
 import traceback
 from enum       import Enum
-from functools  import wraps
 from types      import NoneType
-from wrapt      import synchronized
 from threading  import Lock
 
 import sys
@@ -99,6 +99,7 @@ sys.path.append(shlib_dir)
 import pc_ble_driver as driver
 import ble_driver_types as util
 
+
 class NordicSemiException(Exception):
     """
     Exception used as based exception for other exceptions defined in this package.
@@ -107,14 +108,17 @@ class NordicSemiException(Exception):
 
 
 
-def NordicSemiErrorCheck(func):
-    @wraps(func)
-    def wrapper(*args, **kwargs):
-        err_code = func(*args, **kwargs)
-        if err_code != driver.NRF_SUCCESS:
-            raise NordicSemiException('Failed to {}. Error code: {}'.format(func.__name__, err_code))
+def NordicSemiErrorCheck(wrapped=None, expected = driver.NRF_SUCCESS):
+    if wrapped is None:
+        return functools.partial(NordicSemiErrorCheck, expected=expected)
 
-    return wrapper
+    @wrapt.decorator
+    def wrapper(wrapped, instance, args, kwargs):
+        err_code = wrapped(*args, **kwargs)
+        if err_code != expected:
+            raise NordicSemiException('Failed to {}. Error code: {}'.format(wrapped.__name__, err_code))
+
+    return wrapper(wrapped)
 
 
 
@@ -179,7 +183,7 @@ class BLEGapRoles(Enum):
 
 class BLEGapTimeoutSrc(Enum):
     advertising     = driver.BLE_GAP_TIMEOUT_SRC_ADVERTISING
-    securitu_req    = driver.BLE_GAP_TIMEOUT_SRC_SECURITY_REQUEST
+    security_req    = driver.BLE_GAP_TIMEOUT_SRC_SECURITY_REQUEST
     scan            = driver.BLE_GAP_TIMEOUT_SRC_SCAN
     conn            = driver.BLE_GAP_TIMEOUT_SRC_CONN
 
@@ -403,6 +407,7 @@ class BLEGattStatusCode(Enum):
 class BLEGattExecWriteFlag(Enum):
     prepared_cancel = driver.BLE_GATT_EXEC_WRITE_FLAG_PREPARED_CANCEL
     prepared_write  = driver.BLE_GATT_EXEC_WRITE_FLAG_PREPARED_WRITE
+    invalid         = 0x00
 
 
 
@@ -427,7 +432,7 @@ class BLEGattcWriteParams(object):
 
 
     def to_c(self):
-        self.__data_array       = util.list_to_uint8_array(self.data) #TODO memory leak in C
+        self.__data_array       = util.list_to_uint8_array(self.data)
         write_params            = driver.ble_gattc_write_params_t()
         write_params.p_value    = self.__data_array.cast()
         write_params.flags      = self.flags.value
@@ -669,7 +674,7 @@ class BLEDriver(object):
         self.rpc_adapter    = driver.sd_rpc_adapter_create(transport_layer)
 
 
-    @synchronized(api_lock)
+    @wrapt.synchronized(api_lock)
     @classmethod
     def enum_serial_ports(cls):
         MAX_SERIAL_PORTS = 64
@@ -690,7 +695,7 @@ class BLEDriver(object):
 
 
     @NordicSemiErrorCheck
-    @synchronized(api_lock)
+    @wrapt.synchronized(api_lock)
     def open(self):
         return driver.sd_rpc_open(self.rpc_adapter,
                                   self.status_handler,
@@ -699,17 +704,17 @@ class BLEDriver(object):
 
 
     @NordicSemiErrorCheck
-    @synchronized(api_lock)
+    @wrapt.synchronized(api_lock)
     def close(self):
         return driver.sd_rpc_close(self.rpc_adapter)
 
 
-    @synchronized(observer_lock)
+    @wrapt.synchronized(observer_lock)
     def observer_register(self, observer):
         self.observers.append(observer)
 
 
-    @synchronized(observer_lock)
+    @wrapt.synchronized(observer_lock)
     def observer_unregister(self, observer):
         self.observers.remove(observer)
 
@@ -741,7 +746,7 @@ class BLEDriver(object):
 
 
     @NordicSemiErrorCheck
-    @synchronized(api_lock)
+    @wrapt.synchronized(api_lock)
     def ble_enable(self, ble_enable_params=None):
         if not ble_enable_params:
             ble_enable_params = self.ble_enable_params_setup()
@@ -750,7 +755,7 @@ class BLEDriver(object):
 
 
     @NordicSemiErrorCheck
-    @synchronized(api_lock)
+    @wrapt.synchronized(api_lock)
     def ble_gap_adv_start(self, adv_params=None):
         if not adv_params:
             adv_params = self.adv_params_setup()
@@ -759,13 +764,13 @@ class BLEDriver(object):
 
 
     @NordicSemiErrorCheck
-    @synchronized(api_lock)
+    @wrapt.synchronized(api_lock)
     def ble_gap_adv_stop(self):
         return driver.sd_ble_gap_adv_stop()
 
 
     @NordicSemiErrorCheck
-    @synchronized(api_lock)
+    @wrapt.synchronized(api_lock)
     def ble_gap_scan_start(self, scan_params=None):
         if not scan_params:
             scan_params = self.scan_params_setup()
@@ -774,13 +779,13 @@ class BLEDriver(object):
 
 
     @NordicSemiErrorCheck
-    @synchronized(api_lock)
+    @wrapt.synchronized(api_lock)
     def ble_gap_scan_stop(self):
         return driver.sd_ble_gap_scan_stop()
 
 
     @NordicSemiErrorCheck
-    @synchronized(api_lock)
+    @wrapt.synchronized(api_lock)
     def ble_gap_connect(self, address, scan_params=None, conn_params=None):
         assert isinstance(address, BLEGapAddr), 'Invalid argument type'
 
@@ -799,7 +804,7 @@ class BLEDriver(object):
 
 
     @NordicSemiErrorCheck
-    @synchronized(api_lock)
+    @wrapt.synchronized(api_lock)
     def ble_gap_disconnect(self, conn_handle, hci_status_code = BLEHci.remote_user_terminated_connection):
         assert isinstance(hci_status_code, BLEHci), 'Invalid argument type'
         return driver.sd_ble_gap_disconnect(self.rpc_adapter, 
@@ -808,7 +813,7 @@ class BLEDriver(object):
 
 
     @NordicSemiErrorCheck
-    @synchronized(api_lock)
+    @wrapt.synchronized(api_lock)
     def ble_gap_adv_data_set(self, adv_data = BLEAdvData(), scan_data = BLEAdvData()):
         assert isinstance(adv_data, BLEAdvData),    'Invalid argument type'
         assert isinstance(scan_data, BLEAdvData),   'Invalid argument type'
@@ -823,7 +828,7 @@ class BLEDriver(object):
 
 
     @NordicSemiErrorCheck
-    @synchronized(api_lock)
+    @wrapt.synchronized(api_lock)
     def ble_vs_uuid_add(self, uuid):
         assert isinstance(uuid, BLEUUID), 'Invalid argument type'
         uuid_type = driver.new_uint8()
@@ -837,7 +842,7 @@ class BLEDriver(object):
 
 
     @NordicSemiErrorCheck
-    @synchronized(api_lock)
+    @wrapt.synchronized(api_lock)
     def ble_gattc_write(self, conn_handle, write_params):
         assert isinstance(write_params, BLEGattcWriteParams), 'Invalid argument type'
         return driver.sd_ble_gattc_write(self.rpc_adapter,
@@ -846,7 +851,7 @@ class BLEDriver(object):
 
 
     @NordicSemiErrorCheck
-    @synchronized(api_lock)
+    @wrapt.synchronized(api_lock)
     def ble_gattc_prim_srvc_disc(self, conn_handle, srvc_uuid, start_handle):
         assert isinstance(srvc_uuid, (BLEUUID, NoneType)), 'Invalid argument type'
         return driver.sd_ble_gattc_primary_services_discover(self.rpc_adapter,
@@ -856,7 +861,7 @@ class BLEDriver(object):
 
 
     @NordicSemiErrorCheck
-    @synchronized(api_lock)
+    @wrapt.synchronized(api_lock)
     def ble_gattc_char_disc(self, conn_handle, start_handle, end_handle):
         handle_range                = driver.ble_gattc_handle_range_t()
         handle_range.start_handle   = start_handle
@@ -867,7 +872,7 @@ class BLEDriver(object):
 
 
     @NordicSemiErrorCheck
-    @synchronized(api_lock)
+    @wrapt.synchronized(api_lock)
     def ble_gattc_desc_disc(self, conn_handle, start_handle, end_handle):
         handle_range                = driver.ble_gattc_handle_range_t()
         handle_range.start_handle   = start_handle
@@ -885,7 +890,7 @@ class BLEDriver(object):
         pass
 
 
-    @synchronized(observer_lock)
+    @wrapt.synchronized(observer_lock)
     def ble_evt_handler(self, adapter, ble_event):
         evt_id = None
         try:
