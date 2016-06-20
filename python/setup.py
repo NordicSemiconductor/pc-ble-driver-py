@@ -69,7 +69,7 @@ setup(
 
         'Intended Audience :: Developers',
         
-        'Operating System :: MacOS :: MacOSX',
+        'Operating System :: MacOS',
         'Operating System :: Microsoft :: Windows',
         'Operating System :: POSIX :: Linux',
 
