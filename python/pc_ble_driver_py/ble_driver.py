@@ -75,7 +75,7 @@ elif sys.platform.lower().startswith('linux'):
     shlib_prefix = "lib"
     shlib_postfix = ".so"
 elif sys.platform.startswith('dar'):
-    shlib_plat = 'osx'
+    shlib_plat = 'macos_osx'
     shlib_prefix = "lib"
     shlib_postfix = ".dylib"
     # OS X uses a single library for both archs
