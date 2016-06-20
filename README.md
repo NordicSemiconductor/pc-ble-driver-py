@@ -72,7 +72,7 @@ Open a Microsoft Visual Studio Command Prompt and issue the following from the r
 
     > cd build
     > cmake -G "Visual Studio XX <Win64>" <-DBOOST_LIBRARYDIR="<Boost libs path>>" ..
-    > msbuild ALL_BUILD.vcxproj /p:Configuration=<CFG>
+    > msbuild ALL_BUILD.vcxproj </p:Configuration=<CFG>>
 
 **Note**: Select Visual Sutio 12 or 14 `-G "Visual Studio XX"` option.
 
@@ -103,7 +103,7 @@ Install the required packages to build the bindings:
 Then change to the root folder of the repository and issue the following commands:
 
     $ cd build
-    > cmake -G "Unix Makefiles" -DCMAKE_BUILD_TYPE= <build_type> <-DARCH=<x86_32,x86_64>> <-DBOOST_LIBRARYDIR="<Boost libs path>>" ..
+    > cmake -G "Unix Makefiles" <-DCMAKE_BUILD_TYPE=<build_type>> <-DARCH=<x86_32,x86_64>> <-DBOOST_LIBRARYDIR="<Boost libs path>>" ..
     $ make
 
 **Note**: Optionally Select the build configuration with the `-DCMAKE_BUILD_TYPE` option. Typically `Debug`, `Release`, `MinSizeRel` and `RelWithDebInfo` are available.
