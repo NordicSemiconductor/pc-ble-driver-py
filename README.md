@@ -16,6 +16,8 @@ You can find additional information here:
 
 [Hardware setup](https://github.com/NordicSemiconductor/pc-ble-driver/tree/self_contained_driver#hardware-setup)
 
+**Note**: On Windows, the runtime libraries targeted when building the library must be present when running code using the library. If you get an error about missing msvcr120.dll or msvcr140.dll, please install the redistributable installer for [Visual Studio 2013](https://www.microsoft.com/en-us/download/details.aspx?id=40784) or [Visual Studio 2015](https://www.microsoft.com/en-us/download/details.aspx?id=48145).
+
 ## License
 
 See the [license file](LICENSE) for details.
