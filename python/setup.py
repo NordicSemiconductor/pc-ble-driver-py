@@ -88,6 +88,12 @@ setup(
      
     packages = find_packages(),
     package_data = { 
+                'pc_ble_driver_py.lib.win.x86_32': ['*.pyd', '*.dll', '*.txt'],
+                'pc_ble_driver_py.lib.win.x86_64': ['*.pyd', '*.dll', '*.txt'],
+                'pc_ble_driver_py.lib.linux.x86_32': ['*.so', '*.txt'],
+                'pc_ble_driver_py.lib.linux.x86_64': ['*.so', '*.txt'],
+                'pc_ble_driver_py.lib.macos_osx': ['*.so', '*.dylib', '*.txt'],
+                'pc_ble_driver_py.hex': ['*.hex', '*.patch']
     }
     
     )
