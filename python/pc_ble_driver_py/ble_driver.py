@@ -277,7 +277,7 @@ class BLEGapAddr(object):
 
 
     def to_c(self):
-        addr_array      = util.list_to_uint8_array(reversed(self.addr))
+        addr_array      = util.list_to_uint8_array(self.addr[::-1])
         addr            = driver.ble_gap_addr_t()
         addr.addr_type  = self.addr_type.value
         addr.addr       = addr_array.cast()
