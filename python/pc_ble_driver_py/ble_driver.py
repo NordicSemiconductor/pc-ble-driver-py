@@ -506,7 +506,7 @@ class BLEUUID(object):
         if not isinstance(self.value, list):
             raise NordicSemiException('Not vendor specific UUID {}'.format(self.value))
 
-        lsb_list                = list(reversed(self.value))
+        lsb_list                = self.value[::-1]
         self.__uuid128_array    = util.list_to_uint8_array(lsb_list)
         uuid                    = driver.ble_uuid128_t()
         uuid.uuid128            = self.__uuid128_array.cast()
