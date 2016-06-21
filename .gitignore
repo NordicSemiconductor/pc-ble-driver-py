@@ -7,3 +7,5 @@ python/**/*.hex
 python/**/*.patch
 python/**/*.txt
 python/**/lib/**/*.py
+python/dist/**
+python/*.egg-info/**
