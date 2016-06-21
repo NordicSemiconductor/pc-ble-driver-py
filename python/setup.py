@@ -55,7 +55,7 @@ setup(
     version = pc_ble_driver_py.__version__,
     
     description = 'Python bindings for the Nordic pc-ble-driver SoftDevice serialization library',
-    long_description = 'A Python interface and library for pc-ble-driver. This allows Python applications to interface with a Nordic Semiconductor IC (both nRF51 and nRF52 series) over a serial port to obtain access to the full serialized SoftDevice API.',
+    long_description = 'A Python interface and library for pc-ble-driver. This allows Python applications to interface with a Nordic Semiconductor IC (both nRF51 and nRF52 series) over a serial port to obtain access to the full serialized SoftDevice API. This package is compatible with 2.7 Python on both 32 and 64-bit architectures on Windows, Linux and macOS (OS X).',
 
     url = 'https://github.com/NordicSemiconductor/pc-ble-driver-py',
         
