@@ -50,9 +50,6 @@ import imp
 import importlib
 
 logger  = logging.getLogger(__name__)
-logging.basicConfig()
-
-logger.setLevel(logging.DEBUG)
 
 # Load pc_ble_driver
 
@@ -98,14 +95,7 @@ logger.info('Shared library folder: {}'.format(shlib_dir))
 sys.path.append(shlib_dir)
 import pc_ble_driver as driver
 import ble_driver_types as util
-
-
-class NordicSemiException(Exception):
-    """
-    Exception used as based exception for other exceptions defined in this package.
-    """
-    pass
-
+from exceptions import NordicSemiException
 
 
 def NordicSemiErrorCheck(wrapped=None, expected = driver.NRF_SUCCESS):
@@ -404,6 +394,7 @@ class BLEGattStatusCode(Enum):
     attribute_not_found = driver.BLE_GATT_STATUS_ATTERR_ATTRIBUTE_NOT_FOUND
 
 
+
 class BLEGattExecWriteFlag(Enum):
     prepared_cancel = driver.BLE_GATT_EXEC_WRITE_FLAG_PREPARED_CANCEL
     prepared_write  = driver.BLE_GATT_EXEC_WRITE_FLAG_PREPARED_WRITE
@@ -442,6 +433,7 @@ class BLEGattcWriteParams(object):
         write_params.write_op   = self.write_op.value
 
         return write_params
+
 
 
 class BLEHci(Enum):
@@ -611,6 +603,8 @@ class SerialPortDescriptor(object):
                    location_id = org.locationId,
                    vendor_id = org.vendorId,
                    product_id = org.productId)
+
+
 
 class BLEDriverObserver(object):
     def __init__(self, *args, **kwargs):

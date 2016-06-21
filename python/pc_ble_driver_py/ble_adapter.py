@@ -39,9 +39,9 @@ import logging
 import wrapt
 from threading  import Condition, Lock
 from ble_driver import *
+from exceptions import NordicSemiException
 
 logger  = logging.getLogger(__name__)
-logger.setLevel(logging.DEBUG)
 
 class DbConnection(object):
     def __init__(self):
