@@ -41,9 +41,8 @@ import Queue
 import logging
 logging.basicConfig()
 
-sys.path.append('../../')
-from ble_driver     import *
-from ble_adapter    import *
+from pc_ble_driver_py.ble_driver     import *
+from pc_ble_driver_py.ble_adapter    import *
 
 TARGET_DEV_NAME = "Nordic_HRM"
 CONNECTIONS     = 2

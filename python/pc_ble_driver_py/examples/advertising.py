@@ -36,8 +36,8 @@
 #
 
 import sys
-from threading  import Condition, Lock
-from ble_driver import BLEDriver, BLEDriverObserver, BLEAdvData, BLEEvtID
+from threading                      import Condition, Lock
+from pc_ble_driver_py.ble_driver    import BLEDriver, BLEDriverObserver, BLEAdvData, BLEEvtID
 
 
 class TimeoutObserver(BLEDriverObserver):

@@ -270,12 +270,14 @@ class BLEGapAddr(object):
 
     @classmethod
     def from_c(cls, addr):
+        addr_list = util.uint8_array_to_list(addr.addr, driver.BLE_GAP_ADDR_LEN)
+        addr_list.reverse()
         return cls(addr_type    = BLEGapAddr.Types(addr.addr_type),
-                   addr         = util.uint8_array_to_list(addr.addr, driver.BLE_GAP_ADDR_LEN))
+                   addr         = addr_list)
 
 
     def to_c(self):
-        addr_array      = util.list_to_uint8_array(self.addr)
+        addr_array      = util.list_to_uint8_array(reversed(self.addr))
         addr            = driver.ble_gap_addr_t()
         addr.addr_type  = self.addr_type.value
         addr.addr       = addr_array.cast()

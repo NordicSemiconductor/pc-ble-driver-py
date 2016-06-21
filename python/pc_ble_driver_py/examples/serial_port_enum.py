@@ -36,7 +36,7 @@
 #
 
 import sys
-from ble_driver import BLEDriver, SerialPortDescriptor
+from pc_ble_driver_py.ble_driver import BLEDriver, SerialPortDescriptor
 
 def main():
     descs = BLEDriver.enum_serial_ports()
