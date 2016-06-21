@@ -31,7 +31,7 @@ To install the latest published version from the Python Package Index simply typ
 
     pip install pc-ble-driver-py
 
-## Compiling
+## Compiling from source
 
 Before building pc-ble-driver-py you will need to have Boost installed and some of its libraries statically compiled.
 To install and compile Boost, please follow the instructions here:
