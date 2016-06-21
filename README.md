@@ -5,7 +5,7 @@
 
 ## Introduction
 pc-ble-driver-py is a serialization library over serial port that provides Python bindings
-for the [pc-ble-driver  library](https://github.com/NordicSemiconductor/pc-ble-driver) library.
+for the [pc-ble-driver  library](https://github.com/NordicSemiconductor/pc-ble-driver).
 
 pc-ble-driver-py depends on the pc-ble-driver repository referrenced as a submodule.
 
@@ -25,7 +25,13 @@ You can find additional information here:
 
 See the [license file](LICENSE) for details.
 
-# Compiling
+## Installing from PyPI
+
+To install the latest published version from the Python Package Index simply type:
+
+    pip install pc-ble-driver-py
+
+## Compiling
 
 Before building pc-ble-driver-py you will need to have Boost installed and some of its libraries statically compiled.
 To install and compile Boost, please follow the instructions here:
@@ -36,7 +42,7 @@ Assuming that you have built the Boost libraries and installed the tools require
 
 **Note**: Make sure you have built the Boost libraries for the architecture (32 or 64-bit) required by your Python installation.
 
-## Dependencies
+### Dependencies
 
 To build this project you will need the following tools:
 
@@ -47,7 +53,7 @@ To build this project you will need the following tools:
 
 See the following sections for platform-specific instructions on the installation of the dependencies.
 
-### Windows 
+#### Windows 
 
 * Install the latest CMake stable release by downloading the Windows Installer from:
 
@@ -89,7 +95,7 @@ Open a Microsoft Visual Studio Command Prompt and issue the following from the r
 
 The results of the build will be placed in `build\outdir` and the distributable files will be copied to `python\pc_ble_driver_py\lib\win\x86_<arch>`.
 
-#### Examples
+##### Examples
 
 Building for 32-bit Python with 64-bit Visual Studio 15:
 
@@ -99,7 +105,7 @@ Building for 64-bit Python with 64-bit Visual Studio 15 pointing to a 64-bit Boo
 
     > cmake -G "Visual Studio 14 Win64" -DBOOST_LIBRARYDIR="c:\boost\boost_1_61_0\stage\x64" ..
 
-### Ubuntu Linux
+#### Ubuntu Linux
 
 Install the required packages to build the bindings:
 
@@ -119,7 +125,7 @@ Then change to the root folder of the repository and issue the following command
 
 The results of the build will be placed in `build/outdir` and the distributable files will be copied to `python/pc_ble_driver_py/lib/linux\x86_<arch>`.
 
-### macOS (OS X) 10.11 and later
+#### macOS (OS X) 10.11 and later
 
 Install cmake and swig with Homebrew with the `brew` command on a terminal:
 
