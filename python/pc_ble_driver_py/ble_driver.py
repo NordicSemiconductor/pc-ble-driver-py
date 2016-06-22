@@ -34,10 +34,13 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
+import re
+import time
 import wrapt
 import logging
 import functools
 import traceback
+import subprocess
 from enum       import Enum
 from types      import NoneType
 from threading  import Lock
@@ -655,12 +658,82 @@ class BLEDriverObserver(object):
 
 
 
+class Flasher(object):
+    NRFJPROG = 'nrfjprog'
+    def __init__(self, snr, family = 'NRF51'):
+        self.snr    = snr
+        self.family = family
+
+
+    def read(self, addr, size):
+        args = ['--memrd', str(addr), '--w', '8', '--n', str(size)]
+        data = self.call_cmd(args)
+
+        result = list()
+        for line in data.splitlines():
+            line = re.sub(r"(^.*:)|(\|.*$)", '', line)
+            result.extend([int(i, 16) for i in line.split()])
+        return result
+
+
+    def reset(self):
+        args    = ['--reset']
+        self.call_cmd(args)
+
+
+    def erase(self):
+        args    = ['--eraseall']
+        self.call_cmd(args)
+
+
+    def program(self, path):
+        args    = ['--program', path]
+        self.call_cmd(args)
+
+
+    def call_cmd(self, args):
+        args = [Flasher.NRFJPROG, '--snr', str(self.snr)] + args + ['--family']
+        try:
+            return subprocess.check_output(args + [self.family], stderr=subprocess.STDOUT)
+        except subprocess.CalledProcessError as e:
+            if e.returncode == 18:
+                if self.family == 'NRF51':
+                    self.family = 'NRF52'
+                else:
+                    self.family = 'NRF51'
+                return subprocess.check_output(args + [self.family], stderr=subprocess.STDOUT)
+            else: 
+                raise
+
+
+
 class BLEDriver(object):
     observer_lock   = Lock()
     api_lock        = Lock()
-    def __init__(self, serial_port, baud_rate=115200):
+    def __init__(self, serial_port, baud_rate=115200, auto_flash=True):
         super(BLEDriver, self).__init__()
-        self.observers      = list()
+        self.observers = list()
+        if auto_flash:
+            try:
+                snr = [d.serial_number for d in BLEDriver.enum_serial_ports() if d.port == serial_port][0]
+            except IndexError:
+                logger.error("Auto Flash Failed")
+
+            flasher = Flasher(snr)
+            data    = flasher.read(addr = 0x20000, size = 4)
+            if data != [0x17, 0xA5, 0xD8, 0x46]:# hex magic number
+                flasher.erase()
+                if flasher.family == 'NRF51':
+                    flasher.program(os.path.join(os.path.dirname(__file__),
+                                    'hex',
+                                    'connectivity_115k2_with_s130_2.0.1.hex'))
+                else:
+                    flasher.program(os.path.join(os.path.dirname(__file__),
+                                    'hex',
+                                    'connectivity_115k2_with_s132_2.0.1.hex'))
+            flasher.reset()
+            time.sleep(1)
+
         phy_layer           = driver.sd_rpc_physical_layer_create_uart(serial_port,
                                                                        baud_rate,
                                                                        driver.SD_RPC_FLOW_CONTROL_NONE,

@@ -130,7 +130,7 @@ def main(serial_port):
 def item_choose(item_list):
     for i, it in enumerate(item_list):
         print('\t{} : {}'.format(i, it))
-    print ' '
+    print(' ')
 
     while True:
         try:
