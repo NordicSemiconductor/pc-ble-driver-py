@@ -676,7 +676,7 @@ class Flasher(object):
                 if is_exe(exe_file):
                     return exe_file
 
-    	return None
+   	    return None
 
     NRFJPROG = 'nrfjprog'
     def __init__(self, serial_port = None, snr = None, family = 'NRF51'):
@@ -685,7 +685,9 @@ class Flasher(object):
         
         nrfjprog = Flasher.which(Flasher.NRFJPROG)
         if nrfjprog == None:
-            raise NordicSemiException('nrfjprog not installed')
+            nrfjprog = Flasher.which("{}.exe".format(Flasher.NRFJPROG))
+            if nrfjprog == None:
+                raise NordicSemiException('nrfjprog not installed')
 
         serial_ports = BLEDriver.enum_serial_ports()
         try:
