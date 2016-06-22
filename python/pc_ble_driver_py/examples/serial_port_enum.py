@@ -36,9 +36,9 @@
 #
 
 import sys
-from pc_ble_driver_py.ble_driver import BLEDriver, SerialPortDescriptor
+from pc_ble_driver_py.ble_driver import BLEDriver, SerialPortDescriptor, Flasher
 
-def main():
+def main(port):
     descs = BLEDriver.enum_serial_ports()
     print("enum_serial_ports: {} serial ports found".format(len(descs)))
     for i, d in enumerate(descs):
@@ -51,7 +51,18 @@ def main():
         print("|-  Location ID: \"{}\"".format(d.location_id))
         print("|-  Vendor ID: \"{}\"".format(d.vendor_id))
         print("|_  Product ID: \"{}\"".format(d.product_id))
+    if port != None:
+        flasher = Flasher(serial_port=port) 
+        if flasher.fw_check():
+            print("Port \"{}\" already flashed with connectivity firmware".format(port))
+        else:
+            print("Flashing Port \"{}\"".format(port))
+            flasher.fw_flash()
+            print("Firmware flashed")
 
 if __name__ == "__main__":
-    main()
+    port = None
+    if len(sys.argv) == 2:
+        port = sys.argv[1]
+    main(port)
     quit()
