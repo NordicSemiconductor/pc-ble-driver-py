@@ -55,7 +55,7 @@ class TimeoutObserver(BLEDriverObserver):
 
 def main(serial_port):
     print("Serial port used: {}".format(serial_port))
-    driver      = BLEDriver(serial_port=serial_port)
+    driver      = BLEDriver(serial_port=serial_port, auto_flash=True)
     observer    = TimeoutObserver()
     adv_data    = BLEAdvData(complete_local_name='Example')
 

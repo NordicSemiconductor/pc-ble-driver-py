@@ -660,10 +660,34 @@ class BLEDriverObserver(object):
 
 class Flasher(object):
     NRFJPROG = 'nrfjprog'
-    def __init__(self, snr, family = 'NRF51'):
+    def __init__(self, serial_port = None, snr = None, family = 'NRF51'):
+        if serial_port is None and snr is None:
+            raise NordicSemiException('Invalid Flasher initialization')
+
+        serial_ports = BLEDriver.enum_serial_ports()
+        if serial_port is None:
+            serial_port = [d.port for d in serial_ports if d.serial_number == snr][0]
+        elif snr is None:
+            snr = [d.serial_number for d in serial_ports if d.port == serial_port][0]
+
+        self.serial_port = serial_port
         self.snr    = snr
         self.family = family
 
+    def fw_check(self):
+        data    = self.read(addr = 0x20000, size = 4)
+        return data == [0x17, 0xA5, 0xD8, 0x46] # hex magic number
+
+    def fw_flash(self):
+        self.erase()
+        if self.family == 'NRF51':
+            self.program(os.path.join(os.path.dirname(__file__),
+                            'hex',
+                            'connectivity_115k2_with_s130_2.0.1.hex'))
+        else:
+            self.program(os.path.join(os.path.dirname(__file__),
+                            'hex',
+                            'connectivity_115k2_with_s132_2.0.1.hex'))
 
     def read(self, addr, size):
         args = ['--memrd', str(addr), '--w', '8', '--n', str(size)]
@@ -710,27 +734,20 @@ class Flasher(object):
 class BLEDriver(object):
     observer_lock   = Lock()
     api_lock        = Lock()
-    def __init__(self, serial_port, baud_rate=115200, auto_flash=True):
+    def __init__(self, serial_port, baud_rate=115200, auto_flash=False):
         super(BLEDriver, self).__init__()
         self.observers = list()
         if auto_flash:
             try:
-                snr = [d.serial_number for d in BLEDriver.enum_serial_ports() if d.port == serial_port][0]
-            except IndexError:
-                logger.error("Auto Flash Failed")
+                flasher = Flasher(serial_port=serial_port)
+            except Exception:
+                logger.error("Unable to find serial port")
+                raise
 
-            flasher = Flasher(snr)
-            data    = flasher.read(addr = 0x20000, size = 4)
-            if data != [0x17, 0xA5, 0xD8, 0x46]:# hex magic number
-                flasher.erase()
-                if flasher.family == 'NRF51':
-                    flasher.program(os.path.join(os.path.dirname(__file__),
-                                    'hex',
-                                    'connectivity_115k2_with_s130_2.0.1.hex'))
-                else:
-                    flasher.program(os.path.join(os.path.dirname(__file__),
-                                    'hex',
-                                    'connectivity_115k2_with_s132_2.0.1.hex'))
+            if flasher.fw_check() == False:
+                logger.info("Flashing board with firmware")
+                flasher.fw_flash()
+
             flasher.reset()
             time.sleep(1)
 

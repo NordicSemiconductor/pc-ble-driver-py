@@ -116,7 +116,7 @@ class HRCollector(BLEDriverObserver, BLEAdapterObserver):
 
 def main(serial_port):
     print('Serial port used: {}'.format(serial_port))
-    driver    = BLEDriver(serial_port=serial_port)
+    driver    = BLEDriver(serial_port=serial_port, auto_flash=True)
     adapter   = BLEAdapter(driver)
     collector = HRCollector(adapter)
     collector.open()
