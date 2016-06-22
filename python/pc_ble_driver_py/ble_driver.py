@@ -671,7 +671,7 @@ class Flasher(object):
             snr = [d.serial_number for d in serial_ports if d.port == serial_port][0]
 
         self.serial_port = serial_port
-        self.snr    = snr
+        self.snr    = snr.lstrip("0")
         self.family = family
 
     def fw_check(self):
