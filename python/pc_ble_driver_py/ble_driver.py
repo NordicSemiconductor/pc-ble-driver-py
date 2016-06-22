@@ -659,16 +659,42 @@ class BLEDriverObserver(object):
 
 
 class Flasher(object):
+    @staticmethod
+    def which(program):
+        import os
+        def is_exe(fpath):
+            return os.path.isfile(fpath) and os.access(fpath, os.X_OK)
+
+        fpath, fname = os.path.split(program)
+        if fpath:
+            if is_exe(program):
+                return program
+        else:
+            for path in os.environ["PATH"].split(os.pathsep):
+                path = path.strip('"')
+                exe_file = os.path.join(path, program)
+                if is_exe(exe_file):
+                    return exe_file
+
+    	return None
+
     NRFJPROG = 'nrfjprog'
     def __init__(self, serial_port = None, snr = None, family = 'NRF51'):
         if serial_port is None and snr is None:
             raise NordicSemiException('Invalid Flasher initialization')
+        
+        nrfjprog = Flasher.which(Flasher.NRFJPROG)
+        if nrfjprog == None:
+            raise NordicSemiException('nrfjprog not installed')
 
         serial_ports = BLEDriver.enum_serial_ports()
-        if serial_port is None:
-            serial_port = [d.port for d in serial_ports if d.serial_number == snr][0]
-        elif snr is None:
-            snr = [d.serial_number for d in serial_ports if d.port == serial_port][0]
+        try:
+            if serial_port is None:
+                serial_port = [d.port for d in serial_ports if d.serial_number == snr][0]
+            elif snr is None:
+                snr = [d.serial_number for d in serial_ports if d.port == serial_port][0]
+        except IndexError:
+           raise NordicSemiException('board not found')
 
         self.serial_port = serial_port
         self.snr    = snr.lstrip("0")
