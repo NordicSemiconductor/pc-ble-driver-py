@@ -659,6 +659,7 @@ class BLEDriverObserver(object):
 
 
 class Flasher(object):
+    api_lock = threading.Lock()
     @staticmethod
     def which(program):
         import os
@@ -743,6 +744,7 @@ class Flasher(object):
         self.call_cmd(args)
 
 
+    @wrapt.synchronized(api_lock)
     def call_cmd(self, args):
         args = [Flasher.NRFJPROG, '--snr', str(self.snr)] + args + ['--family']
         try:
