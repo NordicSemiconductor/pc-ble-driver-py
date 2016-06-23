@@ -659,7 +659,7 @@ class BLEDriverObserver(object):
 
 
 class Flasher(object):
-    api_lock = threading.Lock()
+    api_lock = Lock()
     @staticmethod
     def which(program):
         import os
