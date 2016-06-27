@@ -19,8 +19,6 @@ You can find additional information here:
 
 [Hardware setup](https://github.com/NordicSemiconductor/pc-ble-driver/tree/self_contained_driver#hardware-setup)
 
-**Note**: On Windows, the runtime libraries targeted when building the library must be present when running code using the library. If you get an error about missing msvcr120.dll or msvcr140.dll, please install the redistributable installer for [Visual Studio 2013](https://www.microsoft.com/en-us/download/details.aspx?id=40784) or [Visual Studio 2015](https://www.microsoft.com/en-us/download/details.aspx?id=48145).
-
 ## License
 
 See the [license file](LICENSE) for details.
@@ -30,6 +28,8 @@ See the [license file](LICENSE) for details.
 To install the latest published version from the Python Package Index simply type:
 
     pip install pc-ble-driver-py
+
+**Note**: On Windows, the runtime libraries targeted when building the library must be present when running code using the library. If you get an error about missing `MSVC*120.DLL` or `MSVC*140.DLL`, please install the redistributable installer for [Visual Studio 2013](https://www.microsoft.com/en-us/download/details.aspx?id=40784) or [Visual Studio 2015](https://www.microsoft.com/en-us/download/details.aspx?id=48145) respectively.
 
 ## Compiling from source
 
