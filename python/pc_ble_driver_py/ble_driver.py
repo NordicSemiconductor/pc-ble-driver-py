@@ -476,21 +476,28 @@ class BLEUUID(object):
         unknown             = 0x0000
         service_primary     = 0x2800
         service_secondary   = 0x2801
+        characteristic      = 0x2803
         cccd                = 0x2902
         battery_level       = 0x2A19
         heart_rate          = 0x2A37
 
 
-    def __init__(self, value):
-        self.type   = driver.BLE_UUID_TYPE_BLE # can be overwrite by BLEDriver.ble_vs_uuid_add()
-
-        if isinstance(value, BLEUUID.Standard):
+    def __init__(self, value, vs_uuid_base=None, uuid_type=None):
+        if (vs_uuid_base is not None)\
+        or (uuid_type not in [None, driver.BLE_UUID_TYPE_BLE]):
+            assert isinstance(vs_uuid_base, (list, NoneType)), 'Invalid argument type'
             self.value  = value
+            self.type   = uuid_type
+            self.base   = vs_uuid_base
+
         else:
             try:
-                self.value  = BLEUUID.Standard(value)
+                self.value  = value if isinstance(value, BLEUUID.Standard) else BLEUUID.Standard(value)
             except(ValueError):
                 self.value  = value
+            self.type   = driver.BLE_UUID_TYPE_BLE
+            self.base   = [0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x10, 0x00,
+                           0x80, 0x00, 0x00, 0x80, 0x5F, 0x9B, 0x34, 0xFB]
 
 
     def __str__(self):
@@ -502,14 +509,11 @@ class BLEUUID(object):
 
     @classmethod
     def uuid_from_c(cls, uuid):
-        return cls(value = uuid.uuid)
+        return cls(value = uuid.uuid, uuid_type = uuid.type)
 
 
     def uuid128_to_c(self):
-        if not isinstance(self.value, list):
-            raise NordicSemiException('Not vendor specific UUID {}'.format(self.value))
-
-        lsb_list                = self.value[::-1]
+        lsb_list                = self.base[::-1]
         self.__uuid128_array    = util.list_to_uint8_array(lsb_list)
         uuid                    = driver.ble_uuid128_t()
         uuid.uuid128            = self.__uuid128_array.cast()
@@ -517,8 +521,12 @@ class BLEUUID(object):
 
 
     def uuid_to_c(self):
+        assert isinstance(self.type, int), 'Vendor specific UUID not registered'
         uuid        = driver.ble_uuid_t()
-        uuid.uuid   = self.value
+        if self.value is instance(BLEUUID.Standard):
+            uuid.uuid = self.value.value
+        else:
+            uuid.uuid = self.value
         uuid.type   = self.type
         return uuid
 

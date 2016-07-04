@@ -76,8 +76,8 @@ class HRCollector(BLEDriverObserver, BLEAdapterObserver):
         self.adapter.driver.ble_gap_scan_start()
         new_conn = self.conn_q.get(timeout = 60)
         self.adapter.service_discovery(new_conn)
-        self.adapter.enable_notification(new_conn, BLEUUID.Standard.battery_level)
-        self.adapter.enable_notification(new_conn, BLEUUID.Standard.heart_rate)
+        self.adapter.enable_notification(new_conn, BLEUUID(BLEUUID.Standard.battery_level))
+        self.adapter.enable_notification(new_conn, BLEUUID(BLEUUID.Standard.heart_rate))
 
 
     def on_gap_evt_connected(self, ble_driver, conn_handle, peer_addr, own_addr, role, conn_params):

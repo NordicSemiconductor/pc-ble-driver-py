@@ -49,12 +49,11 @@ class DbConnection(object):
 
 
     def get_char_value_handle(self, uuid):
-        if isinstance(uuid, BLEUUID):
-            uuid = uuid.value
+        assert isinstance(uuid, BLEUUID), 'Invalid argument type'
 
         for s in self.services:
             for c in s.chars:
-                if c.uuid.value == uuid:
+                if (c.uuid.value == uuid.value) and (c.uuid.type == uuid.type):
                     for d in c.descs:
                         if d.uuid.value == uuid:
                             return d.handle
@@ -62,26 +61,24 @@ class DbConnection(object):
 
 
     def get_cccd_handle(self, uuid):
-        if isinstance(uuid, BLEUUID):
-            uuid = uuid.value
+        assert isinstance(uuid, BLEUUID), 'Invalid argument type'
 
         for s in self.services:
             for c in s.chars:
-                if c.uuid.value == uuid:
+                if (c.uuid.value == uuid.value) and (c.uuid.type == uuid.type):
                     for d in c.descs:
-                        if d.uuid.value == BLEUUID.Standard.cccd:
+                        if (d.uuid.value == BLEUUID.Standard.cccd):
                             return d.handle
                     break
         return None
 
 
     def get_char_handle(self, uuid):
-        if isinstance(uuid, BLEUUID):
-            uuid = uuid.value
+        assert isinstance(uuid, BLEUUID), 'Invalid argument type'
 
         for s in self.services:
             for c in s.chars:
-                if c.uuid.value == uuid:
+                if (c.uuid.value == uuid.value) and (c.uuid.type == uuid.type):
                     return c.handle_decl
         return None
 
