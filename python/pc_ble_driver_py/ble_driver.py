@@ -704,7 +704,7 @@ class Flasher(object):
                 if is_exe(exe_file):
                     return exe_file
 
-   	    return None
+        return None
 
     NRFJPROG = 'nrfjprog'
     def __init__(self, serial_port = None, snr = None, family = 'NRF51'):
