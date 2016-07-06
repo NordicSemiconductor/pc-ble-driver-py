@@ -362,10 +362,10 @@ class BLEAdvData(object):
         ble_adv_data    = cls()
         index           = 0
         while index < len(ad_list):
-            ad_len  = ad_list[index]
-            ad_type = ad_list[index + 1]
-            offset  = index + 2
             try:
+                ad_len  = ad_list[index]
+                ad_type = ad_list[index + 1]
+                offset  = index + 2
                 key                         = BLEAdvData.Types(ad_type)
                 ble_adv_data.records[key]   = ad_list[offset: offset + ad_len - 1]
             except ValueError:
