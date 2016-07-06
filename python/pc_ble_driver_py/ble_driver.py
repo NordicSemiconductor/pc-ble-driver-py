@@ -471,6 +471,35 @@ class BLEHci(Enum):
 
 
 
+class BLEUUIDBase(object):
+    def __init__(self, vs_uuid_base=None, uuid_type=None):
+        assert isinstance(vs_uuid_base, (list, NoneType)), 'Invalid argument type'
+        assert isinstance(uuid_type, (int, long, NoneType)), 'Invalid argument type'
+        if (vs_uuid_base is None) and uuid_type is None:
+            self.base   = [0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x10, 0x00,
+                           0x80, 0x00, 0x00, 0x80, 0x5F, 0x9B, 0x34, 0xFB]
+            self.type   = driver.BLE_UUID_TYPE_BLE
+
+        else:
+            self.base   = vs_uuid_base
+            self.type   = uuid_type
+
+
+    @classmethod
+    def from_c(cls, uuid):
+        return cls(uuid_type = uuid.type)
+
+
+    def to_c(self):
+        lsb_list        = self.base[::-1]
+        self.__array    = util.list_to_uint8_array(lsb_list)
+        uuid            = driver.ble_uuid128_t()
+        uuid.uuid128    = self.__array.cast()
+        return uuid
+
+
+
+
 class BLEUUID(object):
     class Standard(Enum):
         unknown             = 0x0000
@@ -482,22 +511,13 @@ class BLEUUID(object):
         heart_rate          = 0x2A37
 
 
-    def __init__(self, value, vs_uuid_base=None, uuid_type=None):
-        if (vs_uuid_base is not None)\
-        or (uuid_type not in [None, driver.BLE_UUID_TYPE_BLE]):
-            assert isinstance(vs_uuid_base, (list, NoneType)), 'Invalid argument type'
+    def __init__(self, value, base=BLEUUIDBase()):
+        assert isinstance(base, BLEUUIDBase), 'Invalid argument type'
+        self.base   = base
+        try:
+            self.value  = value if isinstance(value, BLEUUID.Standard) else BLEUUID.Standard(value)
+        except(ValueError):
             self.value  = value
-            self.type   = uuid_type
-            self.base   = vs_uuid_base
-
-        else:
-            try:
-                self.value  = value if isinstance(value, BLEUUID.Standard) else BLEUUID.Standard(value)
-            except(ValueError):
-                self.value  = value
-            self.type   = driver.BLE_UUID_TYPE_BLE
-            self.base   = [0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x10, 0x00,
-                           0x80, 0x00, 0x00, 0x80, 0x5F, 0x9B, 0x34, 0xFB]
 
 
     def __str__(self):
@@ -508,26 +528,18 @@ class BLEUUID(object):
 
 
     @classmethod
-    def uuid_from_c(cls, uuid):
-        return cls(value = uuid.uuid, uuid_type = uuid.type)
+    def from_c(cls, uuid):
+        return cls(value = uuid.uuid, base = BLEUUIDBase.from_c(uuid))
 
 
-    def uuid128_to_c(self):
-        lsb_list                = self.base[::-1]
-        self.__uuid128_array    = util.list_to_uint8_array(lsb_list)
-        uuid                    = driver.ble_uuid128_t()
-        uuid.uuid128            = self.__uuid128_array.cast()
-        return uuid
-
-
-    def uuid_to_c(self):
-        assert isinstance(self.type, int), 'Vendor specific UUID not registered'
-        uuid        = driver.ble_uuid_t()
+    def to_c(self):
+        assert self.base.type is not None, 'Vendor specific UUID not registered'
+        uuid = driver.ble_uuid_t()
         if self.value is instance(BLEUUID.Standard):
             uuid.uuid = self.value.value
         else:
             uuid.uuid = self.value
-        uuid.type   = self.type
+        uuid.type = self.base.type
         return uuid
 
 
@@ -541,7 +553,7 @@ class BLEDescriptor(object):
 
     @classmethod
     def from_c(cls, gattc_desc):
-        return cls(uuid     = BLEUUID.uuid_from_c(gattc_desc.uuid),
+        return cls(uuid     = BLEUUID.from_c(gattc_desc.uuid),
                    handle   = gattc_desc.handle)
 
 
@@ -558,7 +570,7 @@ class BLECharacteristic(object):
 
     @classmethod
     def from_c(cls, gattc_char):
-        return cls(uuid         = BLEUUID.uuid_from_c(gattc_char.uuid),
+        return cls(uuid         = BLEUUID.from_c(gattc_char.uuid),
                    handle_decl  = gattc_char.handle_decl,
                    handle_value = gattc_char.handle_value)
 
@@ -575,7 +587,7 @@ class BLEService(object):
 
     @classmethod
     def from_c(cls, gattc_service):
-        return cls(uuid         = BLEUUID.uuid_from_c(gattc_service.uuid),
+        return cls(uuid         = BLEUUID.from_c(gattc_service.uuid),
                    start_handle = gattc_service.handle_range.start_handle,
                    end_handle   = gattc_service.handle_range.end_handle)
 
@@ -953,15 +965,15 @@ class BLEDriver(object):
 
     @NordicSemiErrorCheck
     @wrapt.synchronized(api_lock)
-    def ble_vs_uuid_add(self, uuid):
-        assert isinstance(uuid, BLEUUID), 'Invalid argument type'
+    def ble_vs_uuid_add(self, uuid_base):
+        assert isinstance(uuid_base, BLEUUIDBase), 'Invalid argument type'
         uuid_type = driver.new_uint8()
 
         err_code = driver.sd_ble_uuid_vs_add(self.rpc_adapter,
-                                             uuid.uuid128_to_c(),
+                                             uuid_base.to_c(),
                                              uuid_type)
         if err_code == driver.NRF_SUCCESS:
-            uuid.type = driver.uint8_value(uuid_type)
+            uuid_base.type = driver.uint8_value(uuid_type)
         return err_code
 
 
@@ -981,7 +993,7 @@ class BLEDriver(object):
         return driver.sd_ble_gattc_primary_services_discover(self.rpc_adapter,
                                                              conn_handle,
                                                              start_handle,
-                                                             srvc_uuid.uuid_to_c() if srvc_uuid else None)
+                                                             srvc_uuid.to_c() if srvc_uuid else None)
 
 
     @NordicSemiErrorCheck

@@ -53,9 +53,9 @@ class DbConnection(object):
 
         for s in self.services:
             for c in s.chars:
-                if (c.uuid.value == uuid.value) and (c.uuid.type == uuid.type):
+                if (c.uuid.value == uuid.value) and (c.uuid.base.type == uuid.base.type):
                     for d in c.descs:
-                        if d.uuid.value == uuid:
+                        if d.uuid.value == uuid.value:
                             return d.handle
         return None
 
@@ -65,7 +65,7 @@ class DbConnection(object):
 
         for s in self.services:
             for c in s.chars:
-                if (c.uuid.value == uuid.value) and (c.uuid.type == uuid.type):
+                if (c.uuid.value == uuid.value) and (c.uuid.base.type == uuid.base.type):
                     for d in c.descs:
                         if (d.uuid.value == BLEUUID.Standard.cccd):
                             return d.handle
@@ -78,7 +78,7 @@ class DbConnection(object):
 
         for s in self.services:
             for c in s.chars:
-                if (c.uuid.value == uuid.value) and (c.uuid.type == uuid.type):
+                if (c.uuid.value == uuid.value) and (c.uuid.base.type == uuid.base.type):
                     return c.handle_decl
         return None
 
