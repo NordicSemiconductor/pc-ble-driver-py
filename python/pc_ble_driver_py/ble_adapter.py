@@ -294,6 +294,11 @@ class BLEAdapter(BLEDriverObserver):
         self.evt_sync[conn_handle]  = EvtSync(events = BLEEvtID)
         self.conn_in_progress       = False
 
+    
+    def on_gap_evt_disconnected(self, ble_driver, conn_handle, reason):
+        del self.db_conns[conn_handle]
+        del self.evt_sync[conn_handle]
+
 
     def on_gap_evt_timeout(self, ble_driver, conn_handle, src):
         if src == BLEGapTimeoutSrc.conn:
