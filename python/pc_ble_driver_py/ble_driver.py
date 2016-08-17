@@ -59,6 +59,13 @@ logger  = logging.getLogger(__name__)
 SWIG_MODULE_NAME = "pc_ble_driver"
 SHLIB_NAME = "pc_ble_driver_shared"
 
+if getattr(sys, 'frozen', False):
+    # we are running in a bundle
+    this_dir = sys._MEIPASS
+else:
+    # we are running in a normal Python environment
+    this_dir, this_file = os.path.split(__file__)
+
 this_dir, this_file = os.path.split(__file__)
 
 if sys.maxsize > 2**32:
