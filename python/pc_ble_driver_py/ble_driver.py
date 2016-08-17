@@ -66,8 +66,6 @@ else:
     # we are running in a normal Python environment
     this_dir, this_file = os.path.split(__file__)
 
-this_dir, this_file = os.path.split(__file__)
-
 if sys.maxsize > 2**32:
     shlib_arch = 'x86_64'
 else:
