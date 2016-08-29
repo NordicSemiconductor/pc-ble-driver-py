@@ -29,7 +29,13 @@ To install the latest published version from the Python Package Index simply typ
 
     pip install pc-ble-driver-py
 
-**Note**: On Windows, the runtime libraries targeted when building the library must be present when running code using the library. If you get an error about missing `MSVC*120.DLL` or `MSVC*140.DLL`, please install the redistributable installer for [Visual Studio 2013](https://www.microsoft.com/en-us/download/details.aspx?id=40784) or [Visual Studio 2015](https://www.microsoft.com/en-us/download/details.aspx?id=48145) respectively.
+**Note**: On Windows, the runtime libraries targeted when building the library must be present when running code using the library. If you get one of the following errors:
+
+* Missing `MSVC*120.DLL` or `MSVC*140.DLL`
+* `RuntimeError: Could not load shared library <path>/pc_ble_driver_shared.dll : '[Error 193] %1 is
+not a valid Win32 application'`. 
+
+please install the redistributable installer for [Visual Studio 2013](https://www.microsoft.com/en-us/download/details.aspx?id=40784) or [Visual Studio 2015](https://www.microsoft.com/en-us/download/details.aspx?id=48145) respectively. Make sure to install the one corresponding to the architecture of your **Python** installation (x86 or x64).
 
 ## Compiling from source
 
