@@ -923,7 +923,7 @@ class BLEDriver(object):
     @NordicSemiErrorCheck
     @wrapt.synchronized(api_lock)
     def ble_gap_adv_stop(self):
-        return driver.sd_ble_gap_adv_stop()
+        return driver.sd_ble_gap_adv_stop(self.rpc_adapter)
 
 
     @NordicSemiErrorCheck
