@@ -1046,9 +1046,11 @@ class BLEDriver(object):
     def log_message_handler(self, adapter, severity, log_message):
         pass
 
+    def ble_evt_handler(self, adapter, ble_event):
+        self.sync_ble_evt_handler(adapter, ble_event)
 
     @wrapt.synchronized(observer_lock)
-    def ble_evt_handler(self, adapter, ble_event):
+    def sync_ble_evt_handler(self, adapter, ble_event):
         evt_id = None
         try:
             evt_id = BLEEvtID(ble_event.header.evt_id)
