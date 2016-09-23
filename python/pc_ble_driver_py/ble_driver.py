@@ -543,7 +543,7 @@ class BLEUUID(object):
     def to_c(self):
         assert self.base.type is not None, 'Vendor specific UUID not registered'
         uuid = driver.ble_uuid_t()
-        if self.value is instance(BLEUUID.Standard):
+        if isinstance(self.value, BLEUUID.Standard):
             uuid.uuid = self.value.value
         else:
             uuid.uuid = self.value
