@@ -36,9 +36,6 @@ endforeach(SD_API_VER)
 
 set(SWIG_I_FILE ${CMAKE_CURRENT_LIST_DIR}/swig/pc_ble_driver.i)
 
-set_property(SOURCE  ${SWIG_I_FILE} APPEND PROPERTY SWIG_FLAGS "-threads")
-set_property(SOURCE  ${SWIG_I_FILE} APPEND PROPERTY SWIG_FLAGS "-DPC_BLE_DRIVER_STATIC")
-
 # Use release lib of Python even when building with DEBUG
 add_definitions( -DSWIG_PYTHON_INTERPRETER_NO_DEBUG -DHAVE_ROUND=1)
 
@@ -47,20 +44,36 @@ if(WIN32)
     add_definitions( -DHAVE_ROUND )
 endif()
 
-set_property(SOURCE ${SWIG_I_FILE} PROPERTY CPLUSPLUS OFF)
+# Copy .i file into N variant files
+foreach(SD_API_VER ${SD_API_VERS})
+    # Copy SWIG-generated wrapper
+    set(SWIG_I_FILE_${SD_API_VER} ${PC_BLE_DRIVER_PY_OUTDIR}/${PYTHON_MODULE_${SD_API_VER}}.i)
+    #MESSAGE( STATUS "swig i: " "${SWIG_I_FILE_${SD_API_VER}}")
+    add_custom_command(OUTPUT ${SWIG_I_FILE_${SD_API_VER}}
+        COMMAND ${CMAKE_COMMAND} -E copy ${SWIG_I_FILE} ${SWIG_I_FILE_${SD_API_VER}} 
+    )
+
+    # append SD API version to module name in .i file
+
+
+    set_property(SOURCE ${SWIG_I_FILE_${SD_API_VER}} PROPERTY CPLUSPLUS OFF)
+    set_property(SOURCE  ${SWIG_I_FILE_${SD_API_VER}} APPEND PROPERTY SWIG_FLAGS "-threads")
+    set_property(SOURCE  ${SWIG_I_FILE_${SD_API_VER}} APPEND PROPERTY SWIG_FLAGS "-DPC_BLE_DRIVER_STATIC")
+endforeach(SD_API_VER)
+
 
 foreach(SD_API_VER ${SD_API_VERS})
     set(SWIG_C_SRC_FILES_${SD_API_VER} ${PC_BLE_DRIVER_PY_OUTDIR}/${PYTHON_MODULE_${SD_API_VER}}PYTHON_wrap.c)
     set_source_files_properties(SWIG_C_SRC_FILES_${SD_API_VER} PROPERTIES LANGUAGE CXX)
 
-    #set(CMAKE_SWIG_FLAGS)
-    #foreach(it ${PC_BLE_DRIVER_${SD_API_VER}_PUBLIC_INCLUDE_DIRS})
-    #  MESSAGE( STATUS "${SD_API_VER} it: " "${it}" )
-    #  set(CMAKE_SWIG_FLAGS ${CMAKE_SWIG_FLAGS} "-I${it}")
-    #endforeach()
+    set(CMAKE_SWIG_FLAGS)
+    foreach(it ${PC_BLE_DRIVER_${SD_API_VER}_PUBLIC_INCLUDE_DIRS})
+        #MESSAGE( STATUS "${SD_API_VER} it: " "${it}" )
+      set(CMAKE_SWIG_FLAGS ${CMAKE_SWIG_FLAGS} "-I${it}")
+    endforeach()
 
-    include_directories(${PC_BLE_DRIVER_${SD_API_VER}_PUBLIC_INCLUDE_DIRS})
-    swig_add_module(${PYTHON_MODULE_${SD_API_VER}} python ${SWIG_I_FILE})
+    #include_directories(${PC_BLE_DRIVER_${SD_API_VER}_PUBLIC_INCLUDE_DIRS})
+    swig_add_module(${PYTHON_MODULE_${SD_API_VER}} python ${SWIG_I_FILE_${SD_API_VER}})
     target_include_directories(${SWIG_MODULE_${PYTHON_MODULE_${SD_API_VER}}_REAL_NAME} PRIVATE ${PC_BLE_DRIVER_${SD_API_VER}_PUBLIC_INCLUDE_DIRS})
 endforeach(SD_API_VER)
 
@@ -104,16 +117,18 @@ else()
     set(SWIG_WRAPPER_SHARED_LIB_EXT so)
 endif()
 
-set(SWIG_WRAPPER_SHARED_LIB_FILE _${PYTHON_MODULE}.${SWIG_WRAPPER_SHARED_LIB_EXT})
-set(SWIG_WRAPPER_SHARED_LIB_PATH ${PC_BLE_DRIVER_PY_OUTDIR}/${SWIG_WRAPPER_SHARED_LIB_FILE})
 set(PY_MODULE_BUILD_INFO build_info.txt)
 set(PY_MODULE_BUILD_INFO_PRE_PATH ${PC_BLE_DRIVER_PY_OUTDIR}/${PY_MODULE_BUILD_INFO})
 set(PY_MODULE_BUILD_INFO_POST_PATH ${PY_MODULE_SHARED_LIB_DIR}/${PY_MODULE_BUILD_INFO})
 
 foreach(SD_API_VER ${SD_API_VERS})
+
+    set(SWIG_WRAPPER_${SD_API_VER}_SHARED_LIB_FILE _${PYTHON_MODULE_${SD_API_VER}}.${SWIG_WRAPPER_SHARED_LIB_EXT})
+    set(SWIG_WRAPPER_${SD_API_VER}_SHARED_LIB_PATH ${PC_BLE_DRIVER_PY_OUTDIR}/${SWIG_WRAPPER_SHARED_LIB_FILE})
+
     # Copy SWIG-generated wrapper
     add_custom_command(TARGET ${SWIG_MODULE_${PYTHON_MODULE_${SD_API_VER}}_REAL_NAME} POST_BUILD
-        COMMAND ${CMAKE_COMMAND} -E copy ${PC_BLE_DRIVER_PY_OUTDIR}/${PYTHON_MODULE}.py ${PY_MODULE_SHARED_LIB_DIR}
+        COMMAND ${CMAKE_COMMAND} -E copy ${PC_BLE_DRIVER_PY_OUTDIR}/${PYTHON_MODULE_${SD_API_VER}}.py ${PY_MODULE_SHARED_LIB_DIR}
     )
 
     # Copy SWIG wrapper lib
@@ -123,7 +138,7 @@ foreach(SD_API_VER ${SD_API_VERS})
 
     # Copy DLL
     add_custom_command(TARGET ${SWIG_MODULE_${PYTHON_MODULE_${SD_API_VER}}_REAL_NAME} POST_BUILD
-        COMMAND ${CMAKE_COMMAND} -E copy ${SWIG_WRAPPER_SHARED_LIB_PATH} ${PY_MODULE_SHARED_LIB_DIR}
+        COMMAND ${CMAKE_COMMAND} -E copy ${SWIG_WRAPPER_${SD_API_VER}_SHARED_LIB_PATH} ${PY_MODULE_SHARED_LIB_DIR}
     )
 
     # Copy .hex files
