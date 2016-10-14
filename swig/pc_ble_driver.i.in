@@ -35,7 +35,7 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-%module pc_ble_driver
+%module @SWIG_MODULE_NAME@
 
 %include "stdint.i"
 %include "carrays.i"
