@@ -54,7 +54,6 @@ foreach(SD_API_VER ${SD_API_VERS})
     #add_custom_command(OUTPUT ${SWIG_I_FILE_${SD_API_VER}}
     #    COMMAND ${CMAKE_COMMAND} -E copy ${SWIG_I_FILE} ${SWIG_I_FILE_${SD_API_VER}} 
     #)
-
     set_property(SOURCE ${SWIG_I_FILE_${SD_API_VER}} PROPERTY CPLUSPLUS OFF)
     set_property(SOURCE  ${SWIG_I_FILE_${SD_API_VER}} APPEND PROPERTY SWIG_FLAGS "-threads")
     set_property(SOURCE  ${SWIG_I_FILE_${SD_API_VER}} APPEND PROPERTY SWIG_FLAGS "-DPC_BLE_DRIVER_STATIC")
@@ -71,7 +70,10 @@ foreach(SD_API_VER ${SD_API_VERS})
       set(CMAKE_SWIG_FLAGS ${CMAKE_SWIG_FLAGS} "-I${it}")
     endforeach()
 
-    #include_directories(${PC_BLE_DRIVER_${SD_API_VER}_PUBLIC_INCLUDE_DIRS})
+    string(REGEX MATCH "[0-9]+$" _SD_API_VER_NUM "${SD_API_VER}")
+    set(SD_API_VER_COMPILER_DEF_NUM "-D${SD_API_VER_COMPILER_DEF}=${_SD_API_VER_NUM}")
+    set(CMAKE_SWIG_FLAGS ${CMAKE_SWIG_FLAGS} "${SD_API_VER_COMPILER_DEF_NUM}")
+
     swig_add_module(${PYTHON_MODULE_${SD_API_VER}} python ${SWIG_I_FILE_${SD_API_VER}})
     target_include_directories(${SWIG_MODULE_${PYTHON_MODULE_${SD_API_VER}}_REAL_NAME} PRIVATE ${PC_BLE_DRIVER_${SD_API_VER}_PUBLIC_INCLUDE_DIRS})
 endforeach(SD_API_VER)
