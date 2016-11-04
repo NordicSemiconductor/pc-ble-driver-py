@@ -35,43 +35,71 @@
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
-import sys
 
-def init(conn_ic_id):
-    global BLEDriver, Flasher
-    from pc_ble_driver_py import config
-    config.__conn_ic_id__ = conn_ic_id
-    from pc_ble_driver_py.ble_driver    import BLEDriver, Flasher
 
-def main(port):
-    descs = BLEDriver.enum_serial_ports()
-    print("enum_serial_ports: {} serial ports found".format(len(descs)))
-    for i, d in enumerate(descs):
-        print("\nSerial port #{}:".format(i))
-        print("|")
-        print("|-  Port: \"{}\"".format(d.port))
-        print("|-  Manufacturer: \"{}\"".format(d.manufacturer))
-        print("|-  Serial Number: \"{}\"".format(d.serial_number))
-        print("|-  PnP ID: \"{}\"".format(d.pnp_id))
-        print("|-  Location ID: \"{}\"".format(d.location_id))
-        print("|-  Vendor ID: \"{}\"".format(d.vendor_id))
-        print("|_  Product ID: \"{}\"".format(d.product_id))
-    if port != None:
-        flasher = Flasher(serial_port=port) 
-        if flasher.fw_check():
-            print("Port \"{}\" already flashed with connectivity firmware".format(port))
-        else:
-            print("Flashing Port \"{}\"".format(port))
-            flasher.fw_flash()
-            print("Firmware flashed")
+class BLEDriverObserver(object):
+    def __init__(self, *args, **kwargs):
+        super(BLEDriverObserver, self).__init__()
+        pass
 
-if __name__ == "__main__":
-    port = None
-    if len(sys.argv) < 2:
-      print("Please specify connectivity IC identifier (NRF51, NRF52)")
-      exit(1)
-    init(sys.argv[1])
-    if len(sys.argv) == 3:
-        port = sys.argv[2]
-    main(port)
-    quit()
+
+    def on_gap_evt_connected(self, ble_driver, conn_handle, peer_addr, role, conn_params):
+        pass
+
+
+    def on_gap_evt_disconnected(self, ble_driver, conn_handle, reason):
+        pass
+
+
+    def on_gap_evt_conn_param_update_request(self, ble_driver, conn_handle, conn_params):
+        pass
+
+
+    def on_gap_evt_timeout(self, ble_driver, conn_handle, src):
+        pass
+
+
+    def on_gap_evt_adv_report(self, ble_driver, conn_handle, peer_addr, rssi, adv_type, adv_data):
+        pass
+
+
+    def on_evt_tx_complete(self, ble_driver, conn_handle, count):
+        pass
+
+
+    def on_gattc_evt_write_rsp(self, ble_driver, conn_handle, status, error_handle, attr_handle, write_op, offset, data):
+        pass
+
+
+    def on_gattc_evt_hvx(self, ble_driver, conn_handle, status, error_handle, attr_handle, hvx_type, data):
+        pass
+
+
+    def on_gattc_evt_prim_srvc_disc_rsp(self, ble_driver, conn_handle, status, services):
+        pass
+
+
+    def on_gattc_evt_char_disc_rsp(self, ble_driver, conn_handle, status, characteristics):
+        pass
+
+
+    def on_gattc_evt_desc_disc_rsp(self, ble_driver, conn_handle, status, descriptions):
+        pass
+
+
+    def on_gatts_evt_exchange_mtu_request(self, ble_driver, conn_handle, client_rx_mtu):
+        pass
+
+class BLEAdapterObserver(object):
+    def __init__(self, *args, **kwargs):
+        super(BLEAdapterObserver, self).__init__()
+
+
+    def on_notification(self, ble_adapter, conn_handle, uuid, data):
+        pass
+        
+        
+    def on_conn_param_update_request(self, ble_adapter, conn_handle, conn_params):
+        # Default behaviour is to accept connection parameter update
+        ble_adapter.conn_param_update(conn_handle, conn_params)
+

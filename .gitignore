@@ -4,6 +4,7 @@ python/**/*.so
 python/**/*.dylib
 python/**/*.pyc
 python/**/*.hex
+python/**/hex/**/*.sh
 python/**/*.patch
 python/**/*.txt
 python/**/lib/**/*.py

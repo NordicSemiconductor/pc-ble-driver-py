@@ -39,14 +39,19 @@ import sys
 import time
 import Queue
 import logging
-logging.basicConfig()
 
-from pc_ble_driver_py.ble_driver     import *
-from pc_ble_driver_py.ble_adapter    import *
+from pc_ble_driver_py.observers     import *
 
-TARGET_DEV_NAME = "Nordic_HRM"
+#TARGET_DEV_NAME = "Nordic_HRM"
+TARGET_DEV_NAME = "Heart Rate"
 CONNECTIONS     = 2
 
+def init(conn_ic_id):
+    global BLEDriver, BLEAdvData, BLEEvtID, BLEAdapter, BLEEnableParams, BLEGapTimeoutSrc, BLEUUID
+    from pc_ble_driver_py import config
+    config.__conn_ic_id__ = conn_ic_id
+    from pc_ble_driver_py.ble_driver    import BLEDriver, BLEAdvData, BLEEvtID, BLEEnableParams, BLEGapTimeoutSrc, BLEUUID
+    from pc_ble_driver_py.ble_adapter   import BLEAdapter
 
 class HRCollector(BLEDriverObserver, BLEAdapterObserver):
     def __init__(self, adapter):
@@ -80,7 +85,7 @@ class HRCollector(BLEDriverObserver, BLEAdapterObserver):
         self.adapter.enable_notification(new_conn, BLEUUID(BLEUUID.Standard.heart_rate))
 
 
-    def on_gap_evt_connected(self, ble_driver, conn_handle, peer_addr, own_addr, role, conn_params):
+    def on_gap_evt_connected(self, ble_driver, conn_handle, peer_addr, role, conn_params):
         print('New connection: {}'.format(conn_handle))
         self.conn_q.put(conn_handle)
 
@@ -145,8 +150,12 @@ def item_choose(item_list):
 
 if __name__ == "__main__":
     serial_port = None
-    if len(sys.argv) == 2:
-        serial_port = sys.argv[1]
+    if len(sys.argv) < 2:
+        print("Please specify connectivity IC identifier (NRF51, NRF52)")
+        exit(1)
+    init(sys.argv[1])
+    if len(sys.argv) == 3:
+        serial_port = sys.argv[2]
     else:
         descs       = BLEDriver.enum_serial_ports()
         choices     = ['{}: {}'.format(d.port, d.serial_number) for d in descs]

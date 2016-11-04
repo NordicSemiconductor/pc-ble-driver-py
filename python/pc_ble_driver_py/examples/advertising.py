@@ -37,21 +37,13 @@
 
 import sys
 from threading                      import Condition, Lock
-from pc_ble_driver_py.ble_driver    import BLEDriver, BLEDriverObserver, BLEAdvData, BLEEvtID
+from pc_ble_driver_py.observers import BLEDriverObserver 
 
-
-class TimeoutObserver(BLEDriverObserver):
-    def __init__(self):
-        self.cond = Condition(Lock())
-
-    def on_gap_evt_timeout(self, ble_driver, conn_handle, src):
-        with self.cond:
-            self.cond.notify_all()
-
-    def wait_for_timeout(self):
-        with self.cond:
-            self.cond.wait()
-
+def init(conn_ic_id):
+    global BLEDriver, BLEAdvData, BLEEvtID
+    from pc_ble_driver_py import config
+    config.__conn_ic_id__ = conn_ic_id
+    from pc_ble_driver_py.ble_driver    import BLEDriver, BLEAdvData, BLEEvtID
 
 def main(serial_port):
     print("Serial port used: {}".format(serial_port))
@@ -69,9 +61,23 @@ def main(serial_port):
     print("Closing")
     driver.close()
 
+class TimeoutObserver(BLEDriverObserver):
+    def __init__(self):
+        self.cond = Condition(Lock())
+
+    def on_gap_evt_timeout(self, ble_driver, conn_handle, src):
+        with self.cond:
+            self.cond.notify_all()
+
+    def wait_for_timeout(self):
+        with self.cond:
+            self.cond.wait()
+
 if __name__ == "__main__":
-    if len(sys.argv) == 2:
-        main(sys.argv[1])
+    if len(sys.argv) == 3:
+        init(sys.argv[1])
+        main(sys.argv[2])
     else:
-        print("No connectivity serial port.")
+        print("Invalid arguments. Parameters: <conn_ic_id> <serial_port>")
+        print("conn_ic_id: NRF51, NRF52")
     quit()

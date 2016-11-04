@@ -41,6 +41,8 @@ from threading  import Condition, Lock
 from ble_driver import *
 from exceptions import NordicSemiException
 
+from observers import *
+
 logger  = logging.getLogger(__name__)
 
 class DbConnection(object):
@@ -108,21 +110,6 @@ class EvtSync(object):
         with self.conds[evt]:
             self.data = data
             self.conds[evt].notify_all()
-
-
-
-class BLEAdapterObserver(object):
-    def __init__(self, *args, **kwargs):
-        super(BLEAdapterObserver, self).__init__()
-
-
-    def on_notification(self, ble_adapter, conn_handle, uuid, data):
-        pass
-        
-        
-    def on_conn_param_update_request(self, ble_adapter, conn_handle, conn_params):
-        # Default behaviour is to accept connection parameter update
-        ble_adapter.conn_param_update(conn_handle, conn_params)
 
 
 class BLEAdapter(BLEDriverObserver):
@@ -289,7 +276,7 @@ class BLEAdapter(BLEDriverObserver):
         self.evt_sync[conn_handle].wait(evt = BLEEvtID.evt_tx_complete)
 
 
-    def on_gap_evt_connected(self, ble_driver, conn_handle, peer_addr, own_addr, role, conn_params):
+    def on_gap_evt_connected(self, ble_driver, conn_handle, peer_addr, role, conn_params):
         self.db_conns[conn_handle]  = DbConnection()
         self.evt_sync[conn_handle]  = EvtSync(events = BLEEvtID)
         self.conn_in_progress       = False
