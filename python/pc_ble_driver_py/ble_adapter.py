@@ -118,8 +118,8 @@ class BLEAdapterObserver(object):
 
     def on_notification(self, ble_adapter, conn_handle, uuid, data):
         pass
-        
-        
+
+
     def on_conn_param_update_request(self, ble_adapter, conn_handle, conn_params):
         # Default behaviour is to accept connection parameter update
         ble_adapter.conn_param_update(conn_handle, conn_params)
@@ -260,7 +260,7 @@ class BLEAdapter(BLEDriverObserver):
     def conn_param_update(self, conn_handle, conn_params):
         self.driver.ble_gap_conn_param_update(conn_handle, conn_params)
 
-    
+
     @NordicSemiErrorCheck(expected = BLEGattStatusCode.success)
     def write_req(self, conn_handle, uuid, data):
         handle = self.db_conns[conn_handle].get_char_value_handle(uuid)
