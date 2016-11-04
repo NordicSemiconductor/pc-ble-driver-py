@@ -93,7 +93,9 @@ setup(
                 'pc_ble_driver_py.lib.linux.x86_32': ['*.so', '*.txt'],
                 'pc_ble_driver_py.lib.linux.x86_64': ['*.so', '*.txt'],
                 'pc_ble_driver_py.lib.macos_osx': ['*.so', '*.dylib', '*.txt'],
-                'pc_ble_driver_py.hex': ['*.hex', '*.patch']
+                'pc_ble_driver_py.hex': ['*.hex', '*.patch', '*.sh'],
+                'pc_ble_driver_py.hex.sd_api_v2': ['*.hex', '*.patch', '*.sh'],
+                'pc_ble_driver_py.hex.sd_api_v3': ['*.hex', '*.patch', '*.sh']
     }
     
     )

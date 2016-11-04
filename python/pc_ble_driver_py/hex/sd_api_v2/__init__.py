@@ -34,9 +34,5 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
-"""
-Package marker file.
+# .hex files to run on the nRF5x ICs.
 
-"""
-
-__version__ = "0.9.9"
