@@ -87,7 +87,7 @@ class BLEDriverObserver(object):
         pass
 
 
-    def on_gatts_evt_exchange_mtu_request(self, ble_driver, conn_handle, client_rx_mtu):
+    def on_att_mtu_exchanged(self, ble_driver, conn_handle, att_mtu):
         pass
 
 class BLEAdapterObserver(object):

@@ -54,7 +54,7 @@ import importlib
 
 from observers import *
 
-logging.basicConfig(level=logging.DEBUG)
+#logging.basicConfig(level=logging.DEBUG)
 logger  = logging.getLogger(__name__)
 
 driver = None
@@ -113,6 +113,7 @@ driver = importlib.import_module(SWIG_MODULE_NAME)
 import ble_driver_types as util
 from exceptions import NordicSemiException
 
+ATT_MTU_DEFAULT                 = driver.GATT_MTU_SIZE_DEFAULT
 
 def NordicSemiErrorCheck(wrapped=None, expected = driver.NRF_SUCCESS):
     if wrapped is None:
@@ -144,6 +145,7 @@ class BLEEvtID(Enum):
     gattc_evt_desc_disc_rsp           = driver.BLE_GATTC_EVT_DESC_DISC_RSP
     if nrf_sd_ble_api_ver >= 3:
         gatts_evt_exchange_mtu_request    = driver.BLE_GATTS_EVT_EXCHANGE_MTU_REQUEST
+        gattc_evt_exchange_mtu_rsp        = driver.BLE_GATTC_EVT_EXCHANGE_MTU_RSP
 
 
 class BLEEnableParams(object):
@@ -153,7 +155,8 @@ class BLEEnableParams(object):
                  periph_conn_count,
                  central_conn_count,
                  central_sec_count,
-                 attr_tab_size = driver.BLE_GATTS_ATTR_TAB_SIZE_DEFAULT):
+                 attr_tab_size = driver.BLE_GATTS_ATTR_TAB_SIZE_DEFAULT,
+                 att_mtu = ATT_MTU_DEFAULT):
         self.vs_uuid_count      = vs_uuid_count
         self.attr_tab_size      = attr_tab_size
         self.service_changed    = service_changed
@@ -161,7 +164,7 @@ class BLEEnableParams(object):
         self.central_conn_count = central_conn_count
         self.central_sec_count  = central_sec_count
         if nrf_sd_ble_api_ver >= 3:
-            self.att_mtu = 23
+            self.att_mtu = att_mtu
 
 
     def to_c(self):
@@ -174,7 +177,7 @@ class BLEEnableParams(object):
         ble_enable_params.gap_enable_params.central_conn_count  = self.central_conn_count
         ble_enable_params.gap_enable_params.central_sec_count   = self.central_sec_count
         if nrf_sd_ble_api_ver >= 3:
-            ble_enable_params.gatt_enable_params.att_mtu            = self.att_mtu
+            ble_enable_params.gatt_enable_params.att_mtu        = self.att_mtu
 
         return ble_enable_params
 
@@ -867,6 +870,7 @@ class BLEDriver(object):
         if not ble_enable_params:
             ble_enable_params = self.ble_enable_params_setup()
         assert isinstance(ble_enable_params, BLEEnableParams), 'Invalid argument type'
+        self.ble_enable_params = ble_enable_params
         return driver.sd_ble_enable(self.rpc_adapter, ble_enable_params.to_c(), None)
 
 
@@ -1005,6 +1009,14 @@ class BLEDriver(object):
         return driver.sd_ble_gattc_descriptors_discover(self.rpc_adapter,
                                                         conn_handle,
                                                         handle_range)
+
+    @NordicSemiErrorCheck
+    @wrapt.synchronized(api_lock)
+    def ble_gattc_exchange_mtu_req(self, conn_handle):
+        logger.debug('Sending GATTC MTU exchange request: {}'.format(self.ble_enable_params.att_mtu))
+        return driver.sd_ble_gattc_exchange_mtu_request(self.rpc_adapter,
+                                                        conn_handle,
+                                                        self.ble_enable_params.att_mtu)
 
 
     def status_handler(self, adapter, status_code, status_message):
@@ -1152,12 +1164,39 @@ class BLEDriver(object):
             elif nrf_sd_ble_api_ver >= 3:
                     if evt_id == BLEEvtID.gatts_evt_exchange_mtu_request:
                         xchg_mtu_evt = ble_event.evt.gatts_evt.params.exchange_mtu_request
-                        driver.sd_ble_gatts_exchange_mtu_reply(self.rpc_adapter, ble_event.evt.gatts_evt.conn_handle, 23)
+                        driver.sd_ble_gatts_exchange_mtu_reply(self.rpc_adapter, ble_event.evt.gatts_evt.conn_handle, self.ble_enable_params.att_mtu)
 
-                        #for obs in self.observers:
-                        #    obs.on_gatts_evt_exchange_mtu_request(ble_driver     = self,
-                        #                             conn_handle    = ble_event.evt.gatts_evt.conn_handle,
-                        #                             client_rx_mtu  = xchg_mtu_evt.client_rx_mtu)
+                        _att_mtu = min(xchg_mtu_evt.client_rx_mtu, self.ble_enable_params.att_mtu)
+                        logger.debug('GATTS: ATT MTU: {}'.format(_att_mtu))
+
+                        for obs in self.observers:
+                            obs.on_att_mtu_exchanged(ble_driver     = self,
+                                                     conn_handle    = ble_event.evt.gatts_evt.conn_handle,
+                                                     att_mtu        = _att_mtu)
+
+                    elif evt_id == BLEEvtID.gattc_evt_exchange_mtu_rsp:
+                        xchg_mtu_evt = ble_event.evt.gattc_evt.params.exchange_mtu_rsp
+                        _status = BLEGattStatusCode(ble_event.evt.gattc_evt.gatt_status) 
+                        _server_rx_mtu = 0
+
+                        if _status == BLEGattStatusCode.success:
+                            _server_rx_mtu = xchg_mtu_evt.server_rx_mtu
+                        else:
+                            _server_rx_mtu = ATT_MTU_DEFAULT
+
+                        _att_mtu = min(_server_rx_mtu, self.ble_enable_params.att_mtu)
+                        logger.debug('GATTC: ATT MTU: {}'.format(_att_mtu))
+
+                        for obs in self.observers:
+                            obs.on_att_mtu_exchanged(ble_driver     = self,
+                                                     conn_handle    = ble_event.evt.gatts_evt.conn_handle,
+                                                     att_mtu        = _att_mtu)
+                        for obs in self.observers:
+                            obs.on_gattc_evt_exchange_mtu_rsp(ble_driver     = self,
+                                                              conn_handle    = ble_event.evt.gatts_evt.conn_handle,
+                                                              status         = _status,
+                                                              att_mtu        = _att_mtu)
+
 
         except Exception as e:
             logger.error("Exception: {}".format(str(e)))

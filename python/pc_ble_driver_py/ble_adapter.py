@@ -48,6 +48,7 @@ logger  = logging.getLogger(__name__)
 class DbConnection(object):
     def __init__(self):
         self.services     = list()
+        self.att_mtu      = ATT_MTU_DEFAULT
 
 
     def get_char_value_handle(self, uuid):
@@ -146,6 +147,12 @@ class BLEAdapter(BLEDriverObserver):
     @wrapt.synchronized(observer_lock)
     def observer_unregister(self, observer):
         self.observers.remove(observer)
+
+
+    def att_mtu_exchange(self, conn_handle):
+        self.driver.ble_gattc_exchange_mtu_req(conn_handle)
+        response = self.evt_sync[conn_handle].wait(evt = BLEEvtID.gatts_evt_exchange_mtu_request)
+        return self.db_conns[conn_handle].att_mtu
 
 
     @NordicSemiErrorCheck(expected = BLEGattStatusCode.success)
@@ -311,7 +318,15 @@ class BLEAdapter(BLEDriverObserver):
     def on_gattc_evt_desc_disc_rsp(self, ble_driver, conn_handle, **kwargs):
         self.evt_sync[conn_handle].notify(evt = BLEEvtID.gattc_evt_desc_disc_rsp, data = kwargs)
 
+
+    def on_att_mtu_exchanged(self, ble_driver, conn_handle, att_mtu):
+        self.db_conns[conn_handle].att_mtu = att_mtu
+
+
+    def on_gattc_evt_exchange_mtu_rsp(self, ble_driver, conn_handle, **kwargs):
+        self.evt_sync[conn_handle].notify(evt = BLEEvtID.gattc_evt_exchange_mtu_rsp, data = kwargs)
     
+
     @wrapt.synchronized(observer_lock)
     def on_gap_evt_conn_param_update_request(self, ble_driver, conn_handle, conn_params):
         for obs in self.observers:

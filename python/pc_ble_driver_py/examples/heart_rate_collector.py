@@ -42,8 +42,7 @@ import logging
 
 from pc_ble_driver_py.observers     import *
 
-#TARGET_DEV_NAME = "Nordic_HRM"
-TARGET_DEV_NAME = "Heart Rate"
+TARGET_DEV_NAME = "Nordic_HRM"
 CONNECTIONS     = 2
 
 def init(conn_ic_id):
@@ -52,6 +51,8 @@ def init(conn_ic_id):
     config.__conn_ic_id__ = conn_ic_id
     from pc_ble_driver_py.ble_driver    import BLEDriver, BLEAdvData, BLEEvtID, BLEEnableParams, BLEGapTimeoutSrc, BLEUUID
     from pc_ble_driver_py.ble_adapter   import BLEAdapter
+    global nrf_sd_ble_api_ver
+    nrf_sd_ble_api_ver = config.sd_api_ver_get()
 
 class HRCollector(BLEDriverObserver, BLEAdapterObserver):
     def __init__(self, adapter):
@@ -70,6 +71,9 @@ class HRCollector(BLEDriverObserver, BLEAdapterObserver):
                                             periph_conn_count  = 0,
                                             central_conn_count = CONNECTIONS,
                                             central_sec_count  = 0)
+        if nrf_sd_ble_api_ver >= 3:
+            print("Enabling larger ATT MTUs")
+            ble_enable_params.att_mtu = 50
         self.adapter.driver.ble_enable(ble_enable_params)
 
 
@@ -80,6 +84,9 @@ class HRCollector(BLEDriverObserver, BLEAdapterObserver):
     def connect_and_discover(self):
         self.adapter.driver.ble_gap_scan_start()
         new_conn = self.conn_q.get(timeout = 60)
+        if nrf_sd_ble_api_ver >= 3:
+            att_mtu = self.adapter.att_mtu_exchange(new_conn)
+
         self.adapter.service_discovery(new_conn)
         self.adapter.enable_notification(new_conn, BLEUUID(BLEUUID.Standard.battery_level))
         self.adapter.enable_notification(new_conn, BLEUUID(BLEUUID.Standard.heart_rate))
@@ -118,6 +125,14 @@ class HRCollector(BLEDriverObserver, BLEAdapterObserver):
     def on_notification(self, ble_adapter, conn_handle, uuid, data):
         print('Connection: {}, {} = {}'.format(conn_handle, uuid, data))
 
+
+    def on_att_mtu_exchanged(self, ble_driver, conn_handle, att_mtu):
+        print('ATT MTU exchanged: conn_handle={} att_mtu={}'.format(conn_handle, att_mtu))
+
+
+    def on_gattc_evt_exchange_mtu_rsp(self, ble_driver, conn_handle, **kwargs):
+        print('ATT MTU exchange response: conn_handle={}'.format(conn_handle))
+    
 
 def main(serial_port):
     print('Serial port used: {}'.format(serial_port))
