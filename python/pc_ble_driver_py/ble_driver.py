@@ -128,6 +128,8 @@ class BLEEvtID(Enum):
     gap_evt_timeout                   = driver.BLE_GAP_EVT_TIMEOUT
     gap_evt_conn_param_update_request = driver.BLE_GAP_EVT_CONN_PARAM_UPDATE_REQUEST
     gap_evt_conn_param_update         = driver.BLE_GAP_EVT_CONN_PARAM_UPDATE
+    gap_evt_auth_status               = driver.BLE_GAP_EVT_AUTH_STATUS
+    gap_evt_conn_sec_update           = driver.BLE_GAP_EVT_CONN_SEC_UPDATE
     evt_tx_complete                   = driver.BLE_EVT_TX_COMPLETE
     gattc_evt_write_rsp               = driver.BLE_GATTC_EVT_WRITE_RSP
     gattc_evt_read_rsp                = driver.BLE_GATTC_EVT_READ_RSP
@@ -806,6 +808,14 @@ class BLEDriverObserver(object):
         pass
 
 
+    def on_gap_evt_auth_status(self, ble_driver, conn_handle, auth_status):
+        pass
+
+
+    def on_gap_evt_conn_sec_update(self, ble_driver, conn_handle):
+        pass
+
+
 
 class Flasher(object):
     api_lock = Lock()
@@ -1118,11 +1128,25 @@ class BLEDriver(object):
         assert isinstance(own_keys,   NoneType),                    'NOT IMPLEMENTED'
         assert isinstance(peer_keys,  NoneType),                    'NOT IMPLEMENTED'
 
+        keyset                      = driver.ble_gap_sec_keyset_t()
+
+        keyset.keys_own.p_enc_key   = driver.ble_gap_enc_key_t()
+        keyset.keys_own.p_id_key    = driver.ble_gap_id_key_t()
+        keyset.keys_own.p_sign_key  = driver.ble_gap_sign_info_t()
+        keyset.keys_own.p_pk        = driver.ble_gap_lesc_p256_pk_t()
+
+        keyset.keys_peer.p_enc_key  = driver.ble_gap_enc_key_t()
+        keyset.keys_peer.p_id_key   = driver.ble_gap_id_key_t()
+        keyset.keys_peer.p_sign_key = driver.ble_gap_sign_info_t()
+        keyset.keys_peer.p_pk       = driver.ble_gap_lesc_p256_pk_t()
+
+        self.__keyset = keyset
+
         return driver.sd_ble_gap_sec_params_reply(self.rpc_adapter,
                                                   conn_handle,
                                                   sec_status.value,
                                                   sec_params.to_c() if sec_params else None,
-                                                  None)
+                                                  self.__keyset)
 
 
     @NordicSemiErrorCheck
@@ -1252,7 +1276,6 @@ class BLEDriver(object):
                                               adv_type      = adv_type,
                                               adv_data      = BLEAdvData.from_c(adv_report_evt))
 
-                                              
             elif evt_id == BLEEvtID.gap_evt_conn_param_update_request:
                 conn_params = ble_event.evt.gap_evt.params.conn_param_update_request.conn_params
 
@@ -1261,7 +1284,21 @@ class BLEDriver(object):
                                                              conn_handle  = ble_event.evt.common_evt.conn_handle,
                                                              conn_params  = BLEGapConnParams.from_c(conn_params))
 
-                                                             
+            elif evt_id == BLEEvtID.gap_evt_auth_status:
+                auth_status_evt = ble_event.evt.gap_evt.params.auth_status
+
+                for obs in self.observers:
+                    obs.on_gap_evt_auth_status(ble_driver   = self,
+                                               conn_handle  = ble_event.evt.common_evt.conn_handle,
+                                               auth_status  = BLEGapSecStatus(auth_status_evt.auth_status))
+
+            elif evt_id == BLEEvtID.gap_evt_conn_sec_update:
+                conn_sec_update_evt = ble_event.evt.gap_evt.params.conn_sec_update
+
+                for obs in self.observers:
+                    obs.on_gap_evt_conn_sec_update(ble_driver   = self,
+                                                   conn_handle  = ble_event.evt.common_evt.conn_handle)
+
             elif evt_id == BLEEvtID.evt_tx_complete:
                 tx_complete_evt = ble_event.evt.common_evt.params.tx_complete
 

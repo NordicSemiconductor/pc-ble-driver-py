@@ -75,9 +75,11 @@ class HRCollector(BLEDriverObserver, BLEAdapterObserver):
     def connect_and_discover(self):
         self.adapter.driver.ble_gap_scan_start()
         new_conn = self.conn_q.get(timeout = 60)
+
         self.adapter.service_discovery(new_conn)
         self.adapter.enable_notification(new_conn, BLEUUID(BLEUUID.Standard.battery_level))
         self.adapter.enable_notification(new_conn, BLEUUID(BLEUUID.Standard.heart_rate))
+        return new_conn
 
 
     def on_gap_evt_connected(self, ble_driver, conn_handle, peer_addr, own_addr, role, conn_params):
@@ -85,15 +87,13 @@ class HRCollector(BLEDriverObserver, BLEAdapterObserver):
         self.conn_q.put(conn_handle)
 
 
+    def on_gap_evt_disconnected(self, ble_driver, conn_handle, reason):
+        print('Disconnected: {} {}'.format(conn_handle, reason))
+
+
     def on_gap_evt_timeout(self, ble_driver, conn_handle, src):
         if src == BLEGapTimeoutSrc.scan:
             ble_driver.ble_gap_scan_start()
-
-
-    def on_gap_evt_sec_params_request(self, ble_driver, conn_handle, peer_params):
-        pass
-        ble_driver.ble_gap_sec_params_reply(conn_handle, BLEGapSecStatus.success, None, None, None)
-
 
 
     def on_gap_evt_adv_report(self, ble_driver, conn_handle, peer_addr, rssi, adv_type, adv_data):
@@ -127,30 +127,8 @@ def main(serial_port):
     collector = HRCollector(adapter)
     collector.open()
     for i in xrange(CONNECTIONS):
-        collector.connect_and_discover()
+        conn_handle = collector.connect_and_discover()
 
-    kdist_own   = BLEGapSecKDist(enc  = False,
-                                 id   = False,
-                                 sign = False,
-                                 link = False)
-    kdist_peer  = BLEGapSecKDist(enc  = False,
-                                 id   = False,
-                                 sign = False,
-                                 link = False)
-    sec_params  = BLEGapSecParams(bond          = False,
-                                  mitm          = False,
-                                  lesc          = False,
-                                  keypress      = False,
-                                  io_caps       = BLEGapIOCaps.none,
-                                  oob           = False,
-                                  min_key_size  = 7,
-                                  max_key_size  = 16,
-                                  kdist_own     = kdist_own,
-                                  kdist_peer    = kdist_peer)
-
-    driver.ble_gap_authenticate(conn_handle=0, sec_params=sec_params)
-    time.sleep(1)
-    # driver.ble_gap_sec_params_reply(0, BLEGapSecStatus.success, None, None, None)
     time.sleep(30)
     print('Closing')
     collector.close()
