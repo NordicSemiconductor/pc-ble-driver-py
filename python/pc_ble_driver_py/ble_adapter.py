@@ -138,6 +138,17 @@ class BLEAdapter(BLEDriverObserver):
         self.evt_sync           = dict()
 
 
+    def open(self):
+        self.driver.open()
+
+
+    def close(self):
+        self.driver.close()
+        self.conn_in_progress   = False
+        self.db_conns           = dict()
+        self.evt_sync           = dict()
+
+
     def connect(self, address, scan_params=None, conn_params=None):
         if self.conn_in_progress:
             return

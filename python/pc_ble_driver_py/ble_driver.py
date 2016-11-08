@@ -293,7 +293,6 @@ class BLEGapConnParams(object):
         conn_params.conn_sup_timeout   = util.msec_to_units(self.conn_sup_timeout_ms,
                                                             util.UNIT_10_MS)
         conn_params.slave_latency      = self.slave_latency
-
         return conn_params
 
 
