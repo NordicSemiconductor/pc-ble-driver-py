@@ -301,7 +301,7 @@ class BLEAdapter(BLEDriverObserver):
 
 
     @NordicSemiErrorCheck(expected = BLEGapSecStatus.success)
-    def pair(self, conn_handle):
+    def authenticate(self, conn_handle):
         kdist_own   = BLEGapSecKDist(enc  = False,
                                      id   = False,
                                      sign = False,
