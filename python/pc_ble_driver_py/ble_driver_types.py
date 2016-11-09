@@ -60,7 +60,7 @@ def msec_to_units(time_ms, resolution):
 
 def units_to_msec(units, resolution):
     """Convert BLE specific units to milliseconds."""
-    time_ms = units * resolution / 1000
+    time_ms = units * float(resolution) / 1000
     return time_ms
 
 def char_array_to_list(array_pointer, length):

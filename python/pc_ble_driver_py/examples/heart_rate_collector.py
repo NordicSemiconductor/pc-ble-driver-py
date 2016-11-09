@@ -43,7 +43,7 @@ import logging
 from pc_ble_driver_py.observers     import *
 
 TARGET_DEV_NAME = "Nordic_HRM"
-CONNECTIONS     = 2
+CONNECTIONS     = 1
 
 def init(conn_ic_id):
     global BLEDriver, BLEAdvData, BLEEvtID, BLEAdapter, BLEEnableParams, BLEGapTimeoutSrc, BLEUUID
@@ -70,10 +70,11 @@ class HRCollector(BLEDriverObserver, BLEAdapterObserver):
                                             service_changed    = False,
                                             periph_conn_count  = 0,
                                             central_conn_count = CONNECTIONS,
-                                            central_sec_count  = 0)
+                                            central_sec_count  = CONNECTIONS)
         if nrf_sd_ble_api_ver >= 3:
             print("Enabling larger ATT MTUs")
             ble_enable_params.att_mtu = 50
+
         self.adapter.driver.ble_enable(ble_enable_params)
 
 
@@ -84,17 +85,23 @@ class HRCollector(BLEDriverObserver, BLEAdapterObserver):
     def connect_and_discover(self):
         self.adapter.driver.ble_gap_scan_start()
         new_conn = self.conn_q.get(timeout = 60)
+
         if nrf_sd_ble_api_ver >= 3:
             att_mtu = self.adapter.att_mtu_exchange(new_conn)
 
         self.adapter.service_discovery(new_conn)
         self.adapter.enable_notification(new_conn, BLEUUID(BLEUUID.Standard.battery_level))
         self.adapter.enable_notification(new_conn, BLEUUID(BLEUUID.Standard.heart_rate))
+        return new_conn
 
 
     def on_gap_evt_connected(self, ble_driver, conn_handle, peer_addr, role, conn_params):
         print('New connection: {}'.format(conn_handle))
         self.conn_q.put(conn_handle)
+
+
+    def on_gap_evt_disconnected(self, ble_driver, conn_handle, reason):
+        print('Disconnected: {} {}'.format(conn_handle, reason))
 
 
     def on_gap_evt_timeout(self, ble_driver, conn_handle, src):
@@ -141,7 +148,8 @@ def main(serial_port):
     collector = HRCollector(adapter)
     collector.open()
     for i in xrange(CONNECTIONS):
-        collector.connect_and_discover()
+        conn_handle = collector.connect_and_discover()
+
     time.sleep(30)
     print('Closing')
     collector.close()
