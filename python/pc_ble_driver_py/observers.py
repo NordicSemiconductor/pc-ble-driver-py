@@ -35,49 +35,83 @@
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
-import sys
-from threading                      import Condition, Lock
-from pc_ble_driver_py.observers import BLEDriverObserver 
 
-def init(conn_ic_id):
-    global BLEDriver, BLEAdvData, BLEEvtID
-    from pc_ble_driver_py import config
-    config.__conn_ic_id__ = conn_ic_id
-    from pc_ble_driver_py.ble_driver    import BLEDriver, BLEAdvData, BLEEvtID
 
-def main(serial_port):
-    print("Serial port used: {}".format(serial_port))
-    driver      = BLEDriver(serial_port=serial_port, auto_flash=True)
-    observer    = TimeoutObserver()
-    adv_data    = BLEAdvData(complete_local_name='Example')
+class BLEDriverObserver(object):
+    def __init__(self, *args, **kwargs):
+        super(BLEDriverObserver, self).__init__()
+        pass
 
-    driver.observer_register(observer)
-    driver.open()
-    driver.ble_enable()
-    driver.ble_gap_adv_data_set(adv_data)
-    driver.ble_gap_adv_start()
-    observer.wait_for_timeout()
 
-    print("Closing")
-    driver.close()
+    def on_gap_evt_connected(self, ble_driver, conn_handle, peer_addr, role, conn_params):
+        pass
 
-class TimeoutObserver(BLEDriverObserver):
-    def __init__(self):
-        self.cond = Condition(Lock())
+
+    def on_gap_evt_disconnected(self, ble_driver, conn_handle, reason):
+        pass
+
+
+    def on_gap_evt_sec_params_request(self, ble_driver, conn_handle, peer_params):
+        pass
+
+
+    def on_gap_evt_conn_param_update_request(self, ble_driver, conn_handle, conn_params):
+        pass
+
 
     def on_gap_evt_timeout(self, ble_driver, conn_handle, src):
-        with self.cond:
-            self.cond.notify_all()
+        pass
 
-    def wait_for_timeout(self):
-        with self.cond:
-            self.cond.wait()
 
-if __name__ == "__main__":
-    if len(sys.argv) == 3:
-        init(sys.argv[1])
-        main(sys.argv[2])
-    else:
-        print("Invalid arguments. Parameters: <conn_ic_id> <serial_port>")
-        print("conn_ic_id: NRF51, NRF52")
-    quit()
+    def on_gap_evt_adv_report(self, ble_driver, conn_handle, peer_addr, rssi, adv_type, adv_data):
+        pass
+
+
+    def on_evt_tx_complete(self, ble_driver, conn_handle, count):
+        pass
+
+
+    def on_gattc_evt_write_rsp(self, ble_driver, conn_handle, status, error_handle, attr_handle, write_op, offset, data):
+        pass
+
+
+    def on_gattc_evt_hvx(self, ble_driver, conn_handle, status, error_handle, attr_handle, hvx_type, data):
+        pass
+
+
+    def on_gattc_evt_prim_srvc_disc_rsp(self, ble_driver, conn_handle, status, services):
+        pass
+
+
+    def on_gattc_evt_char_disc_rsp(self, ble_driver, conn_handle, status, characteristics):
+        pass
+
+
+    def on_gattc_evt_desc_disc_rsp(self, ble_driver, conn_handle, status, descriptions):
+        pass
+
+
+    def on_gap_evt_auth_status(self, ble_driver, conn_handle, auth_status):
+        pass
+
+
+    def on_gap_evt_conn_sec_update(self, ble_driver, conn_handle):
+        pass
+
+
+    def on_att_mtu_exchanged(self, ble_driver, conn_handle, att_mtu):
+        pass
+
+class BLEAdapterObserver(object):
+    def __init__(self, *args, **kwargs):
+        super(BLEAdapterObserver, self).__init__()
+
+
+    def on_notification(self, ble_adapter, conn_handle, uuid, data):
+        pass
+        
+        
+    def on_conn_param_update_request(self, ble_adapter, conn_handle, conn_params):
+        # Default behaviour is to accept connection parameter update
+        ble_adapter.conn_param_update(conn_handle, conn_params)
+

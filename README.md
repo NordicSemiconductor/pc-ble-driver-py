@@ -11,8 +11,8 @@ pc-ble-driver-py depends on the pc-ble-driver repository referrenced as a submod
 
 These bindings include two different components:
 
-* A shared library written in C that encapsulates the SoftDevice API and serializes it over UART.
-* A set of Python files generated with SWIG that present the shared library API to Python applications.
+* A set of shared libraries written in C that encapsulate the different SoftDevice APIs and serialize them over UART.
+* A set of Python files generated with SWIG that present the shared libraries APIs to Python applications.
 
 To run the Python bindings you will need to set up your boards to be able to communicate with your computer.
 You can find additional information here:
@@ -80,9 +80,8 @@ SWIG in `c:\swig\swigwin-x.y.z`:
 
 **Note**: Select the Python architecture (32 or 64-bit) that you plan to build for.
 
-Install Microsoft Visual Studio. The following versions supported are:
+Install Microsoft Visual Studio. The following versions are supported:
 
-* Visual Studio 2013 (MSVC 12.0)
 * Visual Studio 2015 (MSVC 14.0)
 
 Open a Microsoft Visual Studio Command Prompt and issue the following from the root folder of the repository:
@@ -91,7 +90,7 @@ Open a Microsoft Visual Studio Command Prompt and issue the following from the r
     > cmake -G "Visual Studio XX <Win64>" <-DBOOST_LIBRARYDIR="<Boost libs path>>" ..
     > msbuild ALL_BUILD.vcxproj </p:Configuration=<CFG>>
 
-**Note**: Select Visual Sutio 12 or 14 `-G "Visual Studio XX"` option.
+**Note**: Select Visual Sutio 14 with the `-G "Visual Studio XX"` option.
 
 **Note**: Add `Win64` to the `-G` option to build a 64-bit version of the driver.
 
@@ -99,7 +98,7 @@ Open a Microsoft Visual Studio Command Prompt and issue the following from the r
 
 **Note**: Optionally select the build configuration with the `/p:Configuration=` option. Typically `Debug`, `Release`, `MinSizeRel` and `RelWithDebInfo` are available.
 
-The results of the build will be placed in `build\outdir` and the distributable files will be copied to `python\pc_ble_driver_py\lib\win\x86_<arch>`.
+The results of the build will be placed in `build\outdir` and the distributable files will be copied to `python\pc_ble_driver_py\lib\win\x86_<arch>` and `python\pc_ble_driver_py\hex`.
 
 ##### Examples
 
@@ -129,7 +128,7 @@ Then change to the root folder of the repository and issue the following command
 
 **Note**: Optionally select the location of the Boost libraries with the `-DBOOST_LIBRARYDIR` option.
 
-The results of the build will be placed in `build/outdir` and the distributable files will be copied to `python/pc_ble_driver_py/lib/linux\x86_<arch>`.
+The results of the build will be placed in `build/outdir` and the distributable files will be copied to `python/pc_ble_driver_py/lib/linux\x86_<arch>` and `python\pc_ble_driver_py\hex`.
 
 #### macOS (OS X) 10.11 and later
 
@@ -146,4 +145,4 @@ Then change to the root folder of the repository and issue the following command
 
 **Note**: Optionally Select the build configuration with the `-DCMAKE_BUILD_TYPE` option. Typically `Debug`, `Release`, `MinSizeRel` and `RelWithDebInfo` are available.
 
-The results of the build will be placed in `build/outdir` and the distributable files will be copied to `python/pc_ble_driver_py/lib/macos_osx`.
+The results of the build will be placed in `build/outdir` and the distributable files will be copied to `python/pc_ble_driver_py/lib/macos_osx` and `python\pc_ble_driver_py\hex`.

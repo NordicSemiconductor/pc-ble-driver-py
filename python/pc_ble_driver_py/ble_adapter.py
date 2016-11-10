@@ -41,11 +41,14 @@ from threading  import Condition, Lock
 from ble_driver import *
 from exceptions import NordicSemiException
 
+from observers import *
+
 logger  = logging.getLogger(__name__)
 
 class DbConnection(object):
     def __init__(self):
         self.services     = list()
+        self.att_mtu      = ATT_MTU_DEFAULT
 
 
     def get_char_value_handle(self, uuid):
@@ -110,21 +113,6 @@ class EvtSync(object):
             self.conds[evt].notify_all()
 
 
-
-class BLEAdapterObserver(object):
-    def __init__(self, *args, **kwargs):
-        super(BLEAdapterObserver, self).__init__()
-
-
-    def on_notification(self, ble_adapter, conn_handle, uuid, data):
-        pass
-
-
-    def on_conn_param_update_request(self, ble_adapter, conn_handle, conn_params):
-        # Default behaviour is to accept connection parameter update
-        ble_adapter.conn_param_update(conn_handle, conn_params)
-
-
 class BLEAdapter(BLEDriverObserver):
     observer_lock   = Lock()
     def __init__(self, ble_driver):
@@ -170,6 +158,12 @@ class BLEAdapter(BLEDriverObserver):
     @wrapt.synchronized(observer_lock)
     def observer_unregister(self, observer):
         self.observers.remove(observer)
+
+
+    def att_mtu_exchange(self, conn_handle):
+        self.driver.ble_gattc_exchange_mtu_req(conn_handle)
+        response = self.evt_sync[conn_handle].wait(evt = BLEEvtID.gattc_evt_exchange_mtu_rsp)
+        return self.db_conns[conn_handle].att_mtu
 
 
     @NordicSemiErrorCheck(expected = BLEGattStatusCode.success)
@@ -329,7 +323,7 @@ class BLEAdapter(BLEDriverObserver):
         return result['auth_status']
 
 
-    def on_gap_evt_connected(self, ble_driver, conn_handle, peer_addr, own_addr, role, conn_params):
+    def on_gap_evt_connected(self, ble_driver, conn_handle, peer_addr, role, conn_params):
         self.db_conns[conn_handle]  = DbConnection()
         self.evt_sync[conn_handle]  = EvtSync(events = BLEEvtID)
         self.conn_in_progress       = False
@@ -372,6 +366,14 @@ class BLEAdapter(BLEDriverObserver):
     def on_gattc_evt_desc_disc_rsp(self, ble_driver, conn_handle, **kwargs):
         self.evt_sync[conn_handle].notify(evt = BLEEvtID.gattc_evt_desc_disc_rsp, data = kwargs)
 
+
+    def on_att_mtu_exchanged(self, ble_driver, conn_handle, att_mtu):
+        self.db_conns[conn_handle].att_mtu = att_mtu
+
+
+    def on_gattc_evt_exchange_mtu_rsp(self, ble_driver, conn_handle, **kwargs):
+        self.evt_sync[conn_handle].notify(evt = BLEEvtID.gattc_evt_exchange_mtu_rsp, data = kwargs)
+    
 
     @wrapt.synchronized(observer_lock)
     def on_gap_evt_conn_param_update_request(self, ble_driver, conn_handle, conn_params):

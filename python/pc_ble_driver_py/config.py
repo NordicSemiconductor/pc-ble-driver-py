@@ -35,43 +35,39 @@
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
-import sys
+# Connectivity IC identifier
+# This variable needs to be set before importing pc_ble_driver_py from external Python code
+# Currently functional variants are:
+#
+# * "NRF51"
+# * "NRF52"
+__conn_ic_id__ = None
 
-def init(conn_ic_id):
-    global BLEDriver, Flasher
-    from pc_ble_driver_py import config
-    config.__conn_ic_id__ = conn_ic_id
-    from pc_ble_driver_py.ble_driver    import BLEDriver, Flasher
+def sd_api_ver_get():
+    if __conn_ic_id__ is None:
+        raise RuntimeError('Connectivity IC identifier __conn_ic_id__ is not set')
 
-def main(port):
-    descs = BLEDriver.enum_serial_ports()
-    print("enum_serial_ports: {} serial ports found".format(len(descs)))
-    for i, d in enumerate(descs):
-        print("\nSerial port #{}:".format(i))
-        print("|")
-        print("|-  Port: \"{}\"".format(d.port))
-        print("|-  Manufacturer: \"{}\"".format(d.manufacturer))
-        print("|-  Serial Number: \"{}\"".format(d.serial_number))
-        print("|-  PnP ID: \"{}\"".format(d.pnp_id))
-        print("|-  Location ID: \"{}\"".format(d.location_id))
-        print("|-  Vendor ID: \"{}\"".format(d.vendor_id))
-        print("|_  Product ID: \"{}\"".format(d.product_id))
-    if port != None:
-        flasher = Flasher(serial_port=port) 
-        if flasher.fw_check():
-            print("Port \"{}\" already flashed with connectivity firmware".format(port))
-        else:
-            print("Flashing Port \"{}\"".format(port))
-            flasher.fw_flash()
-            print("Firmware flashed")
+    if __conn_ic_id__.upper() == "NRF51":
+        _sd_api_v = 2
+    elif __conn_ic_id__.upper() == "NRF52":
+        _sd_api_v = 3
+    else:
+        raise RuntimeError('Invalid connectivity IC identifier: {}.'.format(__conn_ic_id__))
+    return _sd_api_v
 
-if __name__ == "__main__":
-    port = None
-    if len(sys.argv) < 2:
-      print("Please specify connectivity IC identifier (NRF51, NRF52)")
-      exit(1)
-    init(sys.argv[1])
-    if len(sys.argv) == 3:
-        port = sys.argv[2]
-    main(port)
-    quit()
+
+def conn_ic_hex_get():
+    import os
+    if __conn_ic_id__ is None:
+        raise RuntimeError('Connectivity IC identifier __conn_ic_id__ is not set')
+
+    if __conn_ic_id__.upper() == "NRF51":
+        return os.path.join(os.path.dirname(__file__),
+                        'hex', 'sd_api_v2',
+                        'connectivity_1.0.1_115k2_with_s130_2.0.1.hex')
+    elif __conn_ic_id__.upper() == "NRF52":
+        return os.path.join(os.path.dirname(__file__),
+                        'hex', 'sd_api_v3',
+                        'connectivity_1.0.1_115k2_with_s132_3.0.hex')
+    else:
+        raise RuntimeError('Invalid connectivity IC identifier: {}.'.format(__conn_ic_id__))

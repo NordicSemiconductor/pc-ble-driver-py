@@ -35,8 +35,14 @@
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
+import importlib
+
+import config
+nrf_sd_ble_api_ver = config.sd_api_ver_get()
+# Load pc_ble_driver
+SWIG_MODULE_NAME = "pc_ble_driver_sd_api_v{}".format(nrf_sd_ble_api_ver)
 try:
-    import pc_ble_driver    as ble_driver
+    ble_driver = importlib.import_module(SWIG_MODULE_NAME)
 except Exception:
     print "Error. No ble_driver module found."
 
@@ -108,6 +114,27 @@ def desc_array_to_list(array_pointer, length):
 def handle_value_array_to_list(array_pointer, length):
     """Convert ble_gattc_handle_value_array to python list."""
     data_array = ble_driver.ble_gattc_handle_value_array.frompointer(array_pointer)
+    data_list = _populate_list(data_array, length)
+    return data_list
+
+
+def attr_info_array_to_list(array_pointer, length):
+    """Convert ble_gattc_attr_info_array to python list."""
+    data_array = ble_driver.ble_gattc_attr_info_array.frompointer(array_pointer)
+    data_list = _populate_list(data_array, length)
+    return data_list
+
+
+def attr_info16_array_to_list(array_pointer, length):
+    """Convert ble_gattc_attr_info16_array to python list."""
+    data_array = ble_driver.ble_gattc_attr_info16_array.frompointer(array_pointer)
+    data_list = _populate_list(data_array, length)
+    return data_list
+
+
+def attr_info128_array_to_list(array_pointer, length):
+    """Convert ble_gattc_attr_info128_array to python list."""
+    data_array = ble_driver.ble_gattc_attr_info128_array.frompointer(array_pointer)
     data_list = _populate_list(data_array, length)
     return data_list
 

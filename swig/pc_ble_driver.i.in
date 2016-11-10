@@ -35,7 +35,7 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-%module pc_ble_driver
+%module @SWIG_MODULE_NAME@
 
 %include "stdint.i"
 %include "carrays.i"
@@ -62,8 +62,11 @@
 // Ignore event getter, handled by the connectivity device
 %ignore sd_ble_evt_get;
 
+
 // Grab the definitions
 %include "config/platform.h"
+%define SVCALL(number, return_type, signature) return_type signature
+%enddef
 %include "adapter.h"
 %include "ble.h"
 %include "ble_err.h"
@@ -90,7 +93,13 @@
 %array_class(ble_gattc_include_t, ble_gattc_include_array);
 %array_class(ble_gattc_char_t, ble_gattc_char_array);
 %array_class(ble_gattc_desc_t, ble_gattc_desc_array);
+#if NRF_SD_BLE_API_VERSION == 2
 %array_class(ble_gattc_attr_info_t, ble_gattc_attr_info_array);
+#endif
+#if NRF_SD_BLE_API_VERSION == 3
+%array_class(ble_gattc_attr_info16_t, ble_gattc_attr_info16_array);
+%array_class(ble_gattc_attr_info128_t, ble_gattc_attr_info128_array);
+#endif
 %array_class(ble_gattc_handle_value_t, ble_gattc_handle_value_array);
 %array_class(sd_rpc_serial_port_desc_t, sd_rpc_serial_port_desc_array);
 
