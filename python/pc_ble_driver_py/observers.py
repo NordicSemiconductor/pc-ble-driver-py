@@ -51,6 +51,10 @@ class BLEDriverObserver(object):
         pass
 
 
+    def on_gap_evt_sec_params_request(self, ble_driver, conn_handle, peer_params):
+        pass
+
+
     def on_gap_evt_conn_param_update_request(self, ble_driver, conn_handle, conn_params):
         pass
 
@@ -85,6 +89,7 @@ class BLEDriverObserver(object):
 
     def on_gattc_evt_desc_disc_rsp(self, ble_driver, conn_handle, status, descriptions):
         pass
+
 
     def on_gap_evt_auth_status(self, ble_driver, conn_handle, auth_status):
         pass
