@@ -280,7 +280,18 @@ class BLEAdapter(BLEDriverObserver):
         result = self.evt_sync[conn_handle].wait(evt = BLEEvtID.gattc_evt_write_rsp)
         return result['status']
 
-
+    def read_req(self, conn_handle, uuid):
+        handle = self.db_conns[conn_handle].get_char_value_handle(uuid)
+        if handle == None:
+            raise NordicSemiException('Characteristic value handler not found')
+        self.driver.ble_gattc_read(conn_handle, handle,0)
+        result = self.evt_sync[conn_handle].wait(evt = BLEEvtID.gattc_evt_read_rsp)
+        gatt_res = result['status']
+        if gatt_res == BLEGattStatusCode.success:
+             return (gatt_res, result['data'])
+        else:
+             return (gatt_res, None)
+ 	
     def write_cmd(self, conn_handle, uuid, data):
         handle = self.db_conns[conn_handle].get_char_value_handle(uuid)
         if handle == None:
@@ -354,7 +365,9 @@ class BLEAdapter(BLEDriverObserver):
     def on_gattc_evt_write_rsp(self, ble_driver, conn_handle, **kwargs):
         self.evt_sync[conn_handle].notify(evt = BLEEvtID.gattc_evt_write_rsp, data = kwargs)
 
-
+    def on_gattc_evt_read_rsp(self, ble_driver, conn_handle, **kwargs):
+        self.evt_sync[conn_handle].notify(evt = BLEEvtID.gattc_evt_read_rsp, data = kwargs)
+	
     def on_gattc_evt_prim_srvc_disc_rsp(self, ble_driver, conn_handle, **kwargs):
         self.evt_sync[conn_handle].notify(evt = BLEEvtID.gattc_evt_prim_srvc_disc_rsp, data = kwargs)
 
