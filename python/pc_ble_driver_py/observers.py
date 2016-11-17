@@ -78,6 +78,8 @@ class BLEDriverObserver(object):
     def on_gattc_evt_hvx(self, ble_driver, conn_handle, status, error_handle, attr_handle, hvx_type, data):
         pass
 
+    def on_gattc_evt_read_rsp(self, ble_driver, conn_handle, status, error_handle, attr_handle, offset, data):
+        pass
 
     def on_gattc_evt_prim_srvc_disc_rsp(self, ble_driver, conn_handle, status, services):
         pass

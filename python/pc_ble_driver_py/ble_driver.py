@@ -1130,7 +1130,13 @@ class BLEDriver(object):
                                          conn_handle,
                                          write_params.to_c())
 
-
+    @NordicSemiErrorCheck
+    @wrapt.synchronized(api_lock)
+    def ble_gattc_read(self, conn_handle, handle, offset):
+        return driver.sd_ble_gattc_read(self.rpc_adapter,
+                                         conn_handle,
+                                         handle,
+										 offset)
     @NordicSemiErrorCheck
     @wrapt.synchronized(api_lock)
     def ble_gattc_prim_srvc_disc(self, conn_handle, srvc_uuid, start_handle):
@@ -1286,6 +1292,19 @@ class BLEDriver(object):
                                                offset       = write_rsp_evt.offset,
                                                data         = util.uint8_array_to_list(write_rsp_evt.data,
                                                                                        write_rsp_evt.len))
+
+            elif evt_id == BLEEvtID.gattc_evt_read_rsp:
+                read_rsp_evt   = ble_event.evt.gattc_evt.params.read_rsp
+                logger.debug('GATTC: READ RSP')
+                for obs in self.observers:
+                    obs.on_gattc_evt_read_rsp(ble_driver   = self,
+                                               conn_handle  = ble_event.evt.gattc_evt.conn_handle,
+                                               status       = BLEGattStatusCode(ble_event.evt.gattc_evt.gatt_status),
+                                               error_handle = ble_event.evt.gattc_evt.error_handle,
+                                               attr_handle  = read_rsp_evt.handle,
+                                               offset       = read_rsp_evt.offset,
+                                               data         = util.uint8_array_to_list(read_rsp_evt.data,
+                                                                                       read_rsp_evt.len))
 
             elif evt_id == BLEEvtID.gattc_evt_hvx:
                 hvx_evt = ble_event.evt.gattc_evt.params.hvx
