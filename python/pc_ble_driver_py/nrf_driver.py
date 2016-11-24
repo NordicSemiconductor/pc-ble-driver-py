@@ -125,12 +125,16 @@ class NrfDriver(object):
         if self._event_thread is not None:
             logger.error("Trying to open already opened driver")
             return
-        self._event_thread = Thread(target=self._event_handler)
-        self._event_thread.start()
-        return driver.sd_rpc_open(self.rpc_adapter,
+
+        err_code = driver.sd_rpc_open(self.rpc_adapter,
                                   self.status_handler,
                                   self.ble_evt_handler,
                                   self.log_message_handler)
+
+        if err_code == driver.NRF_SUCCESS:
+            self._event_thread = Thread(target=self._event_handler)
+            self._event_thread.start()
+        return err_code
 
 
     @NordicSemiErrorCheck
