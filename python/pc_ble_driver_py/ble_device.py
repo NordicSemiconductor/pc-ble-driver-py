@@ -1,7 +1,7 @@
 import logging
 from threading          import Event
 
-from ble_gattc          import GattClient
+from gattc              import GattClient
 from nrf_event          import *
 from nrf_event_sync     import EventSync
 
