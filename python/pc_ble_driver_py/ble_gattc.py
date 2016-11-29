@@ -53,16 +53,6 @@ logger = logging.getLogger(__name__)
 # * More events and commands needed
 
 
-class GattClientObserver(object):
-    def on_primary_service_discovery_response(self, gatt_client, event):
-        pass
-
-    def on_characteristic_discovery_response(self, gatt_client, event):
-        pass
-
-    def on_descriptor_discovery_response(self, gatt_client, event):
-        pass
-
 class GattClient(NrfDriverObserver):
 
     def __init__(self, driver, conn_handle):
@@ -229,7 +219,7 @@ class GattClient(NrfDriverObserver):
 
         self._desc_disc = ProcedureSync()
         self._desc_disc._state = {'char': char, 'type': 'desc_disc'}
-        self.driver.ble_gattc_desc_disc(self.conn_handle, char.handle_value, char.end_handle)
+        self.driver.ble_gattc_desc_disc(self.conn_handle, char.handle_value + 1, char.end_handle)
         return self._desc_disc
 
     def _handle_descriptor_discovery_response(self, event):
