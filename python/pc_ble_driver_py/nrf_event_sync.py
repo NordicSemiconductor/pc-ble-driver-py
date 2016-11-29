@@ -37,11 +37,21 @@
 
 import Queue
 import time
+import threading
 
 from nrf_driver     import NrfDriverObserver
 
 
 class EventSync(NrfDriverObserver):
+    """Register an observer to synchronize waiting for events
+
+    This class is used for serial code to start a procedure and wait for the resonse.
+
+    The class takes both a list of classes to filter and a callback filter function.
+    * The class filter is useful for instance to only receive GattcEvtHvx.
+    * The callback filter is useful for instance to make sure that the GattcEvtHvx
+      class is only for a given attribute handle.
+    """
     def __init__(self, driver, event_filter=None, callback=None):
         super(NrfDriverObserver, self).__init__()
         self.driver        = driver
@@ -87,4 +97,24 @@ class EventSync(NrfDriverObserver):
 
     def __exit__(self, type, value, traceback):
         self.unregister_as_observer()
+
+
+class ProcedureSync(object):
+    """Give serial code a chance to sync with long-running procedures.
+
+    The procedure sync serves two purposes:
+    * Make it possible for serial code to wait for procedures that can take time to finish
+      * Connect request
+      * Multi step procedures like pairing and service discovery
+    * Give multi step procedures a state to know what the next step is when receiving an event
+    """
+    def __init__(self):
+        self.event  = threading.Event()
+        self.status = None
+        self.result = []
+        self._state = {}
+
+    def wait(self, timeout=None):
+        self.event.wait(timeout)
+
 
