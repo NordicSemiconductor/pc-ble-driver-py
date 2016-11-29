@@ -12,6 +12,7 @@ from pc_ble_driver_py.exceptions import NordicSemiException
 
 from ble_device         import BLEDevice, BLEDeviceObserver
 from ble_gattc          import GattClient
+from observers          import GattClientObserver
 from nrf_adapter        import NrfAdapter, NrfAdapterObserver
 from nrf_event          import *
 from nrf_event_sync     import EventSync
@@ -29,12 +30,14 @@ def logger_setup():
 
 logger = logger_setup()
 
-class TestDevice(BLEDevice, BLEDeviceObserver):
+class TestDevice(BLEDevice, BLEDeviceObserver, GattClientObserver):
     def __init__(self, driver, peer_addr):
         BLEDevice.__init__(self, driver, peer_addr)
         BLEDeviceObserver.__init__(self)
+        GattClientObserver.__init__(self)
 
         self.observer_register(self)
+        self.gattc.observer_register(self)
 
     def connect(self, timeout=2):
         logger.info('BLE: Connecting to %r', self.peer_addr)
@@ -90,10 +93,56 @@ class TestDevice(BLEDevice, BLEDeviceObserver):
             else:
                 raise NordicSemiException('Got unexpected event %r' % event)
 
+    def print_peer_db(self):
+        proc_sync = self.gattc.primary_service_discovery()
+        proc_sync.wait(8)
+        if proc_sync.status != BLEGattStatusCode.success:
+            print 'error'
+            return
+
+        services = proc_sync.result
+        for service in services:
+            proc_sync = self.gattc.characteristics_discovery(service)
+            proc_sync.wait(8)
+            if proc_sync.status != BLEGattStatusCode.success:
+                print 'error'
+                return
+
+            for char in service.chars:
+                read = self.gattc.read(char.handle_decl)
+                if read is None:
+                    print 'error'
+                    return
+                char.data_decl = read.data
+
+                read = self.gattc.read(char.handle_value)
+                if read is None:
+                    print 'error'
+                    return
+                char.data_value = read.data
+
+                proc_sync = self.gattc.descriptor_discovery(char)
+                proc_sync.wait(8)
+                if proc_sync.status != BLEGattStatusCode.success:
+                    return
+                for descr in char.descs:
+                    read = self.gattc.read(descr.handle)
+                    if read is None:
+                        print 'error'
+                        return
+                    descr.data = read.data
+
+        for service in services:
+            logger.info(        '  0x%04x         0x%04x   -- %s', service.start_handle, service.srvc_uuid.get_value(), service.uuid)
+            for char in service.chars:
+                logger.info(    '    0x%04x       0x%04x   --   %r', char.handle_decl, char.char_uuid.get_value(), ''.join(map(chr, char.data_decl)))
+                logger.info(    '      0x%04x     0x%04x   --     %r', char.handle_value, char.uuid.get_value(), ''.join(map(chr, char.data_value)))
+                for descr in char.descs:
+                    logger.info('      0x%04x     0x%04x   --     %r', descr.handle, descr.uuid.get_value(), ''.join(map(chr, descr.data)))
+
     def on_connection_param_update_request(self, device, event):
         logger.info("Request to update connection parameters")
         self.driver.ble_gap_conn_param_update(self.conn_handle, event.conn_params)
-
 
 def scan(adapter, timeout=1):
     # Scan for devices
@@ -124,23 +173,26 @@ def run_test(adapter, peer_addr):
     # Connect and pair device
     device = TestDevice(adapter.driver, peer_addr)
     device.connect()
-    device.pair()
-    device.gattc.service_discovery()
-    time.sleep(1)
+    #device.pair()
+    device.print_peer_db()
+    #time.sleep(8)
 
-    # Disconnect
-    device.disconnect()
-    time.sleep(2)
+    #device.gattc.service_discovery()
+    #time.sleep(1)
 
-    # Reconnect, reencrypt
-    device.connect()
-    device.encrypt()
+    ## Disconnect
+    #device.disconnect()
+    #time.sleep(2)
 
-    print 'device name?', device.gattc.read(0x0003) # Normally name for NRF devices
+    ## Reconnect, reencrypt
+    #device.connect()
+    #device.encrypt()
+
+    #print 'device name?', device.gattc.read(0x0003) # Normally name for NRF devices
 
 def main(args):
-    adapter = NrfAdapter.open_serial(serial_port=args.device, baud_rate=115200)
-    peer_addr = BLEGapAddr.from_string("FB:5E:B7:BD:EC:39,r")
+    adapter = NrfAdapter.open_serial(serial_port=args.device, baud_rate=1000000)
+    peer_addr = BLEGapAddr.from_string("D6:60:C4:A9:6B:5F,r")
     try:
         #scan(adapter, timeout=8)
         run_test(adapter, peer_addr)
