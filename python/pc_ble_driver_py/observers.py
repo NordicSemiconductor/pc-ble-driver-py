@@ -104,6 +104,7 @@ class BLEDriverObserver(object):
     def on_att_mtu_exchanged(self, ble_driver, conn_handle, att_mtu):
         pass
 
+
 class BLEAdapterObserver(object):
     def __init__(self, *args, **kwargs):
         super(BLEAdapterObserver, self).__init__()
@@ -111,9 +112,20 @@ class BLEAdapterObserver(object):
 
     def on_notification(self, ble_adapter, conn_handle, uuid, data):
         pass
-        
-        
+
+    # TODO: This is probably not a good default. It should be up to the application?
     def on_conn_param_update_request(self, ble_adapter, conn_handle, conn_params):
         # Default behaviour is to accept connection parameter update
         ble_adapter.conn_param_update(conn_handle, conn_params)
+
+
+class GattClientObserver(object):
+    def on_primary_service_discovery_response(self, gatt_client, event):
+        pass
+
+    def on_characteristic_discovery_response(self, gatt_client, event):
+        pass
+
+    def on_descriptor_discovery_response(self, gatt_client, event):
+        pass
 
