@@ -48,11 +48,14 @@ class BLEDevice(object):
 
         self.observers      = []
         self.connected      = Event()
+        self.gattc          = GattClient(self.driver, None)
         self.conn_handle    = None
         self.conn_params    = None
         self.own_addr       = None
-        self.gattc          = None
         self.key_set        = None
+
+    def __del__(self):
+        self.driver.observer_unregister(self)
 
     def connect(self, scan_params=None, conn_params=None):
         if scan_params is None:
@@ -81,9 +84,9 @@ class BLEDevice(object):
         if   isinstance(event, GapEvtConnected):
             if event.peer_addr != self.peer_addr:
                 return # Filter out events for other links
-            self.conn_handle    = event.conn_handle
-            self.own_addr       = event.own_addr
-            self.gattc          = GattClient(self.driver, self.conn_handle)
+            self.conn_handle        = event.conn_handle
+            self.own_addr           = event.own_addr
+            self.gattc.conn_handle  = event.conn_handle
 
             for obs in self.observers[:]:
                 obs.on_connected(self, event)
@@ -101,9 +104,9 @@ class BLEDevice(object):
             for obs in self.observers[:]:
                 obs.on_disconnected(self, event)
 
-            self.conn_handle    = None
-            self.own_addr       = None
-            self.gattc          = None
+            self.conn_handle        = None
+            self.own_addr           = None
+            self.gattc.conn_handle  = None
         elif isinstance(event, GapEvtConnParamUpdateRequest):
             for obs in self.observers[:]:
                 obs.on_connection_param_update_request(self, event)
