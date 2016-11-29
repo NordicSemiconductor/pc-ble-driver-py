@@ -124,6 +124,11 @@ class BLEUUID(object):
         except(ValueError):
             self.value  = value
 
+    def get_value(self):
+        if isinstance(self.value, BLEUUID.Standard):
+            return self.value.value
+        return self.value
+
 
     def __str__(self):
         if isinstance(self.value, BLEUUID.Standard):
@@ -689,9 +694,10 @@ class BLEGattcWriteParams(object):
 
 
 class BLEDescriptor(object):
-    def __init__(self, uuid, handle):
+    def __init__(self, uuid, handle, data=None):
         self.handle = handle
         self.uuid   = uuid
+        self.data   = data
 
 
     @classmethod
@@ -701,10 +707,13 @@ class BLEDescriptor(object):
 
 
 class BLECharacteristic(object):
-    def __init__(self, uuid, handle_decl, handle_value):
+    char_uuid = BLEUUID(BLEUUID.Standard.characteristic)
+    def __init__(self, uuid, handle_decl, handle_value, data_decl=None, data_value=None):
         self.uuid           = uuid
         self.handle_decl    = handle_decl
         self.handle_value   = handle_value
+        self.data_decl      = data_decl
+        self.data_value     = data_value
         self.end_handle     = None
         self.descs          = list()
 
@@ -717,6 +726,8 @@ class BLECharacteristic(object):
 
 
 class BLEService(object):
+    srvc_uuid = BLEUUID(BLEUUID.Standard.service_primary)
+
     def __init__(self, uuid, start_handle, end_handle):
         self.uuid           = uuid
         self.start_handle   = start_handle
