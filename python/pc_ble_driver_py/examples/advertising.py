@@ -36,47 +36,62 @@
 #
 
 import sys
-from threading                      import Condition, Lock
-from pc_ble_driver_py.observers import BLEDriverObserver 
+import traceback
+from threading                  import Condition, Lock
+from pc_ble_driver_py.observers import BLEDriverObserver, NrfDriverObserver
 
 def init(conn_ic_id):
-    global BLEDriver, BLEAdvData, BLEEvtID
+    global NrfAdapter, nrf_types, nrf_event
     from pc_ble_driver_py import config
     config.__conn_ic_id__ = conn_ic_id
-    from pc_ble_driver_py.ble_driver    import BLEDriver, BLEAdvData, BLEEvtID
+    from pc_ble_driver_py               import nrf_types
+    from pc_ble_driver_py               import nrf_event
+    from pc_ble_driver_py.nrf_adapter   import NrfAdapter
 
-def main(serial_port):
+def main(serial_port, baud_rate):
     print("Serial port used: {}".format(serial_port))
-    driver      = BLEDriver(serial_port=serial_port, auto_flash=True)
-    observer    = TimeoutObserver()
-    adv_data    = BLEAdvData(complete_local_name='Example')
+    adapter = None
+    try:
+        adapter     = NrfAdapter.open_serial(serial_port=serial_port, baud_rate=baud_rate)
+        observer    = TimeoutObserver()
+        adv_data    = nrf_types.BLEAdvData(complete_local_name='Example')
+        adv_params  = adapter.driver.adv_params_setup()
+        adv_params.timeout_s = 10
 
-    driver.observer_register(observer)
-    driver.open()
-    driver.ble_enable()
-    driver.ble_gap_adv_data_set(adv_data)
-    driver.ble_gap_adv_start()
-    observer.wait_for_timeout()
+        adapter.driver.observer_register(observer)
+        adapter.driver.ble_gap_adv_data_set(adv_data)
+        adapter.driver.ble_gap_adv_start(adv_params)
+        observer.wait_for_timeout(adv_params.timeout_s)
+    except:
+        traceback.print_exc()
+    if adapter:
+        print("Closing")
+        adapter.close()
 
-    print("Closing")
-    driver.close()
-
-class TimeoutObserver(BLEDriverObserver):
+class TimeoutObserver(NrfDriverObserver):
     def __init__(self):
         self.cond = Condition(Lock())
 
-    def on_gap_evt_timeout(self, ble_driver, conn_handle, src):
-        with self.cond:
-            self.cond.notify_all()
+    def on_event(self, nrf_driver, event):
+        if isinstance(event, nrf_event.GapEvtTimeout):
+            with self.cond:
+                self.cond.notify_all()
+        if isinstance(event, nrf_event.GapEvtConnected):
+            print("Got connected")
+            with self.cond:
+                self.cond.notify_all()
 
-    def wait_for_timeout(self):
+    def wait_for_timeout(self, timeout):
         with self.cond:
-            self.cond.wait()
+            self.cond.wait(timeout)
 
 if __name__ == "__main__":
-    if len(sys.argv) == 3:
+    if len(sys.argv) >= 3:
         init(sys.argv[1])
-        main(sys.argv[2])
+        baud_rate = None
+        if len(sys.argv) == 4:
+            baud_rate = int(sys.argv[3])
+        main(sys.argv[2], baud_rate)
     else:
         print("Invalid arguments. Parameters: <conn_ic_id> <serial_port>")
         print("conn_ic_id: NRF51, NRF52")
