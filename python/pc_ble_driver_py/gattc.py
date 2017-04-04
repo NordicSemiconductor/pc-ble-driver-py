@@ -39,7 +39,7 @@ import logging
 
 from nrf_event      import *
 from nrf_types      import *
-from nrf_driver     import NrfDriverObserver
+from observers      import NrfDriverObserver
 from nrf_event_sync import EventSync, ProcedureSync
 from gatt_db        import GattDb
 

@@ -62,14 +62,13 @@ def NordicSemiErrorCheck(wrapped=None, expected = driver.NRF_SUCCESS):
 
     return wrapper(wrapped)
 
-class NrfDriverObserver(object):
-    def on_event(self, nrf_driver, event):
-        pass
-
 class NrfDriver(object):
-    api_lock        = Lock()
+    api_lock            = Lock()
+    default_baud_rate   = 115200
 
-    def __init__(self, serial_port, baud_rate=115200, auto_flash=False):
+    def __init__(self, serial_port, baud_rate=None, auto_flash=False):
+        if baud_rate is None:
+            baud_rate = self.default_baud_rate
         self._events        = Queue.Queue()
         self._event_thread  = None
         self._event_loop    = False

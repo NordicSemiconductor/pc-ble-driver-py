@@ -129,3 +129,7 @@ class GattClientObserver(object):
     def on_descriptor_discovery_response(self, gatt_client, event):
         pass
 
+class NrfDriverObserver(object):
+    def on_event(self, nrf_driver, event):
+        pass
+

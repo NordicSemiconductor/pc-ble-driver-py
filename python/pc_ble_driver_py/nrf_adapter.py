@@ -38,7 +38,8 @@
 import logging
 import Queue
 
-from nrf_driver                     import NrfDriverObserver, NrfDriver
+from observers                      import NrfDriverObserver
+from nrf_driver                     import NrfDriver
 from nrf_event                      import *
 from nrf_event_sync                 import EventSync
 from pc_ble_driver_py.exceptions    import NordicSemiException
