@@ -280,6 +280,33 @@ class BLEAdapter(BLEDriverObserver):
         result = self.evt_sync[conn_handle].wait(evt = BLEEvtID.gattc_evt_write_rsp)
         return result['status']
 
+
+    @NordicSemiErrorCheck(expected = BLEGattStatusCode.success)
+    def write_prep(self, conn_handle, uuid, data, offset):
+        handle = self.db_conns[conn_handle].get_char_value_handle(uuid)
+        if handle == None:
+            raise NordicSemiException('Characteristic value handler not found')
+        write_params = BLEGattcWriteParams(BLEGattWriteOperation.prepare_write_req,
+                                           BLEGattExecWriteFlag.prepared_write,
+                                           handle,
+                                           data,
+                                           offset)
+        self.driver.ble_gattc_write(conn_handle, write_params)
+        result = self.evt_sync[conn_handle].wait(evt = BLEEvtID.gattc_evt_write_rsp)
+        return result['status']
+
+    @NordicSemiErrorCheck(expected = BLEGattStatusCode.success)
+    def write_exec(self, conn_handle):
+        write_params = BLEGattcWriteParams(BLEGattWriteOperation.execute_write_req,
+                                           BLEGattExecWriteFlag.prepared_write,
+                                           0,
+                                           [],
+                                           0)
+        self.driver.ble_gattc_write(conn_handle, write_params)
+        result = self.evt_sync[conn_handle].wait(evt = BLEEvtID.gattc_evt_write_rsp)
+        return result['status']
+
+
     def read_req(self, conn_handle, uuid):
         handle = self.db_conns[conn_handle].get_char_value_handle(uuid)
         if handle == None:
