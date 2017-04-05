@@ -43,6 +43,12 @@
 # * "NRF52"
 __conn_ic_id__ = None
 
+def set_conn_ic(conn_ic_id):
+    global __conn_ic_id__
+    if conn_ic_id not in ("NRF51", "NRF52"):
+        raise RuntimeError('Invalid connectivity IC identifier: {}.'.format(__conn_ic_id__))
+    __conn_ic_id__ = conn_ic_id
+
 def sd_api_ver_get():
     if __conn_ic_id__ is None:
         raise RuntimeError('Connectivity IC identifier __conn_ic_id__ is not set')

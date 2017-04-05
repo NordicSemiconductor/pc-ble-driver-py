@@ -43,7 +43,7 @@ from pc_ble_driver_py.observers import BLEDriverObserver, NrfDriverObserver
 def init(conn_ic_id):
     global NrfAdapter, nrf_types, nrf_event
     from pc_ble_driver_py import config
-    config.__conn_ic_id__ = conn_ic_id
+    config.set_conn_ic(conn_ic_id)
     from pc_ble_driver_py               import nrf_types
     from pc_ble_driver_py               import nrf_event
     from pc_ble_driver_py.nrf_adapter   import NrfAdapter
