@@ -90,7 +90,6 @@ class NrfAdapter(NrfDriverObserver):
     def scan_stop(self):
         return self.driver.ble_gap_scan_stop()
 
-    # TODO(vw): I think this belongs in the adapter, so implement. Or consider moving it to ble_device
     def att_mtu_exchange(self, conn_handle):
         self.driver.ble_gattc_exchange_mtu_req(conn_handle)
         #response = self.evt_sync[conn_handle].wait(evt = BLEEvtID.gattc_evt_exchange_mtu_rsp)

@@ -39,6 +39,7 @@ import Queue
 import time
 import threading
 
+from nrf_driver     import NrfDriver
 from observers      import NrfDriverObserver
 
 
@@ -54,7 +55,14 @@ class EventSync(NrfDriverObserver):
     """
     def __init__(self, driver, event_filter=None, callback=None):
         super(NrfDriverObserver, self).__init__()
-        self.driver        = driver
+
+        if isinstance(driver, NrfDriver):
+            self.driver     = driver
+        elif hasattr(driver, "driver"):
+            self.driver     = driver.driver
+        else:
+            raise Exception("EventSync not initialized with a driver: %s" % driver)
+
         if isinstance(event_filter, (list, tuple)):
             self._events    = event_filter
         elif event_filter is not None:

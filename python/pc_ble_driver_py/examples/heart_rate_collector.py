@@ -78,7 +78,7 @@ class HRCollector(NrfAdapterObserver, GattClientObserver):
         self.adapter.observer_register(self)
 
     def scan_and_connect(self):
-        with EventSync(self.adapter.driver, [nrf_event.GapEvtAdvReport]) as evt_sync:
+        with EventSync(self.adapter, nrf_event.GapEvtAdvReport) as evt_sync:
             self.adapter.scan_start()
 
             print("Scanning for device, press ctrl-c to stop")
@@ -219,6 +219,8 @@ def main(serial_port, baud_rate):
             collector.start_hr_collect()
 
         time.sleep(10)
+    except KeyboardInterrupt:
+        pass
     except:
         traceback.print_exc()
     if adapter:

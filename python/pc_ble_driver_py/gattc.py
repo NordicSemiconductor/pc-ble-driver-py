@@ -107,7 +107,7 @@ class GattClient(NrfDriverObserver):
     # gattc
 
     def read(self, attr_handle):
-        with EventSync(self.driver, [GattcEvtReadResponse]) as evt_sync:
+        with EventSync(self.driver, GattcEvtReadResponse) as evt_sync:
             self.driver.ble_gattc_read(self.conn_handle, attr_handle)
             return evt_sync.get()
 
