@@ -123,6 +123,8 @@ class GattClientObserver(object):
     def on_gattc_event(self, gatt_client, event):
         pass
 
+    # gattc
+
     def on_primary_service_discovery_response(self, gatt_client, event):
         pass
 
@@ -137,6 +139,33 @@ class GattClientObserver(object):
 
     def on_indication(self, gatt_client, event):
         pass
+
+    # gap
+
+    def on_connected(self, device, event):
+        pass
+
+    def on_disconnected(self, device, event):
+        pass
+
+    def on_connection_param_update_request(self, device, event):
+        pass
+
+    def on_connection_param_update(self, device, event):
+        pass
+
+    def on_sec_params_request(self, device, event):
+        pass
+
+    def on_auth_key_request(self, device, event):
+        pass
+
+    def on_conn_sec_update(self, device, event):
+        pass
+
+    def on_auth_status(self, device, event):
+        pass
+
 
 class NrfDriverObserver(object):
     def on_driver_event(self, nrf_driver, event):

@@ -55,13 +55,18 @@ logger = logging.getLogger(__name__)
 
 class GattClient(NrfDriverObserver):
 
-    def __init__(self, driver, conn_handle):
+    def __init__(self, driver, peer_addr):
         super(GattClient, self).__init__()
-        self.conn_handle        = conn_handle
         self.driver             = driver
+        self.peer_addr          = peer_addr
+        self.conn_params        = None
+        self.own_addr           = None
+        self.conn_handle        = None
+        self.key_set            = None
 
         self.observers          = []
         self.peer_db            = GattDb()
+        self._connect_sync      = None
         self._prim_src_disc     = None
         self._char_disc         = None
         self._desc_disc         = None
@@ -77,6 +82,29 @@ class GattClient(NrfDriverObserver):
 
     def observer_unregister(self, observer):
         self.observers.remove(observer)
+
+    # gap
+
+    def connect(self, scan_params=None, conn_params=None):
+        if scan_params is None:
+            scan_params = self.driver.scan_params_setup()
+        if conn_params is None:
+            conn_params = self.driver.conn_params_setup()
+        self.conn_params = conn_params
+        self._connect_sync = ProcedureSync()
+        self.driver.ble_gap_connect(self.peer_addr, conn_params=conn_params)
+        return self._connect_sync
+
+    def disconnect(self, hci_status_code=BLEHci.remote_user_terminated_connection):
+        with EventSync(self.driver, GapEvtDisconnected) as evt_sync:
+            self.driver.ble_gap_disconnect(self.conn_handle, hci_status_code)
+            event = evt_sync.get(self.conn_params.conn_sup_timeout_ms / 1000.)
+
+    def gap_authenticate(self, sec_params):
+        self.driver.ble_gap_authenticate(self.conn_handle, sec_params)
+
+
+    # gattc
 
     def read(self, attr_handle):
         with EventSync(self.driver, [GattcEvtReadResponse]) as evt_sync:
@@ -140,9 +168,6 @@ class GattClient(NrfDriverObserver):
         return self._prim_src_disc
 
     def _handle_primary_service_discovery_response(self, event):
-        for obs in self.observers[:]:
-            obs.on_primary_service_discovery_response(self, event)
-
         # Stop processing if we are not doing event driven service discovery
         if self._prim_src_disc is None:
             return
@@ -179,9 +204,6 @@ class GattClient(NrfDriverObserver):
         return self._char_disc
 
     def _handle_characteristic_discovery_response(self, event):
-        for obs in self.observers[:]:
-            obs.on_characteristic_discovery_response(self, event)
-
         # Stop processing if we are not doing event driven characteristic discovery
         if self._char_disc is None:
             return
@@ -223,9 +245,6 @@ class GattClient(NrfDriverObserver):
         return self._desc_disc
 
     def _handle_descriptor_discovery_response(self, event):
-        for obs in self.observers[:]:
-            obs.on_descriptor_discovery_response(self, event)
-
         # Stop processing if we are not doing event driven descriptor discovery
         if self._desc_disc is None:
             return
@@ -254,36 +273,90 @@ class GattClient(NrfDriverObserver):
 
         self.driver.ble_gattc_desc_disc(self.conn_handle, last_descr.handle + 1, char.end_handle)
 
-    def _handle_hvx(self, event):
-        is_notification = event.hvx_type == BLEGattHVXType.notification
-        is_indication   = event.hvx_type == BLEGattHVXType.indication
-        for obs in self.observers[:]:
-            if is_notification:
-                obs.on_notification(self, event)
-            if is_indication:
-                obs.on_indication(self, event)
 
     def on_driver_event(self, nrf_driver, event):
         #print event
-        if event.conn_handle != self.conn_handle:
-            # Filter out events for other links
-            return
 
-        if not self.observers:
+        # gap
+
+        if   isinstance(event, GapEvtConnected):
+            if event.peer_addr != self.peer_addr:
+                return # Filter out events for other links
+            self.conn_handle        = event.conn_handle
+            self.own_addr           = event.own_addr
+
+            self._connect_sync.status = True # TODO: Maybe BLE_GAP_EVT_CONNECTED?
+            self._connect_sync.event.set()
+            self._connect_sync = None
+
+            for obs in self.observers[:]:
+                obs.on_gattc_event(self, event)
+            for obs in self.observers[:]:
+                obs.on_connected(self, event)
             return
+        elif isinstance(event, GapEvtTimeout):
+            if event.src != BLEGapTimeoutSrc.conn:
+                return
+            if not self._connect_sync:
+                return
+
+            self._connect_sync.status = False # TODO: Maybe BLE_GAP_EVT_TIMEOUT?
+            self._connect_sync.event.set()
+            self._connect_sync = None
+
+            for obs in self.observers[:]:
+                obs.on_gattc_event(self, event)
+            return
+        elif event.conn_handle != self.conn_handle:
+            return # Filter out events for other links
 
         for obs in self.observers[:]:
             obs.on_gattc_event(self, event)
 
-        if   isinstance(event, GapEvtConnected):
-            pass #    self.conn_handles.append(event.conn_handle)
-        elif isinstance(event, GapEvtDisconnected):
-            pass #    self.conn_handle.remove(event.conn_handle)
+        if   isinstance(event, GapEvtDisconnected):
+            for obs in self.observers[:]:
+                obs.on_disconnected(self, event)
+
+            self.conn_handle        = None
+            self.own_addr           = None
+        elif isinstance(event, GapEvtConnParamUpdateRequest):
+            for obs in self.observers[:]:
+                obs.on_connection_param_update_request(self, event)
+        elif isinstance(event, GapEvtConnParamUpdate):
+            for obs in self.observers[:]:
+                obs.on_connection_param_update(self, event)
+        elif isinstance(event, GapEvtSecParamsRequest):
+            for obs in self.observers[:]:
+                obs.on_sec_params_request(self, event)
+        elif isinstance(event, GapEvtAuthKeyRequest):
+            for obs in self.observers[:]:
+                obs.on_auth_key_request(self, event)
+        elif isinstance(event, GapEvtConnSecUpdate):
+            for obs in self.observers[:]:
+                obs.on_conn_sec_update(self, event)
+        elif isinstance(event, GapEvtAuthStatus):
+            for obs in self.observers[:]:
+                obs.on_auth_status(self, event)
+
+        # gattc
+
         elif isinstance(event, GattcEvtPrimaryServicecDiscoveryResponse):
+            for obs in self.observers[:]:
+                obs.on_primary_service_discovery_response(self, event)
             self._handle_primary_service_discovery_response(event)
         elif isinstance(event, GattcEvtCharacteristicDiscoveryResponse):
+            for obs in self.observers[:]:
+                obs.on_characteristic_discovery_response(self, event)
             self._handle_characteristic_discovery_response(event)
         elif isinstance(event, GattcEvtDescriptorDiscoveryResponse):
+            for obs in self.observers[:]:
+                obs.on_descriptor_discovery_response(self, event)
             self._handle_descriptor_discovery_response(event)
         elif isinstance(event, GattcEvtHvx):
-            self._handle_hvx(event)
+            is_notification = event.hvx_type == BLEGattHVXType.notification
+            is_indication   = event.hvx_type == BLEGattHVXType.indication
+            for obs in self.observers[:]:
+                if is_notification:
+                    obs.on_notification(self, event)
+                if is_indication:
+                    obs.on_indication(self, event)

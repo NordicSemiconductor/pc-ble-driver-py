@@ -53,40 +53,70 @@ def logger_setup():
 
     sh = logging.StreamHandler()
     sh.setFormatter(logging.Formatter('%(asctime)s %(message)s'))
-    logging.getLogger().addHandler(sh)
+    logger.addHandler(sh)
     return logger
 
 
 def init(conn_ic_id):
-    global logger, config, nrf_types, nrf_event, NrfAdapter, BLEDevice
+    global logger, config, nrf_types, nrf_event, NrfAdapter, GattClient, EventSync
     logger = logger_setup()
 
     from pc_ble_driver_py import config
     config.set_conn_ic(conn_ic_id)
 
-    from pc_ble_driver_py               import nrf_types
-    from pc_ble_driver_py               import nrf_event
-    from pc_ble_driver_py.nrf_adapter   import NrfAdapter
-    from pc_ble_driver_py.ble_device    import BLEDevice
+    from pc_ble_driver_py                   import nrf_types
+    from pc_ble_driver_py                   import nrf_event
+    from pc_ble_driver_py.nrf_adapter       import NrfAdapter
+    from pc_ble_driver_py.gattc             import GattClient
+    from pc_ble_driver_py.nrf_event_sync    import EventSync
 
 class HRCollector(NrfAdapterObserver, GattClientObserver):
     def __init__(self, adapter):
         super(HRCollector, self).__init__()
         self.adapter    = adapter
-        self.device     = BLEDevice(self.adapter.driver, None)
+        self.gattc      = None
         self.adapter.observer_register(self)
 
-    def connect_and_discover(self):
-        self.adapter.scan_start()
+    def scan_and_connect(self):
+        with EventSync(self.adapter.driver, [nrf_event.GapEvtAdvReport]) as evt_sync:
+            self.adapter.scan_start()
 
-        if not self.device.connected.wait(10):
-            raise NordicSemiException('Timeout. Device not found.')
+            print("Scanning for device, press ctrl-c to stop")
+            while True:
+                event = evt_sync.get(timeout=1)
 
-        self.device.gattc.observer_register(self)
+                if event is None:
+                    continue
+
+                dev_name_list = None
+                if nrf_types.BLEAdvData.Types.complete_local_name in event.adv_data.records:
+                    dev_name_list = event.adv_data.records[nrf_types.BLEAdvData.Types.complete_local_name]
+                elif nrf_types.BLEAdvData.Types.short_local_name in event.adv_data.records:
+                   dev_name_list = event.adv_data.records[nrf_types.BLEAdvData.Types.short_local_name]
+                else:
+                    continue
+
+                dev_name        = "".join(chr(e) for e in dev_name_list)
+                address_string  = "".join("{0:02X}".format(b) for b in event.peer_addr.addr)
+                print('AdvReport address: 0x{}, device_name: {}'.format(
+                        address_string, dev_name))
+
+                if (dev_name == TARGET_DEV_NAME):
+                    break
+
+        self.gattc  = GattClient(self.adapter.driver, event.peer_addr)
+        proc_sync   = self.gattc.connect()
+        proc_sync.wait(8)
+
+        if not proc_sync.status:
+            raise NordicSemiException('Timeout, unable to connect to device.')
+
+        self.gattc.observer_register(self)
 
         if config.sd_api_ver_get() >= 3:
             att_mtu = self.adapter.att_mtu_exchange(self.device.conn_handle)
 
+    def start_hr_collect(self):
         services = self.get_peer_db()
 
         if not services:
@@ -101,38 +131,39 @@ class HRCollector(NrfAdapterObserver, GattClientObserver):
                     continue
                 for descr in char.descs:
                     if descr.uuid.get_value() == nrf_types.BLEUUID.Standard.cccd.value:
-                        self.device.gattc.enable_notification(descr.handle)
+                        self.gattc.enable_notification(descr.handle)
 
     def get_peer_db(self):
-        proc_sync = self.device.gattc.primary_service_discovery()
+        print("Discovering peer database")
+        proc_sync = self.gattc.primary_service_discovery()
         proc_sync.wait(8)
         if proc_sync.status != nrf_types.BLEGattStatusCode.success:
             return
 
         services = proc_sync.result
         for service in services:
-            proc_sync = self.device.gattc.characteristics_discovery(service)
+            proc_sync = self.gattc.characteristics_discovery(service)
             proc_sync.wait(8)
             if proc_sync.status != nrf_types.BLEGattStatusCode.success:
                 return
 
             for char in service.chars:
-                read = self.device.gattc.read(char.handle_decl)
+                read = self.gattc.read(char.handle_decl)
                 if read is None:
                     return
                 char.data_decl = read.data
 
-                read = self.device.gattc.read(char.handle_value)
+                read = self.gattc.read(char.handle_value)
                 if read is None:
                     return
                 char.data_value = read.data
 
-                proc_sync = self.device.gattc.descriptor_discovery(char)
+                proc_sync = self.gattc.descriptor_discovery(char)
                 proc_sync.wait(8)
                 if proc_sync.status != nrf_types.BLEGattStatusCode.success:
                     return
                 for descr in char.descs:
-                    read = self.device.gattc.read(descr.handle)
+                    read = self.gattc.read(descr.handle)
                     if read is None:
                         return
                     descr.data = read.data
@@ -140,31 +171,21 @@ class HRCollector(NrfAdapterObserver, GattClientObserver):
         return services
 
     def print_peer_db(self, services):
+        print(            '  handle         uuid     value')
         for service in services:
-            logger.info(        '  0x%04x         0x%04x   -- %s', service.start_handle, service.srvc_uuid.get_value(), service.uuid)
+            print(        '  0x%04x         0x%04x   %s' % (
+                    service.start_handle, service.srvc_uuid.get_value(), service.uuid))
             for char in service.chars:
-                logger.info(    '    0x%04x       0x%04x   --   %r', char.handle_decl, char.char_uuid.get_value(), ''.join(map(chr, char.data_decl)))
-                logger.info(    '      0x%04x     0x%04x   --     %r', char.handle_value, char.uuid.get_value(), ''.join(map(chr, char.data_value)))
+                print(    '    0x%04x       0x%04x     %r' % (
+                        char.handle_decl, char.char_uuid.get_value(),
+                        ''.join(map(chr, char.data_decl))))
+                print(    '      0x%04x     0x%04x       %r' % (
+                        char.handle_value, char.uuid.get_value(),
+                        ''.join(map(chr, char.data_value))))
                 for descr in char.descs:
-                    logger.info('      0x%04x     0x%04x   --     %r', descr.handle, descr.uuid.get_value(), ''.join(map(chr, descr.data)))
-
-    def on_gap_evt_adv_report(self, adapter, event):
-        dev_name_list = None
-        if nrf_types.BLEAdvData.Types.complete_local_name in event.adv_data.records:
-            dev_name_list = event.adv_data.records[nrf_types.BLEAdvData.Types.complete_local_name]
-        elif nrf_types.BLEAdvData.Types.short_local_name in event.adv_data.records:
-            dev_name_list = event.adv_data.records[nrf_types.BLEAdvData.Types.short_local_name]
-        else:
-            return
-
-        dev_name        = "".join(chr(e) for e in dev_name_list)
-        address_string  = "".join("{0:02X}".format(b) for b in event.peer_addr.addr)
-        print('Received advertisment report, address: 0x{}, device_name: {}'.format(address_string,
-                                                                                    dev_name))
-
-        if (dev_name == TARGET_DEV_NAME):
-            self.device.peer_addr = event.peer_addr
-            self.device.connect()
+                    print('      0x%04x     0x%04x       %r' % (
+                            descr.handle, descr.uuid.get_value(),
+                            ''.join(map(chr, descr.data))))
 
     def on_notification(self, gatt_client, event):
         print('Connection: {}, {} = {}'.format(event.conn_handle, event.attr_handle, event.data))
@@ -194,7 +215,8 @@ def main(serial_port, baud_rate):
         adapter   = NrfAdapter.open_serial(serial_port, baud_rate, ble_enable_params)
         collector = HRCollector(adapter)
         for i in xrange(CONNECTIONS):
-            collector.connect_and_discover()
+            collector.scan_and_connect()
+            collector.start_hr_collect()
 
         time.sleep(10)
     except:
