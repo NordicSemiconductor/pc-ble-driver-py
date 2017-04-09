@@ -79,7 +79,7 @@ class BLEDevice(object):
     def gap_authenticate(self, sec_params):
         self.driver.ble_gap_authenticate(self.conn_handle, sec_params)
 
-    def on_event(self, nrf_driver, event):
+    def on_driver_event(self, nrf_driver, event):
         #logger.info("event %r", event)
         if   isinstance(event, GapEvtConnected):
             if event.peer_addr != self.peer_addr:

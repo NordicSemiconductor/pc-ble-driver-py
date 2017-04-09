@@ -38,10 +38,10 @@
 import sys
 import traceback
 from threading                  import Condition, Lock
-from pc_ble_driver_py.observers import BLEDriverObserver, NrfDriverObserver
+from pc_ble_driver_py.observers import NrfDriverObserver
 
 def init(conn_ic_id):
-    global NrfAdapter, nrf_types, nrf_event
+    global nrf_types, nrf_event, NrfAdapter
     from pc_ble_driver_py import config
     config.set_conn_ic(conn_ic_id)
     from pc_ble_driver_py               import nrf_types
@@ -72,7 +72,7 @@ class TimeoutObserver(NrfDriverObserver):
     def __init__(self):
         self.cond = Condition(Lock())
 
-    def on_event(self, nrf_driver, event):
+    def on_driver_event(self, nrf_driver, event):
         if isinstance(event, nrf_event.GapEvtTimeout):
             with self.cond:
                 self.cond.notify_all()

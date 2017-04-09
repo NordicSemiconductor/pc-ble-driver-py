@@ -254,11 +254,28 @@ class GattClient(NrfDriverObserver):
 
         self.driver.ble_gattc_desc_disc(self.conn_handle, last_descr.handle + 1, char.end_handle)
 
-    def on_event(self, nrf_driver, event):
+    def _handle_hvx(self, event):
+        is_notification = event.hvx_type == BLEGattHVXType.notification
+        is_indication   = event.hvx_type == BLEGattHVXType.indication
+        for obs in self.observers[:]:
+            if is_notification:
+                obs.on_notification(self, event)
+            if is_indication:
+                obs.on_indication(self, event)
+
+    def on_driver_event(self, nrf_driver, event):
+        #print event
         if event.conn_handle != self.conn_handle:
             # Filter out events for other links
             return
-        elif isinstance(event, GapEvtConnected):
+
+        if not self.observers:
+            return
+
+        for obs in self.observers[:]:
+            obs.on_gattc_event(self, event)
+
+        if   isinstance(event, GapEvtConnected):
             pass #    self.conn_handles.append(event.conn_handle)
         elif isinstance(event, GapEvtDisconnected):
             pass #    self.conn_handle.remove(event.conn_handle)
@@ -268,3 +285,5 @@ class GattClient(NrfDriverObserver):
             self._handle_characteristic_discovery_response(event)
         elif isinstance(event, GattcEvtDescriptorDiscoveryResponse):
             self._handle_descriptor_discovery_response(event)
+        elif isinstance(event, GattcEvtHvx):
+            self._handle_hvx(event)

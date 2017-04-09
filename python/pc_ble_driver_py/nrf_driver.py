@@ -439,7 +439,7 @@ class NrfDriver(object):
             #logger.info('ble_event.header.evt_id %r ----  %r', ble_event.header.evt_id, event)
             for obs in self.observers[:]:
                 try:
-                    obs.on_event(self, event)
+                    obs.on_driver_event(self, event)
                 except:
                     import traceback
                     traceback.print_exc()

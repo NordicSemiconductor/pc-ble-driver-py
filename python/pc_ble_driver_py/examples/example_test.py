@@ -11,12 +11,11 @@ from nrf_dll_load       import util
 from pc_ble_driver_py.exceptions import NordicSemiException
 
 from ble_device         import BLEDevice, BLEDeviceObserver
-from gattc              import GattClient
-from nrf_adapter        import NrfAdapter, NrfAdapterObserver
+from nrf_adapter        import NrfAdapter
 from nrf_event          import *
 from nrf_event_sync     import EventSync
 from nrf_types          import *
-from observers          import GattClientObserver
+from observers          import GattClientObserver, NrfAdapterObserver
 
 
 def logger_setup():

@@ -51,10 +51,6 @@ logger = logging.getLogger(__name__)
 # - Stuff like le_version_get and get_le_supported_features probably belongs here (in the adapter). Or maybe in ble_device?
 
 
-class NrfAdapterObserver(object):
-    def on_gap_evt_adv_report(self, adapter, event):
-        pass
-
 class NrfAdapter(NrfDriverObserver):
 
     def __init__(self, driver):
@@ -65,12 +61,12 @@ class NrfAdapter(NrfDriverObserver):
         self.driver.observer_register(self)
 
     @classmethod
-    def open_serial(cls, serial_port, baud_rate):
+    def open_serial(cls, serial_port, baud_rate, ble_enable_params=None):
         adapter = cls(NrfDriver(serial_port=serial_port, baud_rate=baud_rate))
         adapter.open()
         return adapter
 
-    def open(self):
+    def open(self, ble_enable_params=None):
         self.driver.open()
         self.driver.ble_enable()
 
@@ -101,7 +97,7 @@ class NrfAdapter(NrfDriverObserver):
         #return self.db_conns[conn_handle].att_mtu
 
 
-    def on_event(self, nrf_driver, event):
+    def on_driver_event(self, nrf_driver, event):
         if   isinstance(event, GapEvtConnected):
             self.conn_handles.append(event.conn_handle)
         elif isinstance(event, GapEvtDisconnected):

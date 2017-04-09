@@ -120,6 +120,9 @@ class BLEAdapterObserver(object):
 
 
 class GattClientObserver(object):
+    def on_gattc_event(self, gatt_client, event):
+        pass
+
     def on_primary_service_discovery_response(self, gatt_client, event):
         pass
 
@@ -129,7 +132,17 @@ class GattClientObserver(object):
     def on_descriptor_discovery_response(self, gatt_client, event):
         pass
 
+    def on_notification(self, gatt_client, event):
+        pass
+
+    def on_indication(self, gatt_client, event):
+        pass
+
 class NrfDriverObserver(object):
-    def on_event(self, nrf_driver, event):
+    def on_driver_event(self, nrf_driver, event):
+        pass
+
+class NrfAdapterObserver(object):
+    def on_gap_evt_adv_report(self, adapter, event):
         pass
 
