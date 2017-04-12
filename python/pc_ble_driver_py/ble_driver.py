@@ -987,6 +987,15 @@ class BLEDriver(object):
         self.ble_enable_params = ble_enable_params
         return driver.sd_ble_enable(self.rpc_adapter, ble_enable_params.to_c(), None)
 
+    @wrapt.synchronized(api_lock)
+    def ble_gap_addr_get(self):
+        address = BLEGapAddr(BLEGapAddr.Types.public, [0]*6)
+        addr = address.to_c()
+        err_code = driver.sd_ble_gap_addr_get(self.rpc_adapter, addr)
+        if err_code != driver.NRF_SUCCESS:
+            raise NordicSemiException('Failed to get ble_gap_addr. Error code: {}'.format(err_code))
+        return BLEGapAddr.from_c(addr)
+
 
     @NordicSemiErrorCheck
     @wrapt.synchronized(api_lock)
