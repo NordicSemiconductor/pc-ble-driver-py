@@ -42,7 +42,7 @@ please install the redistributable installer for [Visual Studio 2013](https://ww
 Before building pc-ble-driver-py you will need to have Boost installed and some of its libraries statically compiled.
 To install and compile Boost, please follow the instructions here:
 
-[Building Boost](https://github.com/NordicSemiconductor/pc-ble-driver/tree/master#building-boost)
+[Building Boost](https://github.com/NordicSemiconductor/pc-ble-driver/blob/master/Installation.md#building-boost)
 
 Assuming that you have built the Boost libraries and installed the tools required to do so, you can now build and install the Python bindings and the accompanying shared library.
 
