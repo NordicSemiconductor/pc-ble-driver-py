@@ -82,15 +82,30 @@ class BLEUUIDBase(object):
     def __init__(self, vs_uuid_base=None, uuid_type=None):
         assert isinstance(vs_uuid_base, (list, NoneType)), 'Invalid argument type'
         assert isinstance(uuid_type, (int, long, NoneType)), 'Invalid argument type'
-        if (vs_uuid_base is None) and uuid_type is None:
-            self.base   = [0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x10, 0x00,
-                           0x80, 0x00, 0x00, 0x80, 0x5F, 0x9B, 0x34, 0xFB]
-            self.type   = driver.BLE_UUID_TYPE_BLE
-
+        if vs_uuid_base is None:
+            self.base       = [0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x10, 0x00,
+                               0x80, 0x00, 0x00, 0x80, 0x5F, 0x9B, 0x34, 0xFB]
+            self.def_base   = True
         else:
-            self.base   = vs_uuid_base
-            self.type   = uuid_type
+            self.base       = vs_uuid_base
+            self.def_base   = False
 
+        if uuid_type is None:
+            self.type = driver.BLE_UUID_TYPE_BLE
+        else:
+            self.type = uuid_type
+
+    def __eq__(self, other):
+        if not isinstance(other, BLEUUIDBase):
+            return False
+        if self.base != other.base:
+            return False
+        if self.type != other.type:
+            return False
+        return True
+
+    def __ne__(self, other):
+        return not self.__eq__(other)
 
     @classmethod
     def from_c(cls, uuid):
@@ -119,9 +134,12 @@ class BLEUUID(object):
     def __init__(self, value, base=BLEUUIDBase()):
         assert isinstance(base, BLEUUIDBase), 'Invalid argument type'
         self.base   = base
-        try:
-            self.value  = value if isinstance(value, BLEUUID.Standard) else BLEUUID.Standard(value)
-        except(ValueError):
+        if self.base.def_base:
+            try:
+                self.value  = value if isinstance(value, BLEUUID.Standard) else BLEUUID.Standard(value)
+            except(ValueError):
+                self.value  = value
+        else:
             self.value  = value
 
     def get_value(self):
@@ -132,14 +150,29 @@ class BLEUUID(object):
 
     def __str__(self):
         if isinstance(self.value, BLEUUID.Standard):
-            return '0x{:02X} ({})'.format(self.value.value, self.value)
+            return '0x{:04X} ({})'.format(self.value.value, self.value)
+        elif self.base.type == driver.BLE_UUID_TYPE_BLE and self.base.def_base:
+            return '0x{:04X}'.format(self.value)
+        elif self.base.type == driver.BLE_UUID_TYPE_BLE:
+            baseAndValue    = self.base.base[:]
+            baseAndValue[2] = (self.value >> 8) & 0xff
+            baseAndValue[3] = (self.value >> 0) & 0xff
+            return '0x{}'.format(''.join(['{:02X}'.format(i) for i in baseAndValue]))
         else:
-            return '0x{:02X}'.format(self.value)
+            return '0x{:04X} 0x{:016X}'.format(self.value, self.base.base)
 
+    def __eq__(self, other):
+        if not isinstance(other, BLEUUID):
+            return False
+        if not self.base == other.base:
+            return False
+        if not self.value == other.value:
+            return False
+        return True
 
     @classmethod
     def from_c(cls, uuid):
-        return cls(value = uuid.uuid, base = BLEUUIDBase.from_c(uuid))
+        return cls(value = uuid.uuid, base = BLEUUIDBase.from_c(uuid)) # TODO: Is this correct?
 
 
     def to_c(self):
@@ -746,3 +779,4 @@ class BLEService(object):
         self.chars.append(char)
         if len(self.chars) > 1:
             self.chars[-2].end_handle = char.handle_decl - 1
+
