@@ -35,9 +35,11 @@
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
+import atexit
 import logging
 import wrapt
 import Queue
+import traceback
 from threading                      import Thread, Lock
 from types                          import NoneType
 
@@ -46,7 +48,7 @@ from pc_ble_driver_py.exceptions    import NordicSemiException
 from nrf_event                      import *
 from nrf_types                      import *
 
-logger = logging.getLogger(__name__)
+logger          = logging.getLogger(__name__)
 
 
 # TODO: Do we really want to raise exceptions all the time?
@@ -65,6 +67,7 @@ def NordicSemiErrorCheck(wrapped=None, expected = driver.NRF_SUCCESS):
 class NrfDriver(object):
     api_lock            = Lock()
     default_baud_rate   = 115200
+    ATT_MTU_DEFAULT     = driver.GATT_MTU_SIZE_DEFAULT
 
     def __init__(self, serial_port, baud_rate=None, auto_flash=False):
         if baud_rate is None:
@@ -132,15 +135,22 @@ class NrfDriver(object):
 
         if err_code == driver.NRF_SUCCESS:
             self._event_thread = Thread(target=self._event_handler)
+            # Note: We create a daemon thread and then register an exit handler
+            #       to make sure this thread stops. This ensures that scripts that
+            #       stop because of ctrl-c interrupt, compile errors or other problems
+            #       do not keep hanging in the console, waiting for an infinite thread
+            #       loop.
+            def _exit_handler(): self._event_loop = False
+            atexit.register(_exit_handler)
+            self._event_thread.daemon = True
             self._event_thread.start()
         return err_code
-
 
     @NordicSemiErrorCheck
     @wrapt.synchronized(api_lock)
     def close(self):
         self._event_loop    = False
-        self._event_thread.join()
+        #self._event_thread.join()
         self._event_thread  = None
         self._events        = None
         return driver.sd_rpc_close(self.rpc_adapter)
@@ -315,6 +325,7 @@ class NrfDriver(object):
     @NordicSemiErrorCheck
     @wrapt.synchronized(api_lock)
     def ble_gap_encrypt(self, conn_handle, ediv, rand, ltk, lesc, auth):
+        # TODO: Clean up
         #assert isinstance(sec_params, (BLEGapSecParams, NoneType)), 'Invalid argument type'
         #assert isinstance(sec_keyset, BLEGapSecKeyset), 'Invalid argument type'
         #print 'ediv %r' % master_id.ediv
@@ -429,19 +440,18 @@ class NrfDriver(object):
             #logger.info('ble_event.header.evt_id %r', ble_event.header.evt_id)
 
             if len(self.observers) == 0:
-                return
+                continue
 
             event = event_decode(ble_event)
             if event is None:
                 logger.warn('unknown ble_event %r (discarded)', ble_event.header.evt_id)
-                return
+                continue
 
             #logger.info('ble_event.header.evt_id %r ----  %r', ble_event.header.evt_id, event)
             for obs in self.observers[:]:
                 try:
                     obs.on_driver_event(self, event)
                 except:
-                    import traceback
                     traceback.print_exc()
 
 
