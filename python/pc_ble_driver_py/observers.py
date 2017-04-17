@@ -175,3 +175,6 @@ class NrfAdapterObserver(object):
     def on_gap_evt_adv_report(self, adapter, event):
         pass
 
+    def on_gap_evt_timeout(self, adapter, event):
+        pass
+
