@@ -131,13 +131,15 @@ class TestDevice(BLEDevice, BLEDeviceObserver, GattClientObserver):
                         return
                     descr.data = read.data
 
+        logger.info(            '  handle         uuid     value')
         for service in services:
-            logger.info(        '  0x%04x         0x%04x   -- %s', service.start_handle, service.srvc_uuid.get_value(), service.uuid)
+            logger.info(        '  0x%04x         0x%04x   -- %s',      service.start_handle, service.srvc_uuid.get_value(), service.uuid)
             for char in service.chars:
-                logger.info(    '    0x%04x       0x%04x   --   %r', char.handle_decl, char.char_uuid.get_value(), ''.join(map(chr, char.data_decl)))
-                logger.info(    '      0x%04x     0x%04x   --     %r', char.handle_value, char.uuid.get_value(), ''.join(map(chr, char.data_value)))
+                logger.info(    '    0x%04x       0x%04x   --   %r',    char.handle_decl, char.char_uuid.get_value(), ''.join(map(chr, char.data_decl)))
+                logger.info(    '      0x%04x     0x%04x   --     %r',  char.handle_value, char.uuid.get_value(), ''.join(map(chr, char.data_value)))
                 for descr in char.descs:
-                    logger.info('      0x%04x     0x%04x   --     %r', descr.handle, descr.uuid.get_value(), ''.join(map(chr, descr.data)))
+                    logger.info('      0x%04x     0x%04x   --     %r',  descr.handle, descr.uuid.get_value(), ''.join(map(chr, descr.data)))
+
 
     def on_connection_param_update_request(self, device, event):
         logger.info("Request to update connection parameters")
