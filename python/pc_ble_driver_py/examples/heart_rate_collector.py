@@ -140,14 +140,39 @@ class HRCollector(NrfAdapterObserver, GattClientObserver):
             if data is None:
                 return '(no value)'
             return repr(''.join(map(chr, data)))
+        def uuid_string(uuid):
+            if uuid.base.def_base:
+                return '0x{:04x}'.format(uuid.get_value())
+            else:
+                return '0x{}'.format(''.join(['{:02X}'.format(i) for i in uuid.as_array()]))
+        def char_property_string(char_props):
+            properties = []
+            if char_props.broadcast:
+                properties.append('BROADCAST')
+            if char_props.read:
+                properties.append('READ')
+            if char_props.write_wo_resp:
+                properties.append('WRITE_WO_R')
+            if char_props.write:
+                properties.append('WRITE')
+            if char_props.notify:
+                properties.append('NOTIFY')
+            if char_props.indicate:
+                properties.append('INDICATE')
+            if char_props.auth_signed_wr:
+                properties.append('AUTH_SW')
+            #    properties.append('EXT_PROP')
+            return 'properties: ' + ' '.join(properties)
 
         for service in services:
-            print(        '  0x{:04x}        0x{:04x}  {}'.format(      service.start_handle, service.srvc_uuid.get_value(), service.uuid))
+            print(        '  0x{:04x}        {}  {}'.format(    service.start_handle, uuid_string(service.srvc_uuid), service.uuid))
             for char in service.chars:
-                print(    '    0x{:04x}      0x{:04x}    {}'.format(  char.handle_decl, char.char_uuid.get_value(), repr_val(char.data_decl)))
-                print(    '      0x{:04x}    0x{:04x}      {}'.format(char.handle_value, char.uuid.get_value(), repr_val(char.data_value)))
+                val = repr_val(char.data_decl)
+                val_pad = ' '*max(0, 50-len(val))
+                print(    '    0x{:04x}      {}    {}{}{}'.format(  char.handle_decl, uuid_string(char.char_uuid), val, val_pad , char_property_string(char.char_props)))
+                print(    '      0x{:04x}    {}      {}'.format(char.handle_value, uuid_string(char.uuid), repr_val(char.data_value)))
                 for descr in char.descs:
-                    print('      0x{:04x}    0x{:04x}      {}'.format( descr.handle, descr.uuid.get_value(), repr_val(descr.data)))
+                    print('      0x{:04x}    {}      {}'.format(descr.handle, uuid_string(descr.uuid), repr_val(descr.data)))
 
 
     def parse_hr(self, event):
@@ -235,8 +260,4 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     init(args.family)
-    print nrf_types.BLEUUID(nrf_types.BLEUUID.Standard.battery_level)
-    print nrf_types.BLEUUID(0x0000)
-    print nrf_types.BLEUUID(0x1234)
-    print nrf_types.BLEUUID(0xeeff, nrf_types.BLEUUIDBase([0x01, 0x02, 0x00, 0x00, 0x05, 0x06, 0x17, 0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f, 0x10]))
-    #main(args.port, args.baud, args.name)
+    main(args.port, args.baud, args.name)

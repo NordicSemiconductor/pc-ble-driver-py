@@ -109,7 +109,10 @@ class BLEUUIDBase(object):
 
     @classmethod
     def from_c(cls, uuid):
-        return cls(uuid_type = uuid.type)
+        if uuid.type == driver.BLE_UUID_TYPE_BLE:
+            return cls(uuid_type = uuid.type)
+        else:
+            return cls([0]*16, uuid_type = uuid.type) # TODO: Hmmmm? [] or [None]*16? what?
 
 
     def to_c(self):
@@ -130,7 +133,6 @@ class BLEUUID(object):
         battery_level       = 0x2A19
         heart_rate          = 0x2A37
 
-
     def __init__(self, value, base=BLEUUIDBase()):
         assert isinstance(base, BLEUUIDBase), 'Invalid argument type'
         self.base   = base
@@ -147,19 +149,22 @@ class BLEUUID(object):
             return self.value.value
         return self.value
 
+    def as_array(self):
+        baseAndValue    = self.base.base[:]
+        baseAndValue[2] = (self.get_value() >> 8) & 0xff
+        baseAndValue[3] = (self.get_value() >> 0) & 0xff
+        return baseAndValue
 
     def __str__(self):
         if isinstance(self.value, BLEUUID.Standard):
             return '0x{:04X} ({})'.format(self.value.value, self.value)
         elif self.base.type == driver.BLE_UUID_TYPE_BLE and self.base.def_base:
             return '0x{:04X}'.format(self.value)
-        elif self.base.type == driver.BLE_UUID_TYPE_BLE:
+        else:
             baseAndValue    = self.base.base[:]
             baseAndValue[2] = (self.value >> 8) & 0xff
             baseAndValue[3] = (self.value >> 0) & 0xff
             return '0x{}'.format(''.join(['{:02X}'.format(i) for i in baseAndValue]))
-        else:
-            return '0x{:04X} 0x{:016X}'.format(self.value, self.base.base)
 
     def __eq__(self, other):
         if not isinstance(other, BLEUUID):
@@ -170,10 +175,12 @@ class BLEUUID(object):
             return False
         return True
 
+    def __ne__(self, other):
+        return not self.__eq__(other)
+
     @classmethod
     def from_c(cls, uuid):
         return cls(value = uuid.uuid, base = BLEUUIDBase.from_c(uuid)) # TODO: Is this correct?
-
 
     def to_c(self):
         assert self.base.type is not None, 'Vendor specific UUID not registered'
@@ -184,6 +191,14 @@ class BLEUUID(object):
             uuid.uuid = self.value
         uuid.type = self.base.type
         return uuid
+
+    @classmethod
+    def from_array(cls, uuid_array):
+        uuid    = (uuid_array[2] << 8) + uuid_array[3]
+        base    = uuid_array[:]
+        base[2] = 0
+        base[3] = 0
+        return cls(value = uuid, base = BLEUUIDBase(base, 0))
 
 
 class BLEEnableParams(object):
@@ -738,24 +753,45 @@ class BLEDescriptor(object):
         return cls(uuid     = BLEUUID.from_c(gattc_desc.uuid),
                    handle   = gattc_desc.handle)
 
+class BLECharacteristicProperties(object):
+    def __init__(self, broadcast = False, read = False, write_wo_resp = False,
+            write = False, notify = False, indicate = False, auth_signed_wr = False):
+        self.broadcast      = broadcast
+        self.read           = read
+        self.write_wo_resp  = write_wo_resp
+        self.write          = write
+        self.notify         = notify
+        self.indicate       = indicate
+        self.auth_signed_wr = auth_signed_wr
+
+    @classmethod
+    def from_c(cls, gattc_char_props):
+        return cls(gattc_char_props.broadcast       == 1,
+                   gattc_char_props.read            == 1,
+                   gattc_char_props.write_wo_resp   == 1,
+                   gattc_char_props.write           == 1,
+                   gattc_char_props.notify          == 1,
+                   gattc_char_props.indicate        == 1,
+                   gattc_char_props.auth_signed_wr  == 1)
 
 class BLECharacteristic(object):
     char_uuid = BLEUUID(BLEUUID.Standard.characteristic)
-    def __init__(self, uuid, handle_decl, handle_value, data_decl=None, data_value=None):
+    def __init__(self, uuid, handle_decl, handle_value, data_decl=None, data_value=None, char_props=None):
         self.uuid           = uuid
         self.handle_decl    = handle_decl
         self.handle_value   = handle_value
         self.data_decl      = data_decl
         self.data_value     = data_value
+        self.char_props     = char_props # TODO: From data_decl?
         self.end_handle     = None
         self.descs          = list()
-
 
     @classmethod
     def from_c(cls, gattc_char):
         return cls(uuid         = BLEUUID.from_c(gattc_char.uuid),
                    handle_decl  = gattc_char.handle_decl,
-                   handle_value = gattc_char.handle_value)
+                   handle_value = gattc_char.handle_value,
+                   char_props   = BLECharacteristicProperties.from_c(gattc_char.char_props))
 
 
 class BLEService(object):

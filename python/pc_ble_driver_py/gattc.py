@@ -303,6 +303,14 @@ class GattClient(NrfDriverObserver):
                     return
                 char.data_value = read.data
 
+                # TODO: Can we do this as part of read callback handling?
+                # Populate vendor specific uuid
+                if char.uuid.value == BLEUUID.Standard.unknown.value:
+                    # TODO: Also check char.uuid.base.type?
+                    char_uuid = char.data_decl[3:]
+                    char_uuid.reverse()
+                    char.uuid = BLEUUID.from_array(char_uuid)
+
                 proc_sync = self.descriptor_discovery(char)
                 proc_sync.wait(proc_timeout)
                 if proc_sync.status != BLEGattStatusCode.success:
