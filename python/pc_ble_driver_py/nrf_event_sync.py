@@ -124,5 +124,6 @@ class ProcedureSync(object):
 
     def wait(self, timeout=None):
         self.event.wait(timeout)
+        return self
 
 
