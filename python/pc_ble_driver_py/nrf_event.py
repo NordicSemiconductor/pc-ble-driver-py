@@ -80,6 +80,15 @@ class GapEvtAdvReport(GapEvt):
         self.adv_type       = adv_type
         self.adv_data       = adv_data
 
+    def getDeviceName(self):
+        dev_name_list = []
+        if BLEAdvData.Types.complete_local_name in self.adv_data.records:
+            dev_name_list = self.adv_data.records[BLEAdvData.Types.complete_local_name]
+        elif BLEAdvData.Types.short_local_name in self.adv_data.records:
+           dev_name_list = self.adv_data.records[BLEAdvData.Types.short_local_name]
+        return "".join(map(chr, dev_name_list))
+
+
     @classmethod
     def from_c(cls, event):
         adv_report_evt = event.evt.gap_evt.params.adv_report
@@ -306,7 +315,9 @@ class GattcEvtReadResponse(GattcEvt):
         self.error_handle   = error_handle
         self.attr_handle    = attr_handle
         self.offset         = offset
-        if isinstance(data, str):
+        if status == BLEGattStatusCode.read_not_permitted:
+            self.data       = None
+        elif isinstance(data, str):
             self.data       = map(ord, data)
         else:
             self.data       = data
