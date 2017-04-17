@@ -57,7 +57,12 @@ class GattClient(NrfDriverObserver):
 
     def __init__(self, driver, peer_addr):
         super(GattClient, self).__init__()
-        self.driver             = driver
+
+        if hasattr(driver, "driver"):
+            self.driver         = driver.driver
+        else:
+            self.driver         = driver
+
         self.peer_addr          = peer_addr
         self.conn_params        = None
         self.own_addr           = None
@@ -121,7 +126,7 @@ class GattClient(NrfDriverObserver):
             self.driver.ble_gattc_write(self.conn_handle, write_params)
             event = evt_sync.get()
             if event is None:
-                logger.error('Did not receive HciNumCompletePackets event')
+                logger.error('Did not receive GattcEvtWriteResponse event')
             return event
 
     def write_cmd(self, attr_handle, value, offset=0):
@@ -134,7 +139,7 @@ class GattClient(NrfDriverObserver):
             self.driver.ble_gattc_write(self.conn_handle, write_params)
             event = evt_sync.get()
             if event is None:
-                logger.error('Did not receive HciNumCompletePackets event')
+                logger.error('Did not receive EvtTxComplete event')
             return event
 
     def enable_notification(self, cccd_handle, on=True, indication=False):
@@ -273,6 +278,42 @@ class GattClient(NrfDriverObserver):
 
         self.driver.ble_gattc_desc_disc(self.conn_handle, last_descr.handle + 1, char.end_handle)
 
+    # TODO: Blocking call (is this ok). Needs a bit of testing
+    def get_peer_db(self, proc_timeout=10):
+        proc_sync = self.primary_service_discovery()
+        proc_sync.wait(proc_timeout)
+        if proc_sync.status != BLEGattStatusCode.success:
+            return
+
+        services = proc_sync.result
+        for service in services:
+            proc_sync = self.characteristics_discovery(service)
+            proc_sync.wait(proc_timeout)
+            if proc_sync.status != BLEGattStatusCode.success:
+                return
+
+            for char in service.chars:
+                read = self.read(char.handle_decl)
+                if read is None:
+                    return
+                char.data_decl = read.data
+
+                read = self.read(char.handle_value)
+                if read is None:
+                    return
+                char.data_value = read.data
+
+                proc_sync = self.descriptor_discovery(char)
+                proc_sync.wait(proc_timeout)
+                if proc_sync.status != BLEGattStatusCode.success:
+                    return
+                for descr in char.descs:
+                    read = self.read(descr.handle)
+                    if read is None:
+                        return
+                    descr.data = read.data
+
+        return services
 
     def on_driver_event(self, nrf_driver, event):
         #print event
