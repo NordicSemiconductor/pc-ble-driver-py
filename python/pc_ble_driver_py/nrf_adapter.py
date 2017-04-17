@@ -38,11 +38,11 @@
 import logging
 import Queue
 
-from observers                      import NrfDriverObserver
-from nrf_driver                     import NrfDriver
-from nrf_event                      import *
-from nrf_event_sync                 import EventSync
-from pc_ble_driver_py.exceptions    import NordicSemiException
+from observers      import NrfDriverObserver
+from nrf_driver     import NrfDriver
+from nrf_event      import *
+from nrf_event_sync import EventSync
+from exceptions     import NordicSemiException
 
 logger = logging.getLogger(__name__)
 
@@ -63,12 +63,12 @@ class NrfAdapter(NrfDriverObserver):
     @classmethod
     def open_serial(cls, serial_port, baud_rate, ble_enable_params=None):
         adapter = cls(NrfDriver(serial_port=serial_port, baud_rate=baud_rate))
-        adapter.open()
+        adapter.open(ble_enable_params)
         return adapter
 
     def open(self, ble_enable_params=None):
         self.driver.open()
-        self.driver.ble_enable()
+        self.driver.ble_enable(ble_enable_params)
 
     def close(self):
         with EventSync(self.driver, GapEvtDisconnected) as evt_sync:
@@ -90,6 +90,7 @@ class NrfAdapter(NrfDriverObserver):
     def scan_stop(self):
         return self.driver.ble_gap_scan_stop()
 
+    # TODO: Test and finishe
     def att_mtu_exchange(self, conn_handle):
         self.driver.ble_gattc_exchange_mtu_req(conn_handle)
         #response = self.evt_sync[conn_handle].wait(evt = BLEEvtID.gattc_evt_exchange_mtu_rsp)
@@ -104,16 +105,16 @@ class NrfAdapter(NrfDriverObserver):
                 self.conn_handles.remove(event.conn_handle)
             except ValueError:
                 pass
+        elif isinstance(event, GapEvtTimeout):
+            for obs in self.observers[:]:
+                obs.on_gap_evt_timeout(self, event)
         elif isinstance(event, GapEvtAdvReport):
             # TODO: Maintain list of seen devices seen?
-            self._on_gap_evt_adv_report(nrf_driver, event)
+            for obs in self.observers[:]:
+                obs.on_gap_evt_adv_report(self, event)
 
     def observer_register(self, observer):
         self.observers.append(observer)
 
     def observer_unregister(self, observer):
         self.observers.remove(observer)
-
-    def _on_gap_evt_adv_report(self, nrf_driver, event):
-        for obs in self.observers[:]:
-            obs.on_gap_evt_adv_report(self, event)
