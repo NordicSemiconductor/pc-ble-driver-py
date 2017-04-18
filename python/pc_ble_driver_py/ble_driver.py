@@ -133,6 +133,8 @@ class BLEEvtID(Enum):
     gap_evt_connected                 = driver.BLE_GAP_EVT_CONNECTED
     gap_evt_disconnected              = driver.BLE_GAP_EVT_DISCONNECTED
     gap_evt_sec_params_request        = driver.BLE_GAP_EVT_SEC_PARAMS_REQUEST
+    gap_evt_sec_info_request          = driver.BLE_GAP_EVT_SEC_INFO_REQUEST
+    gap_evt_sec_request               = driver.BLE_GAP_EVT_SEC_REQUEST
     gap_evt_adv_report                = driver.BLE_GAP_EVT_ADV_REPORT
     gap_evt_timeout                   = driver.BLE_GAP_EVT_TIMEOUT
     gap_evt_conn_param_update_request = driver.BLE_GAP_EVT_CONN_PARAM_UPDATE_REQUEST
@@ -146,6 +148,7 @@ class BLEEvtID(Enum):
     gattc_evt_prim_srvc_disc_rsp      = driver.BLE_GATTC_EVT_PRIM_SRVC_DISC_RSP
     gattc_evt_char_disc_rsp           = driver.BLE_GATTC_EVT_CHAR_DISC_RSP
     gattc_evt_desc_disc_rsp           = driver.BLE_GATTC_EVT_DESC_DISC_RSP
+    gatts_evt_hvc                     = driver.BLE_GATTS_EVT_HVC
     if nrf_sd_ble_api_ver >= 3:
         gatts_evt_exchange_mtu_request    = driver.BLE_GATTS_EVT_EXCHANGE_MTU_REQUEST
         gattc_evt_exchange_mtu_rsp        = driver.BLE_GATTC_EVT_EXCHANGE_MTU_RSP
@@ -996,7 +999,6 @@ class BLEDriver(object):
             raise NordicSemiException('Failed to get ble_gap_addr. Error code: {}'.format(err_code))
         return BLEGapAddr.from_c(addr)
 
-
     @NordicSemiErrorCheck
     @wrapt.synchronized(api_lock)
     def ble_gap_adv_start(self, adv_params=None):
@@ -1145,7 +1147,7 @@ class BLEDriver(object):
         return driver.sd_ble_gattc_read(self.rpc_adapter,
                                          conn_handle,
                                          handle,
-										 offset)
+                                         offset)
     @NordicSemiErrorCheck
     @wrapt.synchronized(api_lock)
     def ble_gattc_prim_srvc_disc(self, conn_handle, srvc_uuid, start_handle):
@@ -1234,6 +1236,29 @@ class BLEDriver(object):
                     obs.on_gap_evt_sec_params_request(ble_driver  = self,
                                                       conn_handle = ble_event.evt.gap_evt.conn_handle,
                                                       peer_params = BLEGapSecParams.from_c(sec_params_request_evt.peer_params))
+
+            elif evt_id == BLEEvtID.gap_evt_sec_info_request:
+                seq_info_evt = ble_event.evt.gap_evt.params.sec_info_request
+
+                for obs in self.observers:
+                    obs.on_gap_evt_sec_info_request(ble_driver=self,
+                                                    conn_handle=ble_event.evt.gap_evt.conn_handle,
+                                                    peer_addr=seq_info_evt.peer_addr,
+                                                    master_id=seq_info_evt.master_id,
+                                                    enc_info=seq_info_evt.enc_info,
+                                                    id_info=seq_info_evt.id_info,
+                                                    sign_info=seq_info_evt.sign_info)
+
+            elif evt_id == BLEEvtID.gap_evt_sec_request:
+                seq_req_evt = ble_event.evt.gap_evt.params.sec_request
+
+                for obs in self.observers:
+                    obs.on_gap_evt_sec_request(ble_driver=self,
+                                               conn_handle=ble_event.evt.gap_evt.conn_handle,
+                                               bond=seq_req_evt.bond,
+                                               mitm=seq_req_evt.mitm,
+                                               lesc=seq_req_evt.lesc,
+                                               keypress=seq_req_evt.keypress)
 
             elif evt_id == BLEEvtID.gap_evt_timeout:
                 timeout_evt = ble_event.evt.gap_evt.params.timeout
@@ -1365,6 +1390,16 @@ class BLEDriver(object):
                                                    conn_handle  = ble_event.evt.gattc_evt.conn_handle,
                                                    status       = BLEGattStatusCode(ble_event.evt.gattc_evt.gatt_status),
                                                    descriptions = descriptions)
+
+            elif evt_id == BLEEvtID.gatts_evt_hvc:
+                hvc_evt = ble_event.evt.gatts_evt.params.hvc
+
+                for obs in self.observers:
+                    obs.on_gatts_evt_hvc(ble_driver=self,
+                                         conn_handle=ble_event.evt.gatts_evt.conn_handle,
+                                         status=BLEGattStatusCode(ble_event.evt.gatts_evt.gatt_status),
+                                         error_handle=ble_event.evt.gatts_evt.error_handle,
+                                         attr_handle=hvc_evt.handle)
 
             elif nrf_sd_ble_api_ver >= 3:
                     if evt_id == BLEEvtID.gatts_evt_exchange_mtu_request:
