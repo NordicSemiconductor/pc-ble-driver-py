@@ -447,7 +447,7 @@ class NrfDriver(object):
                 logger.warn('unknown ble_event %r (discarded)', ble_event.header.evt_id)
                 continue
 
-            #logger.info('ble_event.header.evt_id %r ----  %r', ble_event.header.evt_id, event)
+            #logger.debug('ble_event.header.evt_id %r ----  %r', ble_event.header.evt_id, event)
             for obs in self.observers[:]:
                 try:
                     obs.on_driver_event(self, event)

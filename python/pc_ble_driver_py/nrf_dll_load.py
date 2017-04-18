@@ -63,4 +63,4 @@ logger.info('Swig module name: {}'.format(SWIG_MODULE_NAME))
 sys.path.append(shlib_dir)
 driver = importlib.import_module(SWIG_MODULE_NAME)
 
-import pc_ble_driver_py.ble_driver_types as util
+import pc_ble_driver_py.nrf_driver_types as util

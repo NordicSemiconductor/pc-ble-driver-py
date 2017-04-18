@@ -41,7 +41,6 @@ from nrf_event      import *
 from nrf_types      import *
 from observers      import NrfDriverObserver
 from nrf_event_sync import EventSync, ProcedureSync
-from gatt_db        import GattDb
 
 logger = logging.getLogger(__name__)
 
@@ -70,13 +69,11 @@ class GattClient(NrfDriverObserver):
         self.key_set            = None
 
         self.observers          = []
-        self.peer_db            = GattDb()
         self._connect_sync      = None
         self._prim_src_disc     = None
         self._char_disc         = None
         self._desc_disc         = None
 
-        self.observer_register(self.peer_db)
         self.driver.observer_register(self)
 
     def __del__(self):
