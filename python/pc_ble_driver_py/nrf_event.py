@@ -333,7 +333,9 @@ class GattcEvtReadResponse(GattcEvt):
                    data         = util.uint8_array_to_list(read_rsp.data, read_rsp.len))
 
     def __repr__(self):
-        data = ''.join(map(chr, self.data))
+        data = None
+        if self.data is not None:
+            data = ''.join(map(chr, self.data))
         return "%s(conn_handle=%r, status=%r, error_handle=%r, attr_handle=%r, offset=%r, data=%r)" % (
                 self.__class__.__name__, self.conn_handle,
                 self.status, self.error_handle, self.attr_handle, self.offset, data)
