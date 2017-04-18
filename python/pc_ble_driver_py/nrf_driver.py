@@ -72,11 +72,13 @@ class NrfDriver(object):
     def __init__(self, serial_port, baud_rate=None):
         if baud_rate is None:
             baud_rate = self.default_baud_rate
-        self._events        = Queue.Queue()
-        self._event_thread  = None
-        self._event_loop    = False
-        self._event_stopped = Event()
-        self.observers      = []
+
+        self._events            = Queue.Queue()
+        self._event_thread      = None
+        self._event_loop        = False
+        self._event_stopped     = Event()
+        self.observers          = []
+        self.ble_enable_params  = None
 
         # TODO: Is this the best way?
         #if auto_flash:
@@ -452,7 +454,7 @@ class NrfDriver(object):
                 logger.warn('unknown ble_event %r (discarded)', ble_event.header.evt_id)
                 continue
 
-            #logger.debug('ble_event.header.evt_id %r ----  %r', ble_event.header.evt_id, event)
+            logger.debug('ble_event.header.evt_id %r ----  %r', ble_event.header.evt_id, event)
             for obs in self.observers[:]:
                 try:
                     obs.on_driver_event(self, event)

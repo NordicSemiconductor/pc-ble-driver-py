@@ -47,7 +47,7 @@ from pc_ble_driver_py.exceptions import NordicSemiException
 
 def logger_setup():
     logger = logging.getLogger()
-    logger.setLevel(logging.DEBUG)
+    logger.setLevel(logging.INFO)
 
     sh = logging.StreamHandler()
     sh.setFormatter(logging.Formatter('%(asctime)s %(message)s'))
@@ -71,11 +71,11 @@ def init(conn_ic_id):
 class HRCollector(NrfAdapterObserver, GattClientObserver):
     def __init__(self, adapter):
         super(HRCollector, self).__init__()
-        self.adapter    = adapter
-        self.gattc      = None
-        self.hr_handle  = None
-        self.hr_cccd    = None
-        self.scan_active = False
+        self.adapter        = adapter
+        self.gattc          = None
+        self.hr_handle      = None
+        self.hr_cccd        = None
+        self.scan_active    = False
         self.adapter.observer_register(self)
 
     def scan_and_connect(self, target_dev_name):

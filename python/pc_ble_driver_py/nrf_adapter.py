@@ -48,7 +48,7 @@ logger = logging.getLogger(__name__)
 
 # TODO:
 # - Need a reset function (should be called on close?). Is there any? softdevice disable?
-# - Stuff like le_version_get and get_le_supported_features probably belongs here (in the adapter). Or maybe in ble_device?
+# - Stuff like le_version_get and get_le_supported_features probably belongs here.
 
 
 class NrfAdapter(NrfDriverObserver):
@@ -83,14 +83,12 @@ class NrfAdapter(NrfDriverObserver):
         self.driver.close()
 
     def scan_start(self, scan_params=None):
-        if not scan_params:
-            scan_params = self.driver.scan_params_setup()
         return self.driver.ble_gap_scan_start(scan_params)
 
     def scan_stop(self):
         return self.driver.ble_gap_scan_stop()
 
-    # TODO: Test and finishe
+    # TODO: Finish and test
     def att_mtu_exchange(self, conn_handle):
         self.driver.ble_gattc_exchange_mtu_req(conn_handle)
         #response = self.evt_sync[conn_handle].wait(evt = BLEEvtID.gattc_evt_exchange_mtu_rsp)

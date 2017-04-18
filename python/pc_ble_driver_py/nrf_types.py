@@ -782,7 +782,7 @@ class BLECharacteristic(object):
         self.handle_value   = handle_value
         self.data_decl      = data_decl
         self.data_value     = data_value
-        self.char_props     = char_props # TODO: From data_decl?
+        self.char_props     = char_props # TODO: if None, parse first byte of data_decl?
         self.end_handle     = None
         self.descs          = list()
 
@@ -809,7 +809,6 @@ class BLEService(object):
                    start_handle = gattc_service.handle_range.start_handle,
                    end_handle   = gattc_service.handle_range.end_handle)
 
-    # TODO: What is this?
     def char_add(self, char):
         char.end_handle = self.end_handle
         self.chars.append(char)
