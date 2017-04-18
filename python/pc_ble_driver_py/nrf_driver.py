@@ -40,13 +40,13 @@ import logging
 import wrapt
 import Queue
 import traceback
-from threading                      import Thread, Lock
-from types                          import NoneType
+from threading      import Thread, Lock, Event
+from types          import NoneType
 
-from nrf_dll_load                   import driver, util
-from pc_ble_driver_py.exceptions    import NordicSemiException
-from nrf_event                      import *
-from nrf_types                      import *
+from nrf_dll_load   import driver, util
+from exceptions     import NordicSemiException
+from nrf_event      import *
+from nrf_types      import *
 
 logger          = logging.getLogger(__name__)
 
@@ -69,13 +69,14 @@ class NrfDriver(object):
     default_baud_rate   = 115200
     ATT_MTU_DEFAULT     = driver.GATT_MTU_SIZE_DEFAULT
 
-    def __init__(self, serial_port, baud_rate=None, auto_flash=False):
+    def __init__(self, serial_port, baud_rate=None):
         if baud_rate is None:
             baud_rate = self.default_baud_rate
         self._events        = Queue.Queue()
         self._event_thread  = None
         self._event_loop    = False
-        self.observers      = list()
+        self._event_stopped = Event()
+        self.observers      = []
 
         # TODO: Is this the best way?
         #if auto_flash:
@@ -140,19 +141,22 @@ class NrfDriver(object):
             #       stop because of ctrl-c interrupt, compile errors or other problems
             #       do not keep hanging in the console, waiting for an infinite thread
             #       loop.
-            def _exit_handler(): self._event_loop = False
-            atexit.register(_exit_handler)
+            atexit.register(self._event_thread_join)
             self._event_thread.daemon = True
             self._event_thread.start()
         return err_code
 
+    def _event_thread_join(self):
+        if self._event_thread is None:
+            return
+        self._event_loop    = False
+        self._event_stopped.wait(1)
+        self._event_thread  = None
+
     @NordicSemiErrorCheck
     @wrapt.synchronized(api_lock)
     def close(self):
-        self._event_loop    = False
-        #self._event_thread.join()
-        self._event_thread  = None
-        self._events        = None
+        self._event_thread_join()
         return driver.sd_rpc_close(self.rpc_adapter)
 
 
@@ -431,6 +435,7 @@ class NrfDriver(object):
 
     def _event_handler(self):
         self._event_loop = True
+        self._event_stopped.clear()
         while self._event_loop:
             try:
                 ble_event = self._events.get(timeout=0.1)
@@ -453,5 +458,6 @@ class NrfDriver(object):
                     obs.on_driver_event(self, event)
                 except:
                     traceback.print_exc()
+        self._event_stopped.set()
 
 
