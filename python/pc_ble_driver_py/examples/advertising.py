@@ -37,8 +37,8 @@
 
 import sys
 import traceback
-from threading                  import Condition, Lock
-from pc_ble_driver_py.observers import NrfDriverObserver
+from threading                          import Condition, Lock
+from pc_ble_driver_py.nrf_observers     import NrfDriverObserver
 
 def init(conn_ic_id):
     global nrf_types, nrf_event, NrfAdapter

@@ -38,7 +38,7 @@
 import logging
 import Queue
 
-from observers      import NrfDriverObserver
+from nrf_observers  import NrfDriverObserver
 from nrf_driver     import NrfDriver
 from nrf_event      import *
 from nrf_event_sync import EventSync

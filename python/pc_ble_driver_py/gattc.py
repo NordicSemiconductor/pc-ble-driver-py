@@ -39,7 +39,7 @@ import logging
 
 from nrf_event      import *
 from nrf_types      import *
-from observers      import NrfDriverObserver
+from nrf_observers  import NrfDriverObserver
 from nrf_event_sync import EventSync, ProcedureSync
 
 logger = logging.getLogger(__name__)
@@ -367,6 +367,7 @@ class GattClient(NrfDriverObserver):
             self.conn_handle        = None
             self.own_addr           = None
         elif isinstance(event, GapEvtConnParamUpdateRequest):
+            # TODO: Set policy for updating automatically
             for obs in self.observers[:]:
                 obs.on_connection_param_update_request(self, event)
         elif isinstance(event, GapEvtConnParamUpdate):

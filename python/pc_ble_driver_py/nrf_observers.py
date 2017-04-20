@@ -36,84 +36,71 @@
 #
 
 
+class GattClientObserver(object):
+    def on_gattc_event(self, gatt_client, event):
+        pass
 
-class BLEDriverObserver(object):
-    def __init__(self, *args, **kwargs):
-        super(BLEDriverObserver, self).__init__()
+    # gattc
+
+    def on_primary_service_discovery_response(self, gatt_client, event):
+        pass
+
+    def on_characteristic_discovery_response(self, gatt_client, event):
+        pass
+
+    def on_descriptor_discovery_response(self, gatt_client, event):
+        pass
+
+    def on_notification(self, gatt_client, event):
+        pass
+
+    def on_indication(self, gatt_client, event):
+        pass
+
+    # gap
+
+    def on_connected(self, device, event):
+        pass
+
+    def on_disconnected(self, device, event):
+        pass
+
+    def on_connection_param_update_request(self, device, event):
+        pass
+
+    def on_connection_param_update(self, device, event):
+        pass
+
+    def on_sec_params_request(self, device, event):
+        pass
+
+    def on_auth_key_request(self, device, event):
+        pass
+
+    def on_conn_sec_update(self, device, event):
+        pass
+
+    def on_auth_status(self, device, event):
         pass
 
 
-    def on_gap_evt_connected(self, ble_driver, conn_handle, peer_addr, role, conn_params):
+class NrfDriverObserver(object):
+    def on_driver_event(self, nrf_driver, event):
         pass
 
-
-    def on_gap_evt_disconnected(self, ble_driver, conn_handle, reason):
+class NrfAdapterObserver(object):
+    def on_adapter(self, adapter, event):
         pass
 
-
-    def on_gap_evt_sec_params_request(self, ble_driver, conn_handle, peer_params):
+    def on_gap_evt_connected(self, adapter, event):
         pass
 
-
-    def on_gap_evt_conn_param_update_request(self, ble_driver, conn_handle, conn_params):
+    def on_gap_evt_disconnected(self, adapter, event):
         pass
 
-
-    def on_gap_evt_timeout(self, ble_driver, conn_handle, src):
+    def on_gap_evt_adv_report(self, adapter, event):
         pass
 
-
-    def on_gap_evt_adv_report(self, ble_driver, conn_handle, peer_addr, rssi, adv_type, adv_data):
+    def on_gap_evt_timeout(self, adapter, event):
         pass
-
-
-    def on_evt_tx_complete(self, ble_driver, conn_handle, count):
-        pass
-
-
-    def on_gattc_evt_write_rsp(self, ble_driver, conn_handle, status, error_handle, attr_handle, write_op, offset, data):
-        pass
-
-
-    def on_gattc_evt_hvx(self, ble_driver, conn_handle, status, error_handle, attr_handle, hvx_type, data):
-        pass
-
-    def on_gattc_evt_read_rsp(self, ble_driver, conn_handle, status, error_handle, attr_handle, offset, data):
-        pass
-
-    def on_gattc_evt_prim_srvc_disc_rsp(self, ble_driver, conn_handle, status, services):
-        pass
-
-
-    def on_gattc_evt_char_disc_rsp(self, ble_driver, conn_handle, status, characteristics):
-        pass
-
-
-    def on_gattc_evt_desc_disc_rsp(self, ble_driver, conn_handle, status, descriptions):
-        pass
-
-
-    def on_gap_evt_auth_status(self, ble_driver, conn_handle, auth_status):
-        pass
-
-
-    def on_gap_evt_conn_sec_update(self, ble_driver, conn_handle):
-        pass
-
-
-    def on_att_mtu_exchanged(self, ble_driver, conn_handle, att_mtu):
-        pass
-
-class BLEAdapterObserver(object):
-    def __init__(self, *args, **kwargs):
-        super(BLEAdapterObserver, self).__init__()
-
-
-    def on_notification(self, ble_adapter, conn_handle, uuid, data):
-        pass
-        
-        
-    def on_conn_param_update_request(self, ble_adapter, conn_handle, conn_params):
-        # Default behaviour is to accept connection parameter update
-        ble_adapter.conn_param_update(conn_handle, conn_params)
 

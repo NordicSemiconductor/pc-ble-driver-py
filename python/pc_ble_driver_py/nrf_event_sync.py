@@ -40,7 +40,7 @@ import time
 import threading
 
 from nrf_driver     import NrfDriver
-from observers      import NrfDriverObserver
+from nrf_observers  import NrfDriverObserver
 
 
 class EventSync(NrfDriverObserver):

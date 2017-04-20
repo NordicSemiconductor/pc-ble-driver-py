@@ -42,8 +42,8 @@ import Queue
 import logging
 import traceback
 
-from pc_ble_driver_py.observers import NrfAdapterObserver, GattClientObserver
-from pc_ble_driver_py.exceptions import NordicSemiException
+from pc_ble_driver_py.nrf_observers         import NrfAdapterObserver, GattClientObserver
+from pc_ble_driver_py.exceptions            import NordicSemiException
 
 def logger_setup():
     logger = logging.getLogger()
