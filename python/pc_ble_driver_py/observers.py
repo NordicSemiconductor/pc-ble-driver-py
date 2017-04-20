@@ -89,6 +89,15 @@ class NrfDriverObserver(object):
         pass
 
 class NrfAdapterObserver(object):
+    def on_adapter(self, adapter, event):
+        pass
+
+    def on_gap_evt_connected(self, adapter, event):
+        pass
+
+    def on_gap_evt_disconnected(self, adapter, event):
+        pass
+
     def on_gap_evt_adv_report(self, adapter, event):
         pass
 

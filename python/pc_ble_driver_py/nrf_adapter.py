@@ -98,16 +98,29 @@ class NrfAdapter(NrfDriverObserver):
     def on_driver_event(self, nrf_driver, event):
         if   isinstance(event, GapEvtConnected):
             self.conn_handles.append(event.conn_handle)
+
+            for obs in self.observers[:]:
+                obs.on_adapter(self, event)
+            for obs in self.observers[:]:
+                obs.on_gap_evt_connected(self, event)
         elif isinstance(event, GapEvtDisconnected):
             try:
                 self.conn_handles.remove(event.conn_handle)
             except ValueError:
                 pass
+
+            for obs in self.observers[:]:
+                obs.on_adapter(self, event)
+            for obs in self.observers[:]:
+                obs.on_gap_evt_disconnected(self, event)
         elif isinstance(event, GapEvtTimeout):
+            for obs in self.observers[:]:
+                obs.on_adapter(self, event)
             for obs in self.observers[:]:
                 obs.on_gap_evt_timeout(self, event)
         elif isinstance(event, GapEvtAdvReport):
-            # TODO: Maintain list of seen devices seen?
+            for obs in self.observers[:]:
+                obs.on_adapter(self, event)
             for obs in self.observers[:]:
                 obs.on_gap_evt_adv_report(self, event)
 

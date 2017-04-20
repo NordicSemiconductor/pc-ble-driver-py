@@ -60,7 +60,11 @@ def NordicSemiErrorCheck(wrapped=None, expected = driver.NRF_SUCCESS):
     def wrapper(wrapped, instance, args, kwargs):
         err_code = wrapped(*args, **kwargs)
         if err_code != expected:
-            raise NordicSemiException('Failed to {}. Error code: 0x{:04x}, {}'.format(wrapped.__name__, err_code, err_code))
+            try:
+                err_string = 'Error code: {}'.format(NrfError(err_code))
+            except ValueError:
+                err_string = 'Error code: 0x{:04x}, {}'.format(err_code, err_code)
+            raise NordicSemiException('Failed to {}. {}'.format(wrapped.__name__, err_string))
 
     return wrapper(wrapped)
 
