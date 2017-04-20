@@ -75,6 +75,8 @@ class HRCollector(NrfAdapterObserver, GattClientObserver):
         self.gattc          = None
         self.hr_handle      = None
         self.hr_cccd        = None
+        self.bs_handle      = None
+        self.bs_cccd        = None
         self.scan_active    = False
         self.adapter.observer_register(self)
 
@@ -122,18 +124,26 @@ class HRCollector(NrfAdapterObserver, GattClientObserver):
 
         self.print_peer_db(services)
 
+        hr_uuid = nrf_types.BLEUUID(nrf_types.BLEUUID.Standard.heart_rate)
+        bs_uuid = nrf_types.BLEUUID(nrf_types.BLEUUID.Standard.battery_level)
+        cccd_uu = nrf_types.BLEUUID(nrf_types.BLEUUID.Standard.cccd.value)
+
         for service in services:
             for char in service.chars:
-                if not char.uuid.get_value() == nrf_types.BLEUUID.Standard.heart_rate.value:
-                    continue
-                self.hr_handle = char.handle_value
+                if char.uuid == hr_uuid:
+                    self.hr_handle = char.handle_value
+                if char.uuid == bs_uuid:
+                    self.bs_handle = char.handle_value
                 for descr in char.descs:
-                    if descr.uuid.get_value() == nrf_types.BLEUUID.Standard.cccd.value:
+                    if char.uuid == hr_uuid and descr.uuid == cccd_uu:
                         self.hr_cccd = descr.handle
+                    if char.uuid == bs_uuid and descr.uuid == cccd_uu:
+                        self.bs_cccd = descr.handle
 
-        if None in [self.hr_handle, self.hr_cccd]:
+        if None in [self.hr_handle, self.hr_cccd, self.bs_handle, self.bs_cccd]:
             raise NordicSemiException("No heart rate service found")
         self.gattc.enable_notification(self.hr_cccd)
+        self.gattc.enable_notification(self.bs_cccd)
 
     def print_peer_db(self, services):
         def repr_val(data):
@@ -206,11 +216,16 @@ class HRCollector(NrfAdapterObserver, GattClientObserver):
                 rr_values.append(str((event.data[i+1] << 8) + event.data[i]))
                 i += 2
 
-        print('hr {:5} status {}{}'.format(hr, ', '.join(status), ', '.join(rr_values)))
+        print('hr     {:5} status {}{}'.format(hr, ', '.join(status), ', '.join(rr_values)))
+
+    def parse_battery(self, event):
+        print('battery  {:3}'.format(event.data[0]))
 
     def on_notification(self, gatt_client, event):
-        if event.attr_handle == self.hr_handle:
+        if   event.attr_handle == self.hr_handle:
             self.parse_hr(event)
+        elif event.attr_handle == self.bs_handle:
+            self.parse_battery(event)
         else:
             print('Connection: {}, {} = {}'.format(event.conn_handle, event.attr_handle, event.data))
 
@@ -243,7 +258,7 @@ def main(serial_port, baud_rate, target_dev_name):
         collector.scan_and_connect(target_dev_name)
         collector.start_hr_collect()
 
-        time.sleep(10)
+        time.sleep(30)
     except KeyboardInterrupt:
         pass
     if adapter:
