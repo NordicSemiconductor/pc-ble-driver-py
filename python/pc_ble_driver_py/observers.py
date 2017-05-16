@@ -75,6 +75,14 @@ class BLEDriverObserver(object):
         pass
 
 
+    def on_gap_evt_auth_status(self, ble_driver, conn_handle, auth_status):
+        pass
+
+
+    def on_gap_evt_conn_sec_update(self, ble_driver, conn_handle):
+        pass
+
+
     def on_evt_tx_complete(self, ble_driver, conn_handle, count):
         pass
 
@@ -103,15 +111,11 @@ class BLEDriverObserver(object):
         pass
 
 
-    def on_gap_evt_auth_status(self, ble_driver, conn_handle, auth_status):
-        pass
-
-
-    def on_gap_evt_conn_sec_update(self, ble_driver, conn_handle):
-        pass
-
-
     def on_gatts_evt_hvc(self, ble_driver, status, error_handle, attr_handle):
+        pass
+
+
+    def on_gatts_evt_write(self, ble_driver, conn_handle, attr_handle, uuid, op, auth_required, offset, length, data):
         pass
 
 

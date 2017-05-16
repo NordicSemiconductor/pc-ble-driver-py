@@ -306,7 +306,6 @@ class BLEAdapter(BLEDriverObserver):
         result = self.evt_sync[conn_handle].wait(evt = BLEEvtID.gattc_evt_write_rsp)
         return result['status']
 
-
     def read_req(self, conn_handle, uuid):
         handle = self.db_conns[conn_handle].get_char_value_handle(uuid)
         if handle == None:
@@ -393,7 +392,7 @@ class BLEAdapter(BLEDriverObserver):
 
     def on_gattc_evt_read_rsp(self, ble_driver, conn_handle, **kwargs):
         self.evt_sync[conn_handle].notify(evt = BLEEvtID.gattc_evt_read_rsp, data = kwargs)
-    
+
     def on_gattc_evt_prim_srvc_disc_rsp(self, ble_driver, conn_handle, **kwargs):
         self.evt_sync[conn_handle].notify(evt = BLEEvtID.gattc_evt_prim_srvc_disc_rsp, data = kwargs)
 
@@ -402,6 +401,12 @@ class BLEAdapter(BLEDriverObserver):
 
     def on_gattc_evt_desc_disc_rsp(self, ble_driver, conn_handle, **kwargs):
         self.evt_sync[conn_handle].notify(evt = BLEEvtID.gattc_evt_desc_disc_rsp, data = kwargs)
+
+    def on_gatts_evt_hvc(self, ble_driver, status, error_handle, attr_handle, **kwargs):
+        self.evt_sync[conn_handle].notify(evt=BLEEvtID.gatts_evt_hvc, data=kwargs)
+
+    def on_gatts_evt_write(self, ble_driver, conn_handle, **kwargs):
+        self.evt_sync[conn_handle].notify(evt=BLEEvtID.gatts_evt_write, data=kwargs)
 
     def on_att_mtu_exchanged(self, ble_driver, conn_handle, att_mtu):
         self.db_conns[conn_handle].att_mtu = att_mtu
