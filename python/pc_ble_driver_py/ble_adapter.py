@@ -306,7 +306,6 @@ class BLEAdapter(BLEDriverObserver):
         result = self.evt_sync[conn_handle].wait(evt = BLEEvtID.gattc_evt_write_rsp)
         return result['status']
 
-
     def read_req(self, conn_handle, uuid):
         handle = self.db_conns[conn_handle].get_char_value_handle(uuid)
         if handle == None:
@@ -318,7 +317,7 @@ class BLEAdapter(BLEDriverObserver):
              return (gatt_res, result['data'])
         else:
              return (gatt_res, None)
- 	
+
     def write_cmd(self, conn_handle, uuid, data):
         handle = self.db_conns[conn_handle].get_char_value_handle(uuid)
         if handle == None:
@@ -360,60 +359,60 @@ class BLEAdapter(BLEDriverObserver):
         result = self.evt_sync[conn_handle].wait(evt = BLEEvtID.gap_evt_auth_status)
         return result['auth_status']
 
-
     def on_gap_evt_connected(self, ble_driver, conn_handle, peer_addr, role, conn_params):
         self.db_conns[conn_handle]  = DbConnection()
         self.evt_sync[conn_handle]  = EvtSync(events = BLEEvtID)
         self.conn_in_progress       = False
 
-
     def on_gap_evt_disconnected(self, ble_driver, conn_handle, reason):
         del self.db_conns[conn_handle]
         del self.evt_sync[conn_handle]
-
 
     def on_gap_evt_timeout(self, ble_driver, conn_handle, src):
         if src == BLEGapTimeoutSrc.conn:
             self.conn_in_progress = False
 
-
     def on_gap_evt_sec_params_request(self, ble_driver, conn_handle, **kwargs):
         self.evt_sync[conn_handle].notify(evt = BLEEvtID.gap_evt_sec_params_request, data = kwargs)
 
+    def on_gap_evt_sec_info_request(self, ble_driver, conn_handle, **kwargs):
+        self.evt_sync[conn_handle].notify(evt=BLEEvtID.gap_evt_sec_info_request, data=kwargs)
+
+    def on_gap_evt_sec_request(self, ble_driver, conn_handle, **kwargs):
+        self.evt_sync[conn_handle].notify(evt=BLEEvtID.gap_evt_sec_request, data=kwargs)
 
     def on_gap_evt_auth_status(self, ble_driver, conn_handle, **kwargs):
         self.evt_sync[conn_handle].notify(evt = BLEEvtID.gap_evt_auth_status, data = kwargs)
 
-
     def on_evt_tx_complete(self, ble_driver, conn_handle, **kwargs):
         self.evt_sync[conn_handle].notify(evt = BLEEvtID.evt_tx_complete, data = kwargs)
-
 
     def on_gattc_evt_write_rsp(self, ble_driver, conn_handle, **kwargs):
         self.evt_sync[conn_handle].notify(evt = BLEEvtID.gattc_evt_write_rsp, data = kwargs)
 
     def on_gattc_evt_read_rsp(self, ble_driver, conn_handle, **kwargs):
         self.evt_sync[conn_handle].notify(evt = BLEEvtID.gattc_evt_read_rsp, data = kwargs)
-	
+
     def on_gattc_evt_prim_srvc_disc_rsp(self, ble_driver, conn_handle, **kwargs):
         self.evt_sync[conn_handle].notify(evt = BLEEvtID.gattc_evt_prim_srvc_disc_rsp, data = kwargs)
-
 
     def on_gattc_evt_char_disc_rsp(self, ble_driver, conn_handle, **kwargs):
         self.evt_sync[conn_handle].notify(evt = BLEEvtID.gattc_evt_char_disc_rsp, data = kwargs)
 
-
     def on_gattc_evt_desc_disc_rsp(self, ble_driver, conn_handle, **kwargs):
         self.evt_sync[conn_handle].notify(evt = BLEEvtID.gattc_evt_desc_disc_rsp, data = kwargs)
 
+    def on_gatts_evt_hvc(self, ble_driver, status, error_handle, attr_handle, **kwargs):
+        self.evt_sync[conn_handle].notify(evt=BLEEvtID.gatts_evt_hvc, data=kwargs)
+
+    def on_gatts_evt_write(self, ble_driver, conn_handle, **kwargs):
+        self.evt_sync[conn_handle].notify(evt=BLEEvtID.gatts_evt_write, data=kwargs)
 
     def on_att_mtu_exchanged(self, ble_driver, conn_handle, att_mtu):
         self.db_conns[conn_handle].att_mtu = att_mtu
 
-
     def on_gattc_evt_exchange_mtu_rsp(self, ble_driver, conn_handle, **kwargs):
         self.evt_sync[conn_handle].notify(evt = BLEEvtID.gattc_evt_exchange_mtu_rsp, data = kwargs)
-    
 
     @wrapt.synchronized(observer_lock)
     def on_gap_evt_conn_param_update_request(self, ble_driver, conn_handle, conn_params):
@@ -421,7 +420,6 @@ class BLEAdapter(BLEDriverObserver):
             obs.on_conn_param_update_request(ble_adapter = self,
                                              conn_handle = conn_handle, 
                                              conn_params = conn_params)
-
 
     @wrapt.synchronized(observer_lock)
     def on_gattc_evt_hvx(self, ble_driver, conn_handle, status, error_handle, attr_handle, hvx_type, data):
