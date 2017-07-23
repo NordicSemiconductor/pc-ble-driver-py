@@ -262,6 +262,30 @@ class BLEAdapter(BLEDriverObserver):
         return result['status']
 
 
+    @NordicSemiErrorCheck(expected = BLEGattStatusCode.success)
+    def enable_indication(self, conn_handle, uuid):
+        cccd_list = [2, 0]
+
+        handle = self.db_conns[conn_handle].get_cccd_handle(uuid)
+        if handle == None:
+            raise NordicSemiException('CCCD not found')
+
+        write_params = BLEGattcWriteParams(BLEGattWriteOperation.write_req,
+                                           BLEGattExecWriteFlag.unused,
+                                           handle,
+                                           cccd_list,
+                                           0)
+
+        self.driver.ble_gattc_write(conn_handle, write_params)
+        result = self.evt_sync[conn_handle].wait(evt = BLEEvtID.gattc_evt_write_rsp)
+        return result['status']
+
+
+    @NordicSemiErrorCheck(expected = BLEGattStatusCode.success)
+    def disable_indication(self, conn_handle, uuid):
+        return self.disable_notification(conn_handle, uuid)
+
+
     def conn_param_update(self, conn_handle, conn_params):
         self.driver.ble_gap_conn_param_update(conn_handle, conn_params)
 
@@ -437,3 +461,15 @@ class BLEAdapter(BLEDriverObserver):
                                     conn_handle = conn_handle, 
                                     uuid        = uuid,
                                     data        = data)
+
+        elif hvx_type == BLEGattHVXType.indication:
+            uuid = self.db_conns[conn_handle].get_char_uuid(attr_handle)
+            if uuid == None:
+                raise NordicSemiException('UUID not found')
+
+            for obs in self.observers:
+                obs.on_indication(ble_adapter = self,
+                                  conn_handle = conn_handle, 
+                                  uuid        = uuid,
+                                  data        = data)
+
