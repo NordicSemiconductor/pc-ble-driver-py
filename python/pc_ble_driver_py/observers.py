@@ -127,6 +127,10 @@ class BLEAdapterObserver(object):
         super(BLEAdapterObserver, self).__init__()
 
 
+    def on_indication(self, ble_adapter, conn_handle, uuid, data):
+        pass
+        
+        
     def on_notification(self, ble_adapter, conn_handle, uuid, data):
         pass
         
