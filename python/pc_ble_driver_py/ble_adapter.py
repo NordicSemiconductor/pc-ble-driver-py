@@ -473,3 +473,4 @@ class BLEAdapter(BLEDriverObserver):
                                   uuid        = uuid,
                                   data        = data)
 
+            self.driver.ble_gattc_hv_confirm(conn_handle, attr_handle)
