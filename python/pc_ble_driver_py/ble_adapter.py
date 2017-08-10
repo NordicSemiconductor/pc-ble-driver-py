@@ -327,9 +327,19 @@ class BLEAdapter(BLEDriverObserver):
                                            handle,
                                            data,
                                            0)
-        self.driver.ble_gattc_write(conn_handle, write_params)
-        self.evt_sync[conn_handle].wait(evt = BLEEvtID.evt_tx_complete)
 
+        # Send packet and skip waiting for TX-complete event. Try maximum 3 times.
+        for _ in range(3):
+            try:
+                self.driver.ble_gattc_write(conn_handle, write_params)
+                return
+            except NordicSemiException as e:
+                # Retry if BLE_ERROR_NO_TX_PACKETS error code.
+                if "Error code: 12292" in e.message:
+                    self.evt_sync[conn_handle].wait(evt=BLEEvtID.evt_tx_complete, timeout=1)
+                else:
+                    raise e
+        raise NordicSemiException('Unable to successfully call ble_gattc_write')
 
     @NordicSemiErrorCheck(expected = BLEGapSecStatus.success)
     def authenticate(self, conn_handle):
