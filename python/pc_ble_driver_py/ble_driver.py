@@ -140,6 +140,7 @@ class BLEEvtID(Enum):
     gap_evt_conn_param_update_request = driver.BLE_GAP_EVT_CONN_PARAM_UPDATE_REQUEST
     gap_evt_conn_param_update         = driver.BLE_GAP_EVT_CONN_PARAM_UPDATE
     gap_evt_auth_status               = driver.BLE_GAP_EVT_AUTH_STATUS
+    gap_evt_auth_key_request          = driver.BLE_GAP_EVT_AUTH_KEY_REQUEST
     gap_evt_conn_sec_update           = driver.BLE_GAP_EVT_CONN_SEC_UPDATE
     evt_tx_complete                   = driver.BLE_EVT_TX_COMPLETE
     gattc_evt_write_rsp               = driver.BLE_GATTC_EVT_WRITE_RSP
@@ -1402,6 +1403,14 @@ class BLEDriver(object):
                     obs.on_gap_evt_auth_status(ble_driver   = self,
                                                conn_handle  = ble_event.evt.common_evt.conn_handle,
                                                auth_status  = BLEGapSecStatus(auth_status_evt.auth_status))
+
+            elif evt_id == BLEEvtID.gap_evt_auth_key_request:
+                auth_key_request_evt = ble_event.evt.gap_evt.params.auth_key_request
+
+                for obs in self.observers:
+                    obs.on_gap_evt_auth_key_request(ble_driver   = self,
+                                                    conn_handle  = ble_event.evt.common_evt.conn_handle,
+                                                    key_type     = auth_key_request_evt.key_type)
 
             elif evt_id == BLEEvtID.gap_evt_conn_sec_update:
                 conn_sec_update_evt = ble_event.evt.gap_evt.params.conn_sec_update
