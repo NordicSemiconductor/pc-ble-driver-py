@@ -79,6 +79,10 @@ class BLEDriverObserver(object):
         pass
 
 
+    def on_gap_evt_auth_key_request(self, ble_driver, conn_handle, key_type):
+        pass
+
+
     def on_gap_evt_conn_sec_update(self, ble_driver, conn_handle):
         pass
 

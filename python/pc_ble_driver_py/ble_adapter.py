@@ -384,6 +384,9 @@ class BLEAdapter(BLEDriverObserver):
     def on_gap_evt_auth_status(self, ble_driver, conn_handle, **kwargs):
         self.evt_sync[conn_handle].notify(evt = BLEEvtID.gap_evt_auth_status, data = kwargs)
 
+    def on_gap_evt_auth_key_request(self, ble_driver, conn_handle, **kwargs):
+        self.evt_sync[conn_handle].notify(evt=BLEEvtID.gap_evt_auth_key_request, data=kwargs)
+
     def on_evt_tx_complete(self, ble_driver, conn_handle, **kwargs):
         self.evt_sync[conn_handle].notify(evt = BLEEvtID.evt_tx_complete, data = kwargs)
 
