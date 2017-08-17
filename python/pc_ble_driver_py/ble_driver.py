@@ -1031,14 +1031,21 @@ class BLEDriver(object):
         assert isinstance(gap_addr, (BLEGapAddr)), 'Invalid argument type'
         if gap_addr:
             gap_addr = gap_addr.to_c()
-        return driver.sd_ble_gap_addr_set(self.rpc_adapter, gap_addr)
+
+        if nrf_sd_ble_api_ver >= 3:
+            return driver.sd_ble_gap_addr_set(self.rpc_adapter, gap_addr)
+        else:
+            return driver.sd_ble_gap_address_set(self.rpc_adapter, 0, gap_addr)
 
 
     @wrapt.synchronized(api_lock)
     def ble_gap_addr_get(self):
         address = BLEGapAddr(BLEGapAddr.Types.public, [0]*6)
         addr = address.to_c()
-        err_code = driver.sd_ble_gap_addr_get(self.rpc_adapter, addr)
+        if nrf_sd_ble_api_ver >= 3:
+            err_code = driver.sd_ble_gap_addr_get(self.rpc_adapter, addr)
+        else:
+            err_code = driver.sd_ble_gap_address_get(self.rpc_adapter, addr)
         if err_code != driver.NRF_SUCCESS:
             raise NordicSemiException('Failed to get ble_gap_addr. Error code: {}'.format(err_code))
         return BLEGapAddr.from_c(addr)
