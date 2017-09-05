@@ -1283,6 +1283,13 @@ class BLEDriver(object):
 
     @NordicSemiErrorCheck
     @wrapt.synchronized(api_lock)
+    def ble_gattc_hv_confirm(self, conn_handle, attr_handle):
+        logger.debug('Sending GATTC Handle value confirmation')
+        return driver.sd_ble_gattc_hv_confirm(self.rpc_adapter, conn_handle, attr_handle)
+
+
+    @NordicSemiErrorCheck
+    @wrapt.synchronized(api_lock)
     def ble_gatts_service_add(self, service_type, uuid, service_handle):
         uuid_c = uuid.to_c()
         return driver.sd_ble_gatts_service_add(self.rpc_adapter,
