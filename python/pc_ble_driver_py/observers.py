@@ -43,6 +43,10 @@ class BLEDriverObserver(object):
         pass
 
 
+    def on_evt_data_length_changed(self, ble_driver, data_length_changed):
+        pass
+
+
     def on_gap_evt_connected(self, ble_driver, conn_handle, peer_addr, role, conn_params):
         pass
 
@@ -133,8 +137,8 @@ class BLEAdapterObserver(object):
 
     def on_indication(self, ble_adapter, conn_handle, uuid, data):
         pass
-        
-        
+
+
     def on_notification(self, ble_adapter, conn_handle, uuid, data):
         pass
         
