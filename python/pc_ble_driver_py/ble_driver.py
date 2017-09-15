@@ -130,7 +130,6 @@ def NordicSemiErrorCheck(wrapped=None, expected = driver.NRF_SUCCESS):
 
 
 class BLEEvtID(Enum):
-    evt_data_length_changed           = driver.BLE_EVT_DATA_LENGTH_CHANGED
     gap_evt_connected                 = driver.BLE_GAP_EVT_CONNECTED
     gap_evt_disconnected              = driver.BLE_GAP_EVT_DISCONNECTED
     gap_evt_sec_params_request        = driver.BLE_GAP_EVT_SEC_PARAMS_REQUEST
@@ -153,6 +152,7 @@ class BLEEvtID(Enum):
     gatts_evt_hvc                     = driver.BLE_GATTS_EVT_HVC
     gatts_evt_write                   = driver.BLE_GATTS_EVT_WRITE
     if nrf_sd_ble_api_ver >= 3:
+        evt_data_length_changed           = driver.BLE_EVT_DATA_LENGTH_CHANGED
         gatts_evt_exchange_mtu_request    = driver.BLE_GATTS_EVT_EXCHANGE_MTU_REQUEST
         gattc_evt_exchange_mtu_rsp        = driver.BLE_GATTC_EVT_EXCHANGE_MTU_RSP
 
