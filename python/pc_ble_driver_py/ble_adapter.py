@@ -102,6 +102,7 @@ class EvtSync(object):
 
 
     def wait(self, evt, timeout = 5):
+        self.data = None
         with self.conds[evt]:
             self.conds[evt].wait(timeout=timeout)
             return self.data
