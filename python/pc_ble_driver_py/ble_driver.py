@@ -130,6 +130,7 @@ def NordicSemiErrorCheck(wrapped=None, expected = driver.NRF_SUCCESS):
 
 
 class BLEEvtID(Enum):
+    evt_data_length_changed           = driver.BLE_EVT_DATA_LENGTH_CHANGED
     gap_evt_connected                 = driver.BLE_GAP_EVT_CONNECTED
     gap_evt_disconnected              = driver.BLE_GAP_EVT_DISCONNECTED
     gap_evt_sec_params_request        = driver.BLE_GAP_EVT_SEC_PARAMS_REQUEST
@@ -1331,7 +1332,13 @@ class BLEDriver(object):
             logger.error('Invalid received BLE event id: 0x{:02X}'.format(ble_event.header.evt_id))
             return
         try:
-            if evt_id == BLEEvtID.gap_evt_connected:
+
+            if evt_id == BLEEvtID.evt_data_length_changed:
+                for obs in self.observers:
+                    obs.on_evt_data_length_changed(ble_driver = self,
+                                                   data_length_changed = ble_event.evt.common_evt.params.data_length_changed)
+
+            elif evt_id == BLEEvtID.gap_evt_connected:
                 connected_evt = ble_event.evt.gap_evt.params.connected
 
                 for obs in self.observers:
