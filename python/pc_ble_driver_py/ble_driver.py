@@ -1333,12 +1333,7 @@ class BLEDriver(object):
             return
         try:
 
-            if evt_id == BLEEvtID.evt_data_length_changed:
-                for obs in self.observers:
-                    obs.on_evt_data_length_changed(ble_driver = self,
-                                                   data_length_changed = ble_event.evt.common_evt.params.data_length_changed)
-
-            elif evt_id == BLEEvtID.gap_evt_connected:
+            if evt_id == BLEEvtID.gap_evt_connected:
                 connected_evt = ble_event.evt.gap_evt.params.connected
 
                 for obs in self.observers:
@@ -1586,6 +1581,11 @@ class BLEDriver(object):
                                                               conn_handle    = ble_event.evt.gatts_evt.conn_handle,
                                                               status         = _status,
                                                               att_mtu        = _att_mtu)
+
+                    elif evt_id == BLEEvtID.evt_data_length_changed:
+                        for obs in self.observers:
+                            obs.on_evt_data_length_changed(ble_driver = self,
+                                                           data_length_changed = ble_event.evt.common_evt.params.data_length_changed)
 
 
         except Exception as e:
