@@ -4,6 +4,7 @@ cmake_minimum_required(VERSION 3.3)
 project (pc-ble-driver-py)
 
 set(PC_BLE_DRIVER_PY_OUTDIR ${CMAKE_BINARY_DIR}/outdir)
+set(PYTHON_VERSION 3.4)
 
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${PC_BLE_DRIVER_PY_OUTDIR})
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${PC_BLE_DRIVER_PY_OUTDIR})
@@ -27,7 +28,8 @@ include_directories(${PC_BLE_DRIVER_INCLUDE_DIR})
 find_package(SWIG REQUIRED)
 include(${SWIG_USE_FILE})
 
-find_package(PythonLibs 2.7 REQUIRED)
+set(Python_ADDITIONAL_VERSIONS ${PYTHON_VERSION})
+find_package(PythonLibs ${PYTHON_VERSION} REQUIRED)
 include_directories(${PYTHON_INCLUDE_PATH})
 
 foreach(SD_API_VER ${SD_API_VERS})
@@ -66,14 +68,13 @@ foreach(SD_API_VER ${SD_API_VERS})
 
     set(CMAKE_SWIG_FLAGS)
     foreach(it ${PC_BLE_DRIVER_${SD_API_VER}_PUBLIC_INCLUDE_DIRS})
-        #MESSAGE( STATUS "${SD_API_VER} it: " "${it}" )
+      #MESSAGE( STATUS "${SD_API_VER} it: " "${it}" )
       set(CMAKE_SWIG_FLAGS ${CMAKE_SWIG_FLAGS} "-I${it}")
     endforeach()
 
     string(REGEX MATCH "[0-9]+$" _SD_API_VER_NUM "${SD_API_VER}")
     set(SD_API_VER_COMPILER_DEF_NUM "-D${SD_API_VER_COMPILER_DEF}=${_SD_API_VER_NUM}")
     set(CMAKE_SWIG_FLAGS ${CMAKE_SWIG_FLAGS} "${SD_API_VER_COMPILER_DEF_NUM}")
-
     swig_add_module(${PYTHON_MODULE_${SD_API_VER}} python ${SWIG_I_FILE_${SD_API_VER}})
     target_include_directories(${SWIG_MODULE_${PYTHON_MODULE_${SD_API_VER}}_REAL_NAME} PRIVATE ${PC_BLE_DRIVER_${SD_API_VER}_PUBLIC_INCLUDE_DIRS})
 endforeach(SD_API_VER)
