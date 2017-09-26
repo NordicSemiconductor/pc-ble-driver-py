@@ -92,6 +92,14 @@ class DbConnection(object):
                 if (c.handle_decl <= handle) and (c.end_handle >= handle):
                     return c.uuid
 
+    def get_char_props(self, uuid):
+        assert isinstance(uuid, BLEUUID), 'Invalid argument type'
+
+        for s in self.services:
+            for c in s.chars:
+                if (c.uuid.value == uuid.value) and (c.uuid.base.type == uuid.base.type):
+                    return c.char_props
+
 
 class EvtSync(object):
     def __init__(self, events):
@@ -460,7 +468,7 @@ class BLEAdapter(BLEDriverObserver):
     def on_gap_evt_conn_param_update_request(self, ble_driver, conn_handle, conn_params):
         for obs in self.observers:
             obs.on_conn_param_update_request(ble_adapter = self,
-                                             conn_handle = conn_handle, 
+                                             conn_handle = conn_handle,
                                              conn_params = conn_params)
 
     @wrapt.synchronized(observer_lock)
@@ -476,7 +484,7 @@ class BLEAdapter(BLEDriverObserver):
 
             for obs in self.observers:
                 obs.on_notification(ble_adapter = self,
-                                    conn_handle = conn_handle, 
+                                    conn_handle = conn_handle,
                                     uuid        = uuid,
                                     data        = data)
 
@@ -487,7 +495,7 @@ class BLEAdapter(BLEDriverObserver):
 
             for obs in self.observers:
                 obs.on_indication(ble_adapter = self,
-                                  conn_handle = conn_handle, 
+                                  conn_handle = conn_handle,
                                   uuid        = uuid,
                                   data        = data)
 

@@ -51,6 +51,7 @@ import os
 import platform
 import imp
 import importlib
+import collections
 
 from observers import *
 
@@ -750,10 +751,26 @@ class BLEDescriptor(object):
 
 
 
+CharProperties = collections.namedtuple('CharProperties', 'broadcast read write_wo_resp write notify indicate auth_signed_wr')
+
+class BLECharProperties(CharProperties):
+    @classmethod
+    def from_c(cls, char_props):
+        return cls(broadcast      = char_props.broadcast,
+                    read           = char_props.read,
+                    write_wo_resp  = char_props.write_wo_resp,
+                    write          = char_props.write,
+                    notify         = char_props.notify,
+                    indicate       = char_props.indicate,
+                    auth_signed_wr = char_props.auth_signed_wr)
+
+
+
 class BLECharacteristic(object):
-    def __init__(self, uuid, handle_decl, handle_value):
-        logger.debug('New characteristic uuid: {}, declaration handle: {}, value handle: {}'.format(uuid, handle_decl, handle_value))
+    def __init__(self, uuid, char_props, handle_decl, handle_value):
+        logger.debug('New characteristic uuid: {}, properties: {}, declaration handle: {}, value handle: {}'.format(uuid, char_props, handle_decl, handle_value))
         self.uuid           = uuid
+        self.char_props     = char_props
         self.handle_decl    = handle_decl
         self.handle_value   = handle_value
         self.end_handle     = None
@@ -800,7 +817,7 @@ class SerialPortDescriptor(object):
         self.location_id = location_id
         self.vendor_id = vendor_id
         self.product_id = product_id
-    
+
     @classmethod
     def to_string(cls, char_arr):
         s = util.char_array_to_list(char_arr, driver.SD_RPC_MAXPATHLEN)
@@ -848,7 +865,7 @@ class Flasher(object):
     def __init__(self, serial_port = None, snr = None):
         if serial_port is None and snr is None:
             raise NordicSemiException('Invalid Flasher initialization')
-        
+
         nrfjprog = Flasher.which(Flasher.NRFJPROG)
         if nrfjprog == None:
             nrfjprog = Flasher.which("{}.exe".format(Flasher.NRFJPROG))
@@ -911,7 +928,7 @@ class Flasher(object):
         except subprocess.CalledProcessError as e:
             if e.returncode == 18:
                 raise RuntimeError("Invalid Connectivity IC ID: {}".format(self.family))
-            else: 
+            else:
                 raise
 
 
@@ -1111,7 +1128,7 @@ class BLEDriver(object):
             conn_params = self.conn_params_setup()
         assert isinstance(conn_params, BLEGapConnParams), 'Invalid argument type'
 
-        return driver.sd_ble_gap_connect(self.rpc_adapter, 
+        return driver.sd_ble_gap_connect(self.rpc_adapter,
                                          address.to_c(),
                                          scan_params.to_c(),
                                          conn_params.to_c())
@@ -1121,7 +1138,7 @@ class BLEDriver(object):
     @wrapt.synchronized(api_lock)
     def ble_gap_disconnect(self, conn_handle, hci_status_code = BLEHci.remote_user_terminated_connection):
         assert isinstance(hci_status_code, BLEHci), 'Invalid argument type'
-        return driver.sd_ble_gap_disconnect(self.rpc_adapter, 
+        return driver.sd_ble_gap_disconnect(self.rpc_adapter,
                                             conn_handle,
                                             hci_status_code.value)
 
@@ -1566,7 +1583,7 @@ class BLEDriver(object):
 
                     elif evt_id == BLEEvtID.gattc_evt_exchange_mtu_rsp:
                         xchg_mtu_evt = ble_event.evt.gattc_evt.params.exchange_mtu_rsp
-                        _status = BLEGattStatusCode(ble_event.evt.gattc_evt.gatt_status) 
+                        _status = BLEGattStatusCode(ble_event.evt.gattc_evt.gatt_status)
                         _server_rx_mtu = 0
 
                         if _status == BLEGattStatusCode.success:
@@ -1591,5 +1608,5 @@ class BLEDriver(object):
         except Exception as e:
             logger.error("Exception: {}".format(str(e)))
             for line in traceback.extract_tb(sys.exc_info()[2]):
-                logger.error(line) 
-            logger.error("") 
+                logger.error(line)
+            logger.error("")
