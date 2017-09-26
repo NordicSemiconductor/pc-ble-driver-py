@@ -51,6 +51,8 @@ def sd_api_ver_get():
         _sd_api_v = 2
     elif __conn_ic_id__.upper() == "NRF52":
         _sd_api_v = 3
+    elif __conn_ic_id__.upper() == "NRF52V5":
+        _sd_api_v = 5
     else:
         raise RuntimeError('Invalid connectivity IC identifier: {}.'.format(__conn_ic_id__))
     return _sd_api_v

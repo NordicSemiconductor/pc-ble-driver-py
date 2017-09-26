@@ -37,14 +37,14 @@
 
 import importlib
 
-import config
+from . import config
 nrf_sd_ble_api_ver = config.sd_api_ver_get()
 # Load pc_ble_driver
 SWIG_MODULE_NAME = "pc_ble_driver_sd_api_v{}".format(nrf_sd_ble_api_ver)
 try:
     ble_driver = importlib.import_module(SWIG_MODULE_NAME)
 except Exception:
-    print "Error. No ble_driver module found."
+    print("Error. No ble_driver module found.")
 
 
 UNIT_0_625_MS = 625  # Unit used for scanning and advertising parameters

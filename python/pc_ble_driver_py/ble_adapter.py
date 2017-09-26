@@ -34,14 +34,14 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
-import Queue
+import queue
 import logging
 import wrapt
 from threading  import Condition, Lock
-from ble_driver import *
-from exceptions import NordicSemiException
+from .ble_driver import *
+from .exceptions import NordicSemiException
 
-from observers import *
+from .observers import *
 
 logger  = logging.getLogger(__name__)
 
@@ -138,12 +138,13 @@ class BLEAdapter(BLEDriverObserver):
         self.evt_sync           = dict()
 
 
-    def connect(self, address, scan_params=None, conn_params=None):
+    def connect(self, address, scan_params=None, conn_params=None, tag=0):
         if self.conn_in_progress:
             return
         self.driver.ble_gap_connect(address     = address,
                                     scan_params = scan_params,
-                                    conn_params = conn_params)
+                                    conn_params = conn_params,
+                                    tag=tag)
         self.conn_in_progress = True
 
 
@@ -161,8 +162,8 @@ class BLEAdapter(BLEDriverObserver):
         self.observers.remove(observer)
 
 
-    def att_mtu_exchange(self, conn_handle):
-        self.driver.ble_gattc_exchange_mtu_req(conn_handle)
+    def att_mtu_exchange(self, conn_handle, mtu):
+        self.driver.ble_gattc_exchange_mtu_req(conn_handle, mtu)
         response = self.evt_sync[conn_handle].wait(evt = BLEEvtID.gattc_evt_exchange_mtu_rsp)
         return self.db_conns[conn_handle].att_mtu
 
