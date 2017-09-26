@@ -59,6 +59,11 @@
 %ignore sd_ble_l2cap_cid_register;
 %ignore sd_ble_l2cap_cid_unregister;
 %ignore sd_ble_l2cap_tx;
+%ignore sd_ble_l2cap_ch_setup;
+%ignore sd_ble_l2cap_ch_release;
+%ignore sd_ble_l2cap_ch_rx;
+%ignore sd_ble_l2cap_ch_tx;
+%ignore sd_ble_l2cap_ch_flow_control;
 // Ignore event getter, handled by the connectivity device
 %ignore sd_ble_evt_get;
 
@@ -96,7 +101,7 @@
 #if NRF_SD_BLE_API_VERSION == 2
 %array_class(ble_gattc_attr_info_t, ble_gattc_attr_info_array);
 #endif
-#if NRF_SD_BLE_API_VERSION == 3
+#if NRF_SD_BLE_API_VERSION >= 3
 %array_class(ble_gattc_attr_info16_t, ble_gattc_attr_info16_array);
 %array_class(ble_gattc_attr_info128_t, ble_gattc_attr_info128_array);
 #endif
@@ -151,12 +156,10 @@ static void PythonEvtCallBack(adapter_t *adapter, ble_evt_t *ble_event)
     // this callback is complete. The event that is received in this function is allocated
     // on the stack of the function calling this function.
 
-#if _pc_ble_driver_sd_api_v2_EXPORTS
+#if SD_BLE_API_VERSION == 2
     copied_ble_event = (ble_evt_t*)malloc(sizeof(ble_evt_t));
     memcpy(copied_ble_event, ble_event, sizeof(ble_evt_t));
-#endif
-
-#if _pc_ble_driver_sd_api_v3_EXPORTS
+#else
     copied_ble_event = (ble_evt_t*)malloc(ble_event->header.evt_len);
     memcpy(copied_ble_event, ble_event, ble_event->header.evt_len);
 #endif
