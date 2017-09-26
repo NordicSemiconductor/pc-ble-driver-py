@@ -780,6 +780,7 @@ class BLECharacteristic(object):
     @classmethod
     def from_c(cls, gattc_char):
         return cls(uuid         = BLEUUID.from_c(gattc_char.uuid),
+                   char_props   = BLECharProperties.from_c(gattc_char.char_props),
                    handle_decl  = gattc_char.handle_decl,
                    handle_value = gattc_char.handle_value)
 
