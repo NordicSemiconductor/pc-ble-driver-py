@@ -43,6 +43,7 @@
 # * "NRF52"
 __conn_ic_id__ = None
 
+
 def sd_api_ver_get():
     if __conn_ic_id__ is None:
         raise RuntimeError('Connectivity IC identifier __conn_ic_id__ is not set')
@@ -71,3 +72,11 @@ def conn_ic_hex_get():
                         'connectivity_1.2.0_115k2_with_s132_3.0.hex')
     else:
         raise RuntimeError('Invalid connectivity IC identifier: {}.'.format(__conn_ic_id__))
+
+
+def get_connectivity_hex_version():
+    return '1.2.0'
+
+
+def get_connectivity_hex_baud_rate():
+    return 115200
