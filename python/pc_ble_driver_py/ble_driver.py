@@ -890,7 +890,7 @@ class Flasher(object):
         result = list()
         for line in data.splitlines():
             line = re.sub(r"(^.*:)|(\|.*$)", '', line)
-            result.extend([i for i in line.split()])
+            result.extend(line.split())
         return result
 
     def reset(self):
