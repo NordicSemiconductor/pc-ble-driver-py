@@ -72,3 +72,11 @@ def conn_ic_hex_get():
                             'connectivity_1.2.0_1m_with_s132_5.0.hex')
     else:
         raise RuntimeError('Invalid connectivity IC identifier: {}.'.format(__conn_ic_id__))
+
+
+def get_connectivity_hex_version():
+    return '1.2.0'
+
+
+def get_connectivity_hex_baud_rate():
+    return 115200

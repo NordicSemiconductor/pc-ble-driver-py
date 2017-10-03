@@ -864,6 +864,10 @@ class Flasher(object):
         return None
 
     NRFJPROG = 'nrfjprog'
+    FW_STRUCT_ADDRESS = 0x20000
+    FW_STRUCT_LENGTH = 24
+    FW_MAGIC_NUMBER = ['17', 'A5', 'D8', '46']
+
     def __init__(self, serial_port = None, snr = None):
         if serial_port is None and snr is None:
             raise NordicSemiException('Invalid Flasher initialization')
@@ -888,39 +892,37 @@ class Flasher(object):
         self.family = config.__conn_ic_id__
 
     def fw_check(self):
-        data    = self.read(addr = 0x20000, size = 4)
-        return data == [0x17, 0xA5, 0xD8, 0x46] # hex magic number
+        fw_struct = self.read_fw_struct()
+        return (len(fw_struct) == Flasher.FW_STRUCT_LENGTH and
+                Flasher.is_valid_magic_number(fw_struct) and
+                Flasher.is_valid_version(fw_struct) and
+                Flasher.is_valid_baud_rate(fw_struct))
 
     def fw_flash(self):
         self.erase()
         hex_file = config.conn_ic_hex_get()
         self.program(hex_file)
 
-    def read(self, addr, size):
-        args = ['--memrd', str(addr), '--w', '8', '--n', str(size)]
+    def read_fw_struct(self):
+        args = ['--memrd', str(Flasher.FW_STRUCT_ADDRESS), '--w', '8', '--n', str(Flasher.FW_STRUCT_LENGTH)]
         data = self.call_cmd(args)
-
         result = list()
         for line in data.splitlines():
-            line = re.sub(r"(^.*:)|(\|.*$)", '', line.decode('utf-8'))
-            result.extend([int(i, 16) for i in line.split()])
+            line = re.sub(r"(^.*:)|(\|.*$)", '', line)
+            result.extend(line.split())
         return result
-
 
     def reset(self):
         args    = ['--reset']
         self.call_cmd(args)
 
-
     def erase(self):
         args    = ['--eraseall']
         self.call_cmd(args)
 
-
     def program(self, path):
         args    = ['--program', path]
         self.call_cmd(args)
-
 
     @wrapt.synchronized(api_lock)
     def call_cmd(self, args):
@@ -933,6 +935,23 @@ class Flasher(object):
             else: 
                 raise
 
+    @staticmethod
+    def is_valid_magic_number(fw_struct):
+        magic_number = fw_struct[:4]
+        return magic_number == Flasher.FW_MAGIC_NUMBER
+
+    @staticmethod
+    def is_valid_version(fw_struct):
+        major = int(fw_struct[12], 16)
+        minor = int(fw_struct[13], 16)
+        patch = int(fw_struct[14], 16)
+        version = '.'.join(map(str, [major, minor, patch]))
+        return config.get_connectivity_hex_version() == version
+
+    @staticmethod
+    def is_valid_baud_rate(fw_struct):
+        baud_rate = int(''.join(fw_struct[20:24][::-1]), 16)
+        return config.get_connectivity_hex_baud_rate() == baud_rate
 
 class BLEConfigBase(object):
     tag = 1
