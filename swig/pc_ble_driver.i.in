@@ -87,9 +87,9 @@
 %include "sd_rpc.h"
 %include "sd_rpc_types.h"
 
-%pointer_functions(uint8_t, uint8)
-%pointer_functions(uint16_t, uint16)
-%pointer_functions(uint32_t, uint32)
+%pointer_functions(uint8_t, uint8);
+%pointer_functions(uint16_t, uint16);
+%pointer_functions(uint32_t, uint32);
 
 %array_class(char, char_array);
 %array_class(uint8_t, uint8_array);

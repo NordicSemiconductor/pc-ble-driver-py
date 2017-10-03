@@ -42,107 +42,92 @@ class BLEDriverObserver(object):
         super(BLEDriverObserver, self).__init__()
         pass
 
-
-    def on_evt_data_length_changed(self, ble_driver, data_length_changed):
+    def on_evt_data_length_update(self, ble_driver, conn_handle, data_length_params):
         pass
 
-
-    def on_gap_evt_connected(self, ble_driver, conn_handle, peer_addr, role, conn_params):
+    def on_evt_data_length_update_request(self, ble_driver, conn_handle, data_length_params):
         pass
-
-
-    def on_gap_evt_disconnected(self, ble_driver, conn_handle, reason):
-        pass
-
-
-    def on_gap_evt_sec_params_request(self, ble_driver, conn_handle, peer_params):
-        pass
-
-
-    def on_gap_evt_sec_info_request(self, ble_driver, conn_handle, peer_addr, master_id, enc_info, id_info, sign_info):
-        pass
-
-
-    def on_gap_evt_sec_request(self, ble_driver, conn_handle, bond, mitm, lesc, keypress):
-        pass
-
-
-    def on_gap_evt_conn_param_update_request(self, ble_driver, conn_handle, conn_params):
-        pass
-
-
-    def on_gap_evt_timeout(self, ble_driver, conn_handle, src):
-        pass
-
-
-    def on_gap_evt_adv_report(self, ble_driver, conn_handle, peer_addr, rssi, adv_type, adv_data):
-        pass
-
-
-    def on_gap_evt_auth_status(self, ble_driver, conn_handle, auth_status):
-        pass
-
-
-    def on_gap_evt_auth_key_request(self, ble_driver, conn_handle, key_type):
-        pass
-
-
-    def on_gap_evt_conn_sec_update(self, ble_driver, conn_handle):
-        pass
-
 
     def on_evt_tx_complete(self, ble_driver, conn_handle, count):
         pass
 
+    def on_gap_evt_connected(self, ble_driver, conn_handle, peer_addr, role, conn_params):
+        pass
+
+    def on_gap_evt_disconnected(self, ble_driver, conn_handle, reason):
+        pass
+
+    def on_gap_evt_sec_params_request(self, ble_driver, conn_handle, peer_params):
+        pass
+
+    def on_gap_evt_sec_info_request(self, ble_driver, conn_handle, peer_addr, master_id, enc_info, id_info, sign_info):
+        pass
+
+    def on_gap_evt_sec_request(self, ble_driver, conn_handle, bond, mitm, lesc, keypress):
+        pass
+
+    def on_gap_evt_conn_param_update_request(self, ble_driver, conn_handle, conn_params):
+        pass
+
+    def on_gap_evt_timeout(self, ble_driver, conn_handle, src):
+        pass
+
+    def on_gap_evt_adv_report(self, ble_driver, conn_handle, peer_addr, rssi, adv_type, adv_data):
+        pass
+
+    def on_gap_evt_auth_status(self, ble_driver, conn_handle, auth_status):
+        pass
+
+    def on_gap_evt_auth_key_request(self, ble_driver, conn_handle, key_type):
+        pass
+
+    def on_gap_evt_conn_sec_update(self, ble_driver, conn_handle):
+        pass
+
+    def on_gattc_evt_write_cmd_tx_complete(self, ble_driver, conn_handle, count):
+        pass
 
     def on_gattc_evt_write_rsp(self, ble_driver, conn_handle, status, error_handle, attr_handle, write_op, offset, data):
         pass
 
-
     def on_gattc_evt_hvx(self, ble_driver, conn_handle, status, error_handle, attr_handle, hvx_type, data):
         pass
-
 
     def on_gattc_evt_read_rsp(self, ble_driver, conn_handle, status, error_handle, attr_handle, offset, data):
         pass
 
-
     def on_gattc_evt_prim_srvc_disc_rsp(self, ble_driver, conn_handle, status, services):
         pass
-
 
     def on_gattc_evt_char_disc_rsp(self, ble_driver, conn_handle, status, characteristics):
         pass
 
-
     def on_gattc_evt_desc_disc_rsp(self, ble_driver, conn_handle, status, descriptions):
         pass
 
+    def on_gatts_evt_hvn_tx_complete(self, ble_driver, conn_handle, count):
+        pass
 
     def on_gatts_evt_hvc(self, ble_driver, status, error_handle, attr_handle):
         pass
 
-
     def on_gatts_evt_write(self, ble_driver, conn_handle, attr_handle, uuid, op, auth_required, offset, length, data):
         pass
 
-
     def on_att_mtu_exchanged(self, ble_driver, conn_handle, att_mtu):
         pass
+
 
 class BLEAdapterObserver(object):
     def __init__(self, *args, **kwargs):
         super(BLEAdapterObserver, self).__init__()
 
-
     def on_indication(self, ble_adapter, conn_handle, uuid, data):
         pass
 
-
     def on_notification(self, ble_adapter, conn_handle, uuid, data):
         pass
-        
-        
+
     def on_conn_param_update_request(self, ble_adapter, conn_handle, conn_params):
         # Default behaviour is to accept connection parameter update
         ble_adapter.conn_param_update(conn_handle, conn_params)

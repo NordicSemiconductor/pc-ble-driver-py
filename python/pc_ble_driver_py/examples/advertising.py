@@ -36,7 +36,7 @@
 #
 
 import sys
-from threading                      import Condition, Lock
+from threading                  import Condition, Lock
 from pc_ble_driver_py.observers import BLEDriverObserver 
 
 def init(conn_ic_id):
@@ -47,9 +47,9 @@ def init(conn_ic_id):
 
 def main(serial_port):
     print("Serial port used: {}".format(serial_port))
-    driver      = BLEDriver(serial_port=serial_port, auto_flash=True)
+    driver      = BLEDriver(serial_port=serial_port)
     observer    = TimeoutObserver()
-    adv_data    = BLEAdvData(complete_local_name='Example')
+    adv_data    = BLEAdvData(complete_local_name='JOKV')
 
     driver.observer_register(observer)
     driver.open()
@@ -66,6 +66,10 @@ class TimeoutObserver(BLEDriverObserver):
         self.cond = Condition(Lock())
 
     def on_gap_evt_timeout(self, ble_driver, conn_handle, src):
+        with self.cond:
+            self.cond.notify_all()
+            
+    def on_gap_evt_disconnected(self, ble_driver, conn_handle, reason):
         with self.cond:
             self.cond.notify_all()
 

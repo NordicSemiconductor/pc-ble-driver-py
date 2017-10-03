@@ -37,19 +37,19 @@
 
 import sys
 import time
-import Queue
 import logging
+from queue import Queue
 
 from pc_ble_driver_py.observers     import *
 
-TARGET_DEV_NAME = "Nordic_HRM"
+TARGET_DEV_NAME = "Thingy"
 CONNECTIONS     = 1
 
 def init(conn_ic_id):
-    global BLEDriver, BLEAdvData, BLEEvtID, BLEAdapter, BLEEnableParams, BLEGapTimeoutSrc, BLEUUID
+    global BLEDriver, BLEAdvData, BLEEvtID, BLEAdapter, BLEEnableParams, BLEGapTimeoutSrc, BLEUUID, BLEConfigCommon, BLEConfig, BLEConfigConnGatt
     from pc_ble_driver_py import config
     config.__conn_ic_id__ = conn_ic_id
-    from pc_ble_driver_py.ble_driver    import BLEDriver, BLEAdvData, BLEEvtID, BLEEnableParams, BLEGapTimeoutSrc, BLEUUID
+    from pc_ble_driver_py.ble_driver    import BLEDriver, BLEAdvData, BLEEvtID, BLEEnableParams, BLEGapTimeoutSrc, BLEUUID, BLEConfigCommon, BLEConfig, BLEConfigConnGatt
     from pc_ble_driver_py.ble_adapter   import BLEAdapter
     global nrf_sd_ble_api_ver
     nrf_sd_ble_api_ver = config.sd_api_ver_get()
@@ -58,7 +58,7 @@ class HRCollector(BLEDriverObserver, BLEAdapterObserver):
     def __init__(self, adapter):
         super(HRCollector, self).__init__()
         self.adapter    = adapter
-        self.conn_q     = Queue.Queue()
+        self.conn_q     = Queue()
         self.adapter.observer_register(self)
         self.adapter.driver.observer_register(self)
 
@@ -66,16 +66,15 @@ class HRCollector(BLEDriverObserver, BLEAdapterObserver):
     def open(self):
         self.adapter.driver.open()
 
-        ble_enable_params = BLEEnableParams(vs_uuid_count      = 1,
-                                            service_changed    = False,
-                                            periph_conn_count  = 0,
-                                            central_conn_count = CONNECTIONS,
-                                            central_sec_count  = CONNECTIONS)
-        if nrf_sd_ble_api_ver >= 3:
-            print("Enabling larger ATT MTUs")
-            ble_enable_params.att_mtu = 50
+        ble_cfg = BLEConfigCommon()
+        ble_cfg.vs_uuid_count = 2
+        self.adapter.driver.ble_cfg_set(BLEConfig.uuid_count, ble_cfg)
 
-        self.adapter.driver.ble_enable(ble_enable_params)
+        ble_cfg = BLEConfigConnGatt()
+        ble_cfg.att_mtu = 273
+        ble_cfg.tag = 1
+        self.adapter.driver.ble_cfg_set(BLEConfig.conn_gatt, ble_cfg)
+        self.adapter.driver.ble_enable()
 
 
     def close(self):
@@ -87,11 +86,11 @@ class HRCollector(BLEDriverObserver, BLEAdapterObserver):
         new_conn = self.conn_q.get(timeout = 60)
 
         if nrf_sd_ble_api_ver >= 3:
-            att_mtu = self.adapter.att_mtu_exchange(new_conn)
+            att_mtu = self.adapter.att_mtu_exchange(new_conn, 273)
 
         self.adapter.service_discovery(new_conn)
-        self.adapter.enable_notification(new_conn, BLEUUID(BLEUUID.Standard.battery_level))
-        self.adapter.enable_notification(new_conn, BLEUUID(BLEUUID.Standard.heart_rate))
+        #self.adapter.enable_notification(new_conn, BLEUUID(BLEUUID.Standard.battery_level))
+        #self.adapter.enable_notification(new_conn, BLEUUID(BLEUUID.Standard.heart_rate))
         return new_conn
 
 
@@ -126,7 +125,7 @@ class HRCollector(BLEDriverObserver, BLEAdapterObserver):
                                                                                     dev_name))
 
         if (dev_name == TARGET_DEV_NAME):
-            self.adapter.connect(peer_addr)
+            self.adapter.connect(peer_addr, tag=1)
 
 
     def on_notification(self, ble_adapter, conn_handle, uuid, data):
@@ -143,14 +142,13 @@ class HRCollector(BLEDriverObserver, BLEAdapterObserver):
 
 def main(serial_port):
     print('Serial port used: {}'.format(serial_port))
-    driver    = BLEDriver(serial_port=serial_port, auto_flash=True)
+    driver    = BLEDriver(serial_port=serial_port, auto_flash=False, baud_rate=1000000)
     adapter   = BLEAdapter(driver)
     collector = HRCollector(adapter)
     collector.open()
-    for i in xrange(CONNECTIONS):
+    for i in range(CONNECTIONS):
         conn_handle = collector.connect_and_discover()
-
-    time.sleep(30)
+    time.sleep(3)
     print('Closing')
     collector.close()
 
