@@ -1232,7 +1232,6 @@ class BLEDriver(object):
         app_ram_base = driver.new_uint32()
         driver.uint32_assign(app_ram_base, 0)
         err_code = driver.sd_ble_enable(self.rpc_adapter, app_ram_base)
-        logger.error("sd_ble_enable result: {}".format(err_code))
         return err_code
 
 
@@ -1423,17 +1422,15 @@ class BLEDriver(object):
     def ble_gap_data_length_update(self, conn_handle, data_length_params, data_length_limitation):
         assert isinstance(data_length_params, (BLEGapDataLengthParams, type(None)))
         assert isinstance(data_length_limitation, (BLEGapDataLengthLimitation, type(None)))
-        if data_length_limitation:
-            dll = data_length_limitation.to_c()
-        else:
-            dll = None
-        retval = driver.sd_ble_gap_data_length_update(self.rpc_adapter,
-                                                      conn_handle,
-                                                      data_length_params.to_c() if data_length_params else None,
-                                                      dll)
-        if dll:
-            data_length_limitation = BLEGapDataLengthLimitation.from_c(dll)
-        return retval
+        dll = driver.new_ble_gap_data_length_limitation()
+        err_code = driver.sd_ble_gap_data_length_update(self.rpc_adapter,
+                                                        conn_handle,
+                                                        data_length_params.to_c() if data_length_params else None,
+                                                        dll)
+        if err_code != driver.NRF_SUCCESS:
+            value = driver.ble_gap_data_length_limitation_value(dll)
+            data_length_limitation = BLEGapDataLengthLimitation.from_c(value)
+        return err_code
 
     @NordicSemiErrorCheck
     @wrapt.synchronized(api_lock)
@@ -1448,7 +1445,6 @@ class BLEDriver(object):
             uuid_base.type = driver.uint8_value(uuid_type)
         return err_code
 
-
     @NordicSemiErrorCheck
     @wrapt.synchronized(api_lock)
     def ble_gattc_write(self, conn_handle, write_params):
@@ -1457,15 +1453,13 @@ class BLEDriver(object):
                                          conn_handle,
                                          write_params.to_c())
 
-
     @NordicSemiErrorCheck
     @wrapt.synchronized(api_lock)
     def ble_gattc_read(self, conn_handle, handle, offset):
         return driver.sd_ble_gattc_read(self.rpc_adapter,
-                                         conn_handle,
-                                         handle,
-                                         offset)
-
+                                        conn_handle,
+                                        handle,
+                                        offset)
 
     @NordicSemiErrorCheck
     @wrapt.synchronized(api_lock)
