@@ -107,7 +107,9 @@
 #endif
 %array_class(ble_gattc_handle_value_t, ble_gattc_handle_value_array);
 %array_class(sd_rpc_serial_port_desc_t, sd_rpc_serial_port_desc_array);
-
+#if NRF_SD_BLE_API_VERSION >= 5
+%pointer_functions(ble_gap_data_length_limitation_t, ble_gap_data_length_limitation);
+#endif
 // Grab a Python function object as a Python object.
 %typemap(in) PyObject *pyfunc {
     if (!PyCallable_Check($input)) {
