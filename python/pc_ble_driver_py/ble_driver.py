@@ -954,7 +954,7 @@ class Flasher(object):
         return config.get_connectivity_hex_baud_rate() == baud_rate
 
 class BLEConfigBase(object):
-    tag = 1
+    conn_cfg_tag = 1
 
 
 class BLEConfigConnGap(BLEConfigBase):
@@ -964,7 +964,7 @@ class BLEConfigConnGap(BLEConfigBase):
 
     def to_c(self):        
         ble_cfg = driver.ble_cfg_t()
-        ble_cfg.conn_cfg.conn_cfg_tag = self.tag
+        ble_cfg.conn_cfg.conn_cfg_tag = self.conn_cfg_tag
         ble_cfg.conn_cfg.params.gap_conn_cfg.conn_count = self.conn_count
         ble_cfg.conn_cfg.params.gap_conn_cfg.event_length = self.event_length
         return ble_cfg
@@ -975,7 +975,7 @@ class BLEConfigConnGattc(BLEConfigBase):
 
     def to_c(self):        
         ble_cfg = driver.ble_cfg_t()
-        ble_cfg.conn_cfg.conn_cfg_tag = self.tag
+        ble_cfg.conn_cfg.conn_cfg_tag = self.conn_cfg_tag
         ble_cfg.conn_cfg.params.gattc_conn_cfg.write_cmd_tx_queue_size = self.write_cmd_tx_queue_size
         return ble_cfg
 
@@ -985,7 +985,7 @@ class BLEConfigConnGatts(BLEConfigBase):
 
     def to_c(self):
         ble_cfg = driver.ble_cfg_t()
-        ble_cfg.conn_cfg.conn_cfg_tag = self.tag
+        ble_cfg.conn_cfg.conn_cfg_tag = self.conn_cfg_tag
         ble_cfg.conn_cfg.params.gatts_conn_cfg.hvn_tx_queue_size = self.hvn_tx_queue_size
         return ble_cfg
 
@@ -995,7 +995,7 @@ class BLEConfigConnGatt(BLEConfigBase):
 
     def to_c(self):        
         ble_cfg = driver.ble_cfg_t()
-        ble_cfg.conn_cfg.conn_cfg_tag = self.tag
+        ble_cfg.conn_cfg.conn_cfg_tag = self.conn_cfg_tag
         ble_cfg.conn_cfg.params.gatt_conn_cfg.att_mtu = self.att_mtu
         return ble_cfg
 
@@ -1014,7 +1014,7 @@ class BLEConfigConnL2cap(BLEConfigBase):
 
     def to_c(self):        
         ble_cfg = driver.ble_cfg_t()
-        ble_cfg.conn_cfg.conn_cfg_tag = 1
+        ble_cfg.conn_cfg.conn_cfg_tag = self.conn_cfg_tag
         ble_cfg.conn_cfg.params.l2cap_conn_cfg.rx_mps = self.rx_mps
         ble_cfg.conn_cfg.params.l2cap_conn_cfg.tx_mps = self.tx_mps
         ble_cfg.conn_cfg.params.l2cap_conn_cfg.rx_queue_size = self.rx_queue_size
