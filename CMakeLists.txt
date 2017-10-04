@@ -4,7 +4,7 @@ cmake_minimum_required(VERSION 3.3)
 project (pc-ble-driver-py)
 
 # Python version to link with
-set(PYTHON_VERSION 3.4)
+set(PYTHON_VERSION 2.7)
 
 set(PC_BLE_DRIVER_PY_OUTDIR ${CMAKE_BINARY_DIR}/outdir)
 
