@@ -87,7 +87,7 @@ setup(
     install_requires = requirements,
      
     packages = find_packages(),
-    package_data = { 
+    package_data = {
                 'pc_ble_driver_py.lib.win.x86_32': ['*.pyd', '*.dll', '*.txt'],
                 'pc_ble_driver_py.lib.win.x86_64': ['*.pyd', '*.dll', '*.txt'],
                 'pc_ble_driver_py.lib.linux.x86_32': ['*.so', '*.txt'],
@@ -95,7 +95,7 @@ setup(
                 'pc_ble_driver_py.lib.macos_osx': ['*.so', '*.dylib', '*.txt'],
                 'pc_ble_driver_py.hex': ['*.hex', '*.patch', '*.sh'],
                 'pc_ble_driver_py.hex.sd_api_v2': ['*.hex', '*.patch', '*.sh'],
-                'pc_ble_driver_py.hex.sd_api_v3': ['*.hex', '*.patch', '*.sh']
+                'pc_ble_driver_py.hex.sd_api_v5': ['*.hex', '*.patch', '*.sh']
     }
     
     )
