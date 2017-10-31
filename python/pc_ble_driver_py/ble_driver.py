@@ -344,6 +344,13 @@ class BLEGapAddr(object):
         self.addr_type  = addr_type
         self.addr       = addr
 
+    def __getstate__(self):
+        self.addr_type = self.addr_type.value
+        return self.__dict__
+
+    def __setstate__(self, state):
+        self.__dict__ = state
+        self.addr_type = BLEGapAddr.Types(self.addr_type)
 
     @classmethod
     def from_c(cls, addr):
@@ -512,13 +519,18 @@ class BLEAdvData(object):
         information_3d_data                 = driver.BLE_GAP_AD_TYPE_3D_INFORMATION_DATA
         manufacturer_specific_data          = driver.BLE_GAP_AD_TYPE_MANUFACTURER_SPECIFIC_DATA
 
-
-
     def __init__(self, **kwargs):
         self.records = dict()
         for k in kwargs:
             self.records[BLEAdvData.Types[k]] = kwargs[k]
 
+    def __getstate__(self):
+        self.records = {k.value:v for k, v in self.records.items()}
+        return self.__dict__
+
+    def __setstate__(self, state):
+        self.__dict__ = state
+        self.records = {BLEAdvData.Types(k): v for k, v in self.records.items()}
 
     def to_c(self):
         data_list = list()
@@ -723,6 +735,17 @@ class BLEUUID(object):
         except(ValueError):
             self.value  = value
 
+    def __setstate__(self, state):
+        try:
+            self.value  = BLEUUID.Standard(state['value'])
+        except ValueError:
+            self.value = state['value']
+        self.base = state['base']
+
+    def __getstate__(self):
+        if isinstance(self.value, BLEUUID.Standard):
+            return {'value': self.value.value, 'base': self.base}
+        return {'value': self.value, 'base': self.base}
 
     def __str__(self):
         if isinstance(self.value, BLEUUID.Standard):
