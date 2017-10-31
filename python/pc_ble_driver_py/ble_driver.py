@@ -1551,7 +1551,13 @@ class BLEDriver(object):
                                                       attr_char_value,
                                                       char_handle)
 
-
+    @NordicSemiErrorCheck
+    @wrapt.synchronized(api_lock)
+    def ble_gatts_exchange_mtu_reply(self, conn_handle, mtu):
+        return driver.sd_ble_gatts_exchange_mtu_reply(self.rpc_adapter,
+                                                      conn_handle,
+                                                      mtu)
+    
     def status_handler(self, adapter, status_code, status_message):
         # print(status_message)
         pass
@@ -1799,60 +1805,38 @@ class BLEDriver(object):
             elif nrf_sd_ble_api_ver == 2:
                 if evt_id == BLEEvtID.evt_tx_complete:
                     for obs in self.observers:
-                        obs.on_evt_tx_complete(ble_driver     = self,
-                                               conn_handle    = ble_event.evt.gatts_evt.conn_handle,
-                                                 att_mtu        = _att_mtu)
+                        obs.on_evt_tx_complete(ble_driver  = self,
+                                               conn_handle = ble_event.evt.common_evt.conn_handle,
+                                               count       = ble_event.evt.common_evt.params.tx_complete.count)
 
             elif nrf_sd_ble_api_ver >= 3:
                 if evt_id == BLEEvtID.gatts_evt_exchange_mtu_request:
-                    xchg_mtu_evt = ble_event.evt.gatts_evt.params.exchange_mtu_request
-                    driver.sd_ble_gatts_exchange_mtu_reply(self.rpc_adapter, ble_event.evt.gatts_evt.conn_handle, self.ble_enable_params.att_mtu)
-
-                    _att_mtu = min(xchg_mtu_evt.client_rx_mtu, self.ble_enable_params.att_mtu)
-                    logger.debug('GATTS: ATT MTU: {}'.format(_att_mtu))
-
                     for obs in self.observers:
-                        obs.on_att_mtu_exchanged(ble_driver     = self,
-                                                 conn_handle    = ble_event.evt.gatts_evt.conn_handle,
-                                                 att_mtu        = _att_mtu)
+                        obs.on_gatts_evt_exchange_mtu_request(ble_driver=self,
+                                                              conn_handle=ble_event.evt.gatts_evt.conn_handle,
+                                                              client_mtu=ble_event.evt.gatts_evt.params.exchange_mtu_request.client_rx_mtu)
 
                 elif evt_id == BLEEvtID.gattc_evt_exchange_mtu_rsp:
-                    xchg_mtu_evt = ble_event.evt.gattc_evt.params.exchange_mtu_rsp
-                    _status = BLEGattStatusCode(ble_event.evt.gattc_evt.gatt_status) 
-                    _server_rx_mtu = 0
-
-                    if _status == BLEGattStatusCode.success:
-                        _server_rx_mtu = xchg_mtu_evt.server_rx_mtu
-                    else:
-                        _server_rx_mtu = ATT_MTU_DEFAULT
-
-                    _att_mtu = _server_rx_mtu
-                    logger.debug('GATTC: ATT MTU: {}'.format(_att_mtu))
-
-                    for obs in self.observers:
-                        obs.on_att_mtu_exchanged(ble_driver     = self,
-                                                 conn_handle    = ble_event.evt.gattc_evt.conn_handle,
-                                                 att_mtu        = _att_mtu)
+                    mtu_evt = ble_event.evt.gattc_evt.params.exchange_mtu_rsp
                     for obs in self.observers:
                         obs.on_gattc_evt_exchange_mtu_rsp(ble_driver     = self,
                                                           conn_handle    = ble_event.evt.gattc_evt.conn_handle,
-                                                          status         = _status,
-                                                          att_mtu        = _att_mtu)
+                                                          status         = BLEGattStatusCode(ble_event.evt.gattc_evt.gatt_status),
+                                                          att_mtu        = mtu_evt.server_rx_mtu)
 
                 elif evt_id == BLEEvtID.gap_evt_data_length_update:
                     params = ble_event.evt.gap_evt.params.data_length_update.effective_params
                     for obs in self.observers:
-                        obs.on_evt_data_length_update(ble_driver         = self,
-                                                      conn_handle        = ble_event.evt.gap_evt.conn_handle,
-                                                      data_length_params = BLEGapDataLengthParams.from_c(params))
+                        obs.on_gap_evt_data_length_update(ble_driver         = self,
+                                                          conn_handle        = ble_event.evt.gap_evt.conn_handle,
+                                                          data_length_params = BLEGapDataLengthParams.from_c(params))
 
                 elif evt_id == BLEEvtID.gap_evt_data_length_update_request:
                     params = ble_event.evt.gap_evt.params.data_length_update_request.peer_params
                     for obs in self.observers:
-                        obs.on_evt_data_length_update_request(ble_driver         = self,
-                                                              conn_handle        = ble_event.evt.gap_evt.conn_handle,
-                                                              data_length_params = BLEGapDataLengthParams.from_c(params))
-
+                        obs.on_gap_evt_data_length_update_request(ble_driver         = self,
+                                                                  conn_handle        = ble_event.evt.gap_evt.conn_handle,
+                                                                  data_length_params = BLEGapDataLengthParams.from_c(params))
 
         except Exception as e:
             logger.error("Exception: {}".format(str(e)))
