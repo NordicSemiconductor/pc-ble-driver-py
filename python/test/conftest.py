@@ -41,7 +41,7 @@ class PcBLEDriverPyTester(BLEDriverObserver, BLEAdapterObserver):
                            mtu_exchanged=threading.Event(),
                            mtu_exchanged_rsp=threading.Event())
 
-    def on_evt_data_length_update(self, ble_driver, conn_handle, data_length_params):
+    def on_gap_evt_data_length_update(self, ble_driver, conn_handle, data_length_params):
         log.info("event: {}".format('on_evt_data_length_changed'))
         log.info("    max_tx_octets: {}".format(data_length_params.max_tx_octets))
         log.info("    max_rx_octets: {}".format(data_length_params.max_rx_octets))

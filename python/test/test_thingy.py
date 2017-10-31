@@ -47,6 +47,7 @@ def test_thingy_mtu(ble_tester):
 
 
 def test_thingy(ble_tester):
+    
     ble_cfg = BLEConfigConnGatt()
     ble_cfg.att_mtu = 273
     ble_cfg.tag = 1
@@ -72,7 +73,7 @@ def test_thingy(ble_tester):
     ble_tester.driver.ble_cfg_set(BLEConfig.service_changed, cfg)
 
     cfg = BLEConfigGatts()
-    cfg.attr_tab_size = 248
+    cfg.attr_tab_size = 1024
     ble_tester.driver.ble_cfg_set(BLEConfig.attr_tab_size, cfg)
 
     ble_tester.driver.ble_enable()
@@ -90,8 +91,8 @@ def test_thingy(ble_tester):
             ble_tester.adapter.connect(peer_addr, tag=1)
             break
     conn_handle = ble_tester.conn_q.get(timeout=5)
-    ble_tester.driver.ble_gattc_exchange_mtu_req(conn_handle, 251)
-    ble_tester.events['mtu_exchanged'].wait()
+    
+    ble_tester.driver.ble_gattc_exchange_mtu_req(conn_handle, 273)
     ble_tester.events['mtu_exchanged_rsp'].wait()
 
     dlp = BLEGapDataLengthParams()
@@ -122,6 +123,7 @@ def test_thingy(ble_tester):
     res = ble_tester.adapter.read_req(conn_handle, BLEUUID(0x206, base=uuid))
     assert res[0] == BLEGattStatusCode.success
     ble_tester.adapter.write_req(conn_handle, BLEUUID(0x106, base=uuid), [22, 68, 134, 54])
+    ble_tester.adapter.write_req(conn_handle, BLEUUID(0x106, base=uuid), [22]*200)
     ble_tester.adapter.enable_notification(conn_handle, BLEUUID(0x0504, base=uuid))
     time.sleep(1)
     ble_tester.adapter.disable_notification(conn_handle, BLEUUID(0x0504, base=uuid))
