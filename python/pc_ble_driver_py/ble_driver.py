@@ -53,7 +53,7 @@ import importlib
 
 from .observers import *
 
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(level=logging.WARNING)
 logger  = logging.getLogger(__name__)
 
 driver = None
@@ -567,10 +567,10 @@ class BLEAdvData(object):
                 key                         = BLEAdvData.Types(ad_type)
                 ble_adv_data.records[key]   = ad_list[offset: offset + ad_len - 1]
             except ValueError:
-                logger.error('Invalid advertising data type: 0x{:02X}'.format(ad_type))
+                logger.info('Invalid advertising data type: 0x{:02X}'.format(ad_type))
                 pass
             except IndexError:
-                logger.error('Invalid advertising data: {}'.format(ad_list))
+                logger.info('Invalid advertising data: {}'.format(ad_list))
                 return ble_adv_data
             index += (ad_len + 1)
 
