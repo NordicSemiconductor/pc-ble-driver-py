@@ -42,10 +42,10 @@ class BLEDriverObserver(object):
         super(BLEDriverObserver, self).__init__()
         pass
 
-    def on_evt_data_length_update(self, ble_driver, conn_handle, data_length_params):
+    def on_gap_evt_data_length_update(self, ble_driver, conn_handle, data_length_params):
         pass
 
-    def on_evt_data_length_update_request(self, ble_driver, conn_handle, data_length_params):
+    def on_gap_evt_data_length_update_request(self, ble_driver, conn_handle, data_length_params):
         pass
 
     def on_evt_tx_complete(self, ble_driver, conn_handle, count):
@@ -114,7 +114,7 @@ class BLEDriverObserver(object):
     def on_gatts_evt_write(self, ble_driver, conn_handle, attr_handle, uuid, op, auth_required, offset, length, data):
         pass
 
-    def on_att_mtu_exchanged(self, ble_driver, conn_handle, att_mtu):
+    def on_gatts_evt_exchange_mtu_request(self, ble_driver, conn_handle, client_mtu):
         pass
 
 
