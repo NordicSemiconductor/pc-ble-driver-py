@@ -329,6 +329,10 @@ class BLEAdapter(BLEDriverObserver):
              return (gatt_res, None)
 
     def write_cmd(self, conn_handle, uuid, data):
+        try:
+            tx_complete = BLEEvtID.evt_tx_complete
+        except:
+            tx_complete = BLEEvtID.gattc_evt_write_cmd_tx_complete
         handle = self.db_conns[conn_handle].get_char_value_handle(uuid)
         if handle == None:
             raise NordicSemiException('Characteristic value handler not found')
