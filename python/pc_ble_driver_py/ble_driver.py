@@ -1071,7 +1071,7 @@ class BLEConfigGatts(BLEConfigBase):
 
     def to_c(self):
         ble_cfg = driver.ble_cfg_t()
-        ble_cfg.gatts_cfg.attr_tab_size.attr_tab_size = self.attr_tab_size
+        ble_cfg.gatts_cfg.service_changed.service_changed = self.service_changed
         ble_cfg.gatts_cfg.attr_tab_size.attr_tab_size = self.attr_tab_size
         return ble_cfg
 
