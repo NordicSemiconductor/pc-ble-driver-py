@@ -210,11 +210,13 @@ class BLEGapRoles(Enum):
 
 
 class BLEGapTimeoutSrc(Enum):
-    advertising     = driver.BLE_GAP_TIMEOUT_SRC_ADVERTISING
-    security_req    = driver.BLE_GAP_TIMEOUT_SRC_AUTH_PAYLOAD
-    scan            = driver.BLE_GAP_TIMEOUT_SRC_SCAN
-    conn            = driver.BLE_GAP_TIMEOUT_SRC_CONN
-
+    advertising = driver.BLE_GAP_TIMEOUT_SRC_ADVERTISING
+    if nrf_sd_ble_api_ver == 2:
+        security_req = driver.BLE_GAP_TIMEOUT_SRC_SECURITY_REQUEST
+    if nrf_sd_ble_api_ver == 5:
+        auth_payload = driver.BLE_GAP_TIMEOUT_SRC_AUTH_PAYLOAD
+    scan = driver.BLE_GAP_TIMEOUT_SRC_SCAN
+    conn = driver.BLE_GAP_TIMEOUT_SRC_CONN
 
 
 class BLEGapIOCaps(Enum):
@@ -246,16 +248,17 @@ class BLEGapSecStatus(Enum):
     x_trans_key_disallowed  = driver.BLE_GAP_SEC_STATUS_X_TRANS_KEY_DISALLOWED
 
 class BLEConfig(Enum):
-    conn_gap = driver.BLE_CONN_CFG_GAP
-    conn_gattc = driver.BLE_CONN_CFG_GATTC
-    conn_gatts = driver.BLE_CONN_CFG_GATTS
-    conn_gatt = driver.BLE_CONN_CFG_GATT
-    conn_l2cap = driver.BLE_CONN_CFG_L2CAP
-    uuid_count = driver.BLE_COMMON_CFG_VS_UUID
-    device_name = driver.BLE_GAP_CFG_DEVICE_NAME
-    role_count = driver.BLE_GAP_CFG_ROLE_COUNT
-    service_changed = driver.BLE_GATTS_CFG_SERVICE_CHANGED
-    attr_tab_size = driver.BLE_GATTS_CFG_ATTR_TAB_SIZE
+    if nrf_sd_ble_api_ver == 5:
+        conn_gap = driver.BLE_CONN_CFG_GAP
+        conn_gattc = driver.BLE_CONN_CFG_GATTC
+        conn_gatts = driver.BLE_CONN_CFG_GATTS
+        conn_gatt = driver.BLE_CONN_CFG_GATT
+        conn_l2cap = driver.BLE_CONN_CFG_L2CAP
+        uuid_count = driver.BLE_COMMON_CFG_VS_UUID
+        device_name = driver.BLE_GAP_CFG_DEVICE_NAME
+        role_count = driver.BLE_GAP_CFG_ROLE_COUNT
+        service_changed = driver.BLE_GATTS_CFG_SERVICE_CHANGED
+        attr_tab_size = driver.BLE_GATTS_CFG_ATTR_TAB_SIZE
 
 class BLEGapAdvParams(object):
     def __init__(self, interval_ms, timeout_s):
@@ -1251,12 +1254,16 @@ class BLEDriver(object):
 
     @NordicSemiErrorCheck
     @wrapt.synchronized(api_lock)
-    def ble_enable(self):
+    def ble_enable(self, ble_enable_params=None):
         app_ram_base = driver.new_uint32()
-        driver.uint32_assign(app_ram_base, 0)
-        err_code = driver.sd_ble_enable(self.rpc_adapter, app_ram_base)
+        if nrf_sd_ble_api_ver == 2:
+            assert isinstance(ble_enable_params, BLEEnableParams)
+            err_code = driver.sd_ble_enable(self.rpc_adapter, ble_enable_params.to_c(), app_ram_base)
+        elif nrf_sd_ble_api_ver == 5:
+            assert ble_enable_params is None, "ble_enable_params not used in s132 v5 API"
+            driver.uint32_assign(app_ram_base, 0)
+            err_code = driver.sd_ble_enable(self.rpc_adapter, app_ram_base)
         return err_code
-
 
     @NordicSemiErrorCheck
     @wrapt.synchronized(api_lock)
@@ -1264,12 +1271,10 @@ class BLEDriver(object):
         assert isinstance(gap_addr, (BLEGapAddr)), 'Invalid argument type'
         if gap_addr:
             gap_addr = gap_addr.to_c()
-
-        if nrf_sd_ble_api_ver >= 3:
-            return driver.sd_ble_gap_addr_set(self.rpc_adapter, gap_addr)
-        else:
+        if nrf_sd_ble_api_ver == 2:
             return driver.sd_ble_gap_address_set(self.rpc_adapter, 0, gap_addr)
-
+        elif nrf_sd_ble_api_ver == 5:
+            return driver.sd_ble_gap_addr_set(self.rpc_adapter, gap_addr)
 
     @wrapt.synchronized(api_lock)
     def ble_gap_addr_get(self):
@@ -1297,23 +1302,23 @@ class BLEDriver(object):
         if not adv_params:
             adv_params = self.adv_params_setup()
         assert isinstance(adv_params, BLEGapAdvParams), 'Invalid argument type'
-        return driver.sd_ble_gap_adv_start(self.rpc_adapter, adv_params.to_c(), tag)
-
+        if nrf_sd_ble_api_ver == 5:
+            return driver.sd_ble_gap_adv_start(self.rpc_adapter, adv_params.to_c(), tag)
+        else:
+            return driver.sd_ble_gap_adv_start(self.rpc_adapter, adv_params.to_c())
 
     @NordicSemiErrorCheck
     @wrapt.synchronized(api_lock)
     def ble_gap_conn_param_update(self, conn_handle, conn_params):
         assert isinstance(conn_params, (BLEGapConnParams, type(None))), 'Invalid argument type'
         if conn_params:
-            conn_params=conn_params.to_c()
+            conn_params = conn_params.to_c()
         return driver.sd_ble_gap_conn_param_update(self.rpc_adapter, conn_handle, conn_params)
-
 
     @NordicSemiErrorCheck
     @wrapt.synchronized(api_lock)
     def ble_gap_adv_stop(self):
         return driver.sd_ble_gap_adv_stop(self.rpc_adapter)
-
 
     @NordicSemiErrorCheck
     @wrapt.synchronized(api_lock)
@@ -1323,12 +1328,10 @@ class BLEDriver(object):
         assert isinstance(scan_params, BLEGapScanParams), 'Invalid argument type'
         return driver.sd_ble_gap_scan_start(self.rpc_adapter, scan_params.to_c())
 
-
     @NordicSemiErrorCheck
     @wrapt.synchronized(api_lock)
     def ble_gap_scan_stop(self):
         return driver.sd_ble_gap_scan_stop(self.rpc_adapter)
-
 
     @NordicSemiErrorCheck
     @wrapt.synchronized(api_lock)
@@ -1342,13 +1345,17 @@ class BLEDriver(object):
         if not conn_params:
             conn_params = self.conn_params_setup()
         assert isinstance(conn_params, BLEGapConnParams), 'Invalid argument type'
-
-        return driver.sd_ble_gap_connect(self.rpc_adapter, 
-                                         address.to_c(),
-                                         scan_params.to_c(),
-                                         conn_params.to_c(),
-                                         tag)
-
+        if nrf_sd_ble_api_ver == 2:
+            return driver.sd_ble_gap_connect(self.rpc_adapter,
+                                             address.to_c(),
+                                             scan_params.to_c(),
+                                             conn_params.to_c())
+        elif nrf_sd_ble_api_ver == 5:
+            return driver.sd_ble_gap_connect(self.rpc_adapter,
+                                             address.to_c(),
+                                             scan_params.to_c(),
+                                             conn_params.to_c(),
+                                             tag)
 
     @NordicSemiErrorCheck
     @wrapt.synchronized(api_lock)
@@ -1809,7 +1816,7 @@ class BLEDriver(object):
                                                conn_handle = ble_event.evt.common_evt.conn_handle,
                                                count       = ble_event.evt.common_evt.params.tx_complete.count)
 
-            elif nrf_sd_ble_api_ver >= 3:
+            elif nrf_sd_ble_api_ver == 5:
                 if evt_id == BLEEvtID.gatts_evt_exchange_mtu_request:
                     for obs in self.observers:
                         obs.on_gatts_evt_exchange_mtu_request(ble_driver=self,
