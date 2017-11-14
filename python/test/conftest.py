@@ -50,10 +50,11 @@ logging.basicConfig()
 log = logging.getLogger("pc-ble-driver-tester")
 log.setLevel(logging.INFO)
 
+COM_PORT = 'COM76'
 
 @pytest.fixture
 def ble_tester():
-    _a = PcBLEDriverPyTester('COM76')
+    _a = PcBLEDriverPyTester(COM_PORT)
     _a.driver.open()
     yield _a
     _a.driver.close()
@@ -66,6 +67,7 @@ class PcBLEDriverPyTester(BLEDriverObserver, BLEAdapterObserver):
         super(PcBLEDriverPyTester, self).__init__()
         self._adv_report_q = None
         self.conn_q = Queue()
+        self.notification_q = Queue()
         self.disconnected_evt = threading.Event()
         self.data_length_update_evt = threading.Event()
         self.mtu_exchanged_evt = threading.Event()
@@ -184,6 +186,7 @@ class PcBLEDriverPyTester(BLEDriverObserver, BLEAdapterObserver):
 
     def on_notification(self, ble_adapter, conn_handle, uuid, data):
         log.info("event: {}, data: {}".format('on_notification', data))
+        self.notification_q.put((uuid, data))
 
     def on_conn_param_update_request(self, ble_adapter, conn_handle, conn_params):
         log.info("event: {}".format('on_conn_param_update_request'))
