@@ -131,10 +131,15 @@ class BLEAdapter(BLEDriverObserver):
     def connect(self, address, scan_params=None, conn_params=None, tag=0):
         if self.conn_in_progress:
             return
-        self.driver.ble_gap_connect(address     = address,
-                                    scan_params = scan_params,
-                                    conn_params = conn_params,
-                                    tag=tag)
+        if nrf_sd_ble_api_ver == 2:
+            self.driver.ble_gap_connect(address=address,
+                                        scan_params=scan_params,
+                                        conn_params=conn_params)
+        elif nrf_sd_ble_api_ver == 5:
+            self.driver.ble_gap_connect(address=address,
+                                        scan_params=scan_params,
+                                        conn_params=conn_params,
+                                        tag=tag)
         self.conn_in_progress = True
 
     def disconnect(self, conn_handle):
@@ -318,9 +323,9 @@ class BLEAdapter(BLEDriverObserver):
 
     def read_req(self, conn_handle, uuid):
         handle = self.db_conns[conn_handle].get_char_value_handle(uuid)
-        if handle == None:
+        if handle is None:
             raise NordicSemiException('Characteristic value handler not found')
-        self.driver.ble_gattc_read(conn_handle, handle,0)
+        self.driver.ble_gattc_read(conn_handle, handle, 0)
         result = self.evt_sync[conn_handle].wait(evt = BLEEvtID.gattc_evt_read_rsp)
         gatt_res = result['status']
         if gatt_res == BLEGattStatusCode.success:
@@ -393,8 +398,14 @@ class BLEAdapter(BLEDriverObserver):
         self.conn_in_progress       = False
 
     def on_gap_evt_disconnected(self, ble_driver, conn_handle, reason):
-        del self.db_conns[conn_handle]
-        del self.evt_sync[conn_handle]
+        try:
+            del self.db_conns[conn_handle]
+        except KeyError:
+            pass
+        try:
+            del self.evt_sync[conn_handle]
+        except KeyError:
+            pass
 
     def on_gap_evt_timeout(self, ble_driver, conn_handle, src):
         if src == BLEGapTimeoutSrc.conn:

@@ -43,7 +43,6 @@ import traceback
 import subprocess
 from enum       import Enum
 from threading  import Lock
-
 import sys
 import ctypes
 import os
@@ -123,7 +122,6 @@ def NordicSemiErrorCheck(wrapped=None, expected = driver.NRF_SUCCESS):
         err_code = wrapped(*args, **kwargs)
         if err_code != expected:
             raise NordicSemiException('Failed to {}. Error code: {}'.format(wrapped.__name__, err_code), error_code=err_code)
-
     return wrapper(wrapped)
 
 
@@ -762,6 +760,14 @@ class BLEUUID(object):
         else:
             return "<BLEUUID obj: 0x{:04X}>".format(self.value)
 
+    def __eq__(self, other):
+        if not isinstance(other, BLEUUID):
+            return False
+        return (self.value == other.value) and (self.base.base == other.base.base)
+
+    def __hash__(self):
+        return hash(self.value*self.base.base)
+
     @classmethod
     def from_c(cls, uuid):
         return cls(value = uuid.uuid, base = BLEUUIDBase.from_c(uuid))
@@ -1106,8 +1112,8 @@ class BLEGapDataLengthParams(object):
     def __init__(self,
                  max_tx_octets=251,
                  max_rx_octets=251,
-                 max_tx_time_us=driver.BLE_GAP_DATA_LENGTH_AUTO,
-                 max_rx_time_us=driver.BLE_GAP_DATA_LENGTH_AUTO):
+                 max_tx_time_us=0,   # BLE_GAP_DATA_LENGTH_AUTO
+                 max_rx_time_us=0):  # BLE_GAP_DATA_LENGTH_AUTO
         self.max_tx_octets = max_tx_octets
         self.max_rx_octets = max_rx_octets
         self.max_tx_time_us = max_tx_time_us
@@ -1558,15 +1564,12 @@ class BLEDriver(object):
         # print(status_message)
         pass
 
-
     def log_message_handler(self, adapter, severity, log_message):
         # print(log_message)
         pass
 
-
     def ble_evt_handler(self, adapter, ble_event):
         self.sync_ble_evt_handler(adapter, ble_event)
-
 
     @wrapt.synchronized(observer_lock)
     def sync_ble_evt_handler(self, adapter, ble_event):
@@ -1590,11 +1593,14 @@ class BLEDriver(object):
 
             elif evt_id == BLEEvtID.gap_evt_disconnected:
                 disconnected_evt = ble_event.evt.gap_evt.params.disconnected
-
+                try:
+                    reason = BLEHci(disconnected_evt.reason)
+                except ValueError:
+                    reason = disconnected_evt.reason
                 for obs in self.observers:
                     obs.on_gap_evt_disconnected(ble_driver=self,
                                                 conn_handle=ble_event.evt.gap_evt.conn_handle,
-                                                reason=BLEHci(disconnected_evt.reason))
+                                                reason=reason)
 
             elif evt_id == BLEEvtID.gap_evt_sec_params_request:
                 sec_params_request_evt = ble_event.evt.gap_evt.params.sec_params_request
@@ -1682,22 +1688,6 @@ class BLEDriver(object):
                 for obs in self.observers:
                     obs.on_gap_evt_conn_sec_update(ble_driver=self,
                                                    conn_handle=ble_event.evt.common_evt.conn_handle)
-
-            elif evt_id == BLEEvtID.gattc_evt_write_cmd_tx_complete:
-                tx_complete_evt = ble_event.evt.gattc_evt.params.write_cmd_tx_complete
-
-                for obs in self.observers:
-                    obs.on_gattc_evt_write_cmd_tx_complete(ble_driver=self,
-                                                           conn_handle=ble_event.evt.gattc_evt.conn_handle,
-                                                           count=tx_complete_evt.count)
-
-            elif evt_id == BLEEvtID.gatts_evt_hvn_tx_complete:
-                tx_complete_evt = ble_event.evt.gatts_evt.params.hvn_tx_complete
-
-                for obs in self.observers:
-                    obs.on_gatts_evt_hvn_tx_complete(ble_driver=self,
-                                                     conn_handle=ble_event.evt.gatts_evt.conn_handle,
-                                                     count=tx_complete_evt.count)
 
             elif evt_id == BLEEvtID.gattc_evt_write_rsp:
                 write_rsp_evt = ble_event.evt.gattc_evt.params.write_rsp
@@ -1809,7 +1799,22 @@ class BLEDriver(object):
                                                count=ble_event.evt.common_evt.params.tx_complete.count)
 
             elif nrf_sd_ble_api_ver == 5:
-                if evt_id == BLEEvtID.gatts_evt_exchange_mtu_request:
+                if evt_id == BLEEvtID.gattc_evt_write_cmd_tx_complete:
+                    tx_complete_evt = ble_event.evt.gattc_evt.params.write_cmd_tx_complete
+
+                    for obs in self.observers:
+                        obs.on_gattc_evt_write_cmd_tx_complete(ble_driver=self,
+                                                               conn_handle=ble_event.evt.gattc_evt.conn_handle,
+                                                               count=tx_complete_evt.count)
+
+                elif evt_id == BLEEvtID.gatts_evt_hvn_tx_complete:
+                    tx_complete_evt = ble_event.evt.gatts_evt.params.hvn_tx_complete
+
+                    for obs in self.observers:
+                        obs.on_gatts_evt_hvn_tx_complete(ble_driver=self,
+                                                         conn_handle=ble_event.evt.gatts_evt.conn_handle,
+                                                         count=tx_complete_evt.count)
+                elif evt_id == BLEEvtID.gatts_evt_exchange_mtu_request:
                     for obs in self.observers:
                         obs.on_gatts_evt_exchange_mtu_request(ble_driver=self,
                                                               conn_handle=ble_event.evt.gatts_evt.conn_handle,
