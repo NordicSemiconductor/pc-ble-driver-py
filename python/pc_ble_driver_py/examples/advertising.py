@@ -36,30 +36,40 @@
 #
 
 import sys
-from threading                  import Condition, Lock
-from pc_ble_driver_py.observers import BLEDriverObserver 
+from threading import Condition, Lock
+from pc_ble_driver_py.observers import BLEDriverObserver
+
 
 def init(conn_ic_id):
-    global BLEDriver, BLEAdvData, BLEEvtID
+    global BLEDriver, BLEAdvData, BLEEvtID, BLEEnableParams, config
     from pc_ble_driver_py import config
     config.__conn_ic_id__ = conn_ic_id
-    from pc_ble_driver_py.ble_driver    import BLEDriver, BLEAdvData, BLEEvtID
+    from pc_ble_driver_py.ble_driver import BLEDriver, BLEAdvData, BLEEvtID, BLEEnableParams
+
 
 def main(serial_port):
     print("Serial port used: {}".format(serial_port))
-    driver      = BLEDriver(serial_port=serial_port)
-    observer    = TimeoutObserver()
-    adv_data    = BLEAdvData(complete_local_name='JOKV')
+    driver = BLEDriver(serial_port=serial_port, baud_rate=1000000)
+    observer = TimeoutObserver()
+    adv_data = BLEAdvData(complete_local_name='pc_ble_driver_py')
 
     driver.observer_register(observer)
     driver.open()
-    driver.ble_enable()
+    if config.__conn_ic_id__ == 'NRF51':
+        driver.ble_enable(BLEEnableParams(vs_uuid_count=0,
+                                          service_changed=0,
+                                          periph_conn_count=1,
+                                          central_conn_count=0,
+                                          central_sec_count=0))
+    elif config.__conn_ic_id__ == 'NRF52':
+        driver.ble_enable()
     driver.ble_gap_adv_data_set(adv_data)
     driver.ble_gap_adv_start()
     observer.wait_for_timeout()
 
     print("Closing")
     driver.close()
+
 
 class TimeoutObserver(BLEDriverObserver):
     def __init__(self):
@@ -68,7 +78,7 @@ class TimeoutObserver(BLEDriverObserver):
     def on_gap_evt_timeout(self, ble_driver, conn_handle, src):
         with self.cond:
             self.cond.notify_all()
-            
+
     def on_gap_evt_disconnected(self, ble_driver, conn_handle, reason):
         with self.cond:
             self.cond.notify_all()
@@ -76,6 +86,7 @@ class TimeoutObserver(BLEDriverObserver):
     def wait_for_timeout(self):
         with self.cond:
             self.cond.wait()
+
 
 if __name__ == "__main__":
     if len(sys.argv) == 3:
