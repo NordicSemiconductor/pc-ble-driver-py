@@ -288,6 +288,25 @@ class BLEGapScanParams(object):
 
 
 
+class BLEGapConnSec(object):
+    def __init__(self, sec_mode, level, encr_key_size):
+        self.sec_mode       = sec_mode
+        self.level          = level
+        self.encr_key_size  = encr_key_size
+
+
+    @classmethod
+    def from_c(cls, conn_sec):
+        return cls(sec_mode         = conn_sec.sec_mode.sm,
+                    level            = conn_sec.sec_mode.lv,
+                    encr_key_size    = conn_sec.encr_key_size)
+
+
+    def __str__(self):
+        return "sec_mode({0.sec_mode}) level({0.level}) encr_key_size({0.encr_key_size})".format(self)
+
+
+
 class BLEGapConnParams(object):
     def __init__(self, min_conn_interval_ms, max_conn_interval_ms, conn_sup_timeout_ms, slave_latency):
         self.min_conn_interval_ms   = min_conn_interval_ms
@@ -351,6 +370,136 @@ class BLEGapAddr(object):
 
 
 
+class BLEGapSecKeyset(object):
+    def __init__(self, keys_own, keys_peer):
+        self.keys_own  = keys_own
+        self.keys_peer = keys_peer
+
+
+    @classmethod
+    def from_c(cls, keyset):
+        return cls(keys_own  = BLEGapSecKeys.from_c(keyset.keys_own),
+                    keys_peer = BLEGapSecKeys.from_c(keyset.keys_peer))
+
+
+    def __str__(self):
+        return "keys_own({0.keys_own}) keys_peer({0.keys_peer})".format(self)
+
+
+
+class BLEGapSecKeys(object):
+    def __init__(self, enc_key, id_key, sign_key, pk):
+        self.enc_key  = enc_key
+        self.id_key   = id_key
+        self.csrk     = sign_key
+        self.pk       = pk
+
+
+    @classmethod
+    def from_c(cls, keys):
+        return cls(enc_key  = BLEGapEncKey.from_c(keys.p_enc_key),
+                    id_key   = BLEGapIdKey.from_c(keys.p_id_key),
+                    sign_key = util.uint8_array_to_list(keys.p_sign_key.csrk, driver.BLE_GAP_SEC_KEY_LEN),
+                    pk       = util.uint8_array_to_list(keys.p_pk.pk, driver.BLE_GAP_LESC_P256_PK_LEN))
+
+
+    def __str__(self):
+        return "enc_key({0.enc_key}) id_key({0.id_key}) csrk({0.csrk}) pk({0.pk})".format(self)
+
+
+
+class BLEGapEncKey(object):
+    def __init__(self, master_id, enc_info):
+        self.master_id  = master_id
+        self.enc_info   = enc_info
+
+
+    @classmethod
+    def from_c(cls, enc_key):
+        return cls(master_id  = BLEGapMasterId.from_c(enc_key.master_id),
+                    enc_info   = BLEGapEncInfo.from_c(enc_key.enc_info))
+
+
+    def __str__(self):
+        return "master_id({0.master_id}) enc_info({0.enc_info})".format(self)
+
+
+
+class BLEGapIdKey(object):
+    def __init__(self, id_info, id_addr_info):
+        self.irk            = id_info
+        self.id_addr_info   = id_addr_info
+
+
+    @classmethod
+    def from_c(cls, id_key):
+        return cls(id_info      = util.uint8_array_to_list(id_key.id_info.irk, driver.BLE_GAP_SEC_KEY_LEN),
+                    id_addr_info = BLEGapAddr.from_c(id_key.id_addr_info))
+
+
+    def __str__(self):
+        return "irk({0.irk}) id_addr_info({0.id_addr_info})".format(self)
+
+
+
+class BLEGapEncInfo(object):
+    def __init__(self, ltk, auth, lesc, ltk_len):
+        self.ltk     = ltk
+        self.auth    = auth
+        self.lesc    = lesc
+        self.ltk_len = ltk_len
+
+
+    @classmethod
+    def from_c(cls, enc_info):
+        ltk_list = util.uint8_array_to_list(enc_info.ltk, driver.BLE_GAP_SEC_KEY_LEN)
+        return cls(ltk     = ltk_list,
+                    auth    = enc_info.auth,
+                    lesc    = enc_info.lesc,
+                    ltk_len = enc_info.ltk_len)
+
+
+    def to_c(self):
+        ltk_array        = util.list_to_uint8_array(self.ltk)
+        enc_info         = driver.ble_gap_enc_info_t()
+        enc_info.auth    = self.auth
+        enc_info.lesc    = self.lesc
+        enc_info.ltk_len = self.ltk_len
+        enc_info.ltk     = ltk_array.cast()
+        return enc_info
+
+
+    def __str__(self):
+        return "ltk({0.ltk}) auth({0.auth}) lesc({0.lesc}) ltk_len({0.ltk_len})".format(self)
+
+
+
+class BLEGapMasterId(object):
+    def __init__(self, ediv, rand):
+        self.ediv    = ediv
+        self.rand    = rand
+
+
+    @classmethod
+    def from_c(cls, master_id):
+        rand_list = util.uint8_array_to_list(master_id.rand, driver.BLE_GAP_SEC_RAND_LEN)
+        return cls(ediv  = master_id.ediv,
+                    rand  = rand_list)
+
+
+    def to_c(self):
+        rand_array       = util.list_to_uint8_array(self.rand)
+        master_id        = driver.ble_gap_master_id_t()
+        master_id.ediv   = self.ediv
+        master_id.rand   = rand_array.cast()
+        return master_id
+
+
+    def __str__(self):
+        return "ediv({0.ediv}) rand({0.rand})".format(self)
+
+
+
 class BLEGapSecKDist(object):
     def __init__(self, enc, id, sign, link):
         self.enc    = enc
@@ -364,7 +513,7 @@ class BLEGapSecKDist(object):
         return cls(enc  = kdist.enc,
                    id   = kdist.id,
                    sign = kdist.sign,
-                   link = kdist.sign)
+                   link = kdist.link)
 
 
     def to_c(self):
@@ -374,6 +523,10 @@ class BLEGapSecKDist(object):
         kdist.sign  = self.sign
         kdist.link  = self.link
         return kdist
+
+
+    def __str__(self):
+        return "enc({0.enc}) id({0.id}) sign({0.sign}) link({0.link})".format(self)
 
 
 
@@ -433,6 +586,12 @@ class BLEGapSecParams(object):
         return params
 
 
+    def __str__(self):
+        return ('bond({0.bond}) mitm({0.mitm}) lesc({0.lesc}) keypress({0.keypress}) '
+        'io_caps({0.io_caps}) oob({0.oob}) max_key_size({0.max_key_size}) '
+        'min_key_size({0.min_key_size}) kdist_own({0.kdist_own}) kdist_peer({0.kdist_peer})').format(self)
+
+
 
 class BLEGapPrivacyParams(object):
     def __init__(self, privacy_mode, private_addr_type, private_addr_cycle_s, irk):
@@ -463,6 +622,11 @@ class BLEGapPrivacyParams(object):
             priv_params.p_device_irk = irk
 
         return priv_params
+
+
+    def __str__(self):
+        return ("privacy_mode({0.privacy_mode}) private_addr_type({0.private_addr_type}) "
+        "private_addr_cycle_s({0.private_addr_cycle_s}) irk({0.irk})").format(self)
 
 
 
@@ -573,25 +737,25 @@ class BLEGattHVXType(Enum):
 
 
 class BLEGattStatusCode(Enum):
-    success             = driver.BLE_GATT_STATUS_SUCCESS
-    invalid = driver.BLE_GATT_STATUS_ATTERR_INVALID
-    invalid_handle = driver.BLE_GATT_STATUS_ATTERR_INVALID_HANDLE
-    read_not_permitted = driver.BLE_GATT_STATUS_ATTERR_READ_NOT_PERMITTED
-    write_not_permitted = driver.BLE_GATT_STATUS_ATTERR_WRITE_NOT_PERMITTED
-    invalid_pdu = driver.BLE_GATT_STATUS_ATTERR_INVALID_PDU
-    insuf_authentication = driver.BLE_GATT_STATUS_ATTERR_INSUF_AUTHENTICATION
-    req_not_supp = driver.BLE_GATT_STATUS_ATTERR_REQUEST_NOT_SUPPORTED
-    invalid_offs = driver.BLE_GATT_STATUS_ATTERR_INVALID_OFFSET
-    insuf_authorization = driver.BLE_GATT_STATUS_ATTERR_INSUF_AUTHORIZATION
-    prep_q_full = driver.BLE_GATT_STATUS_ATTERR_PREPARE_QUEUE_FULL
-    attribute_not_found = driver.BLE_GATT_STATUS_ATTERR_ATTRIBUTE_NOT_FOUND
-    attribute_not_long = driver.BLE_GATT_STATUS_ATTERR_ATTRIBUTE_NOT_LONG
-    insuf_enc_key_size = driver.BLE_GATT_STATUS_ATTERR_INSUF_ENC_KEY_SIZE
+    success               = driver.BLE_GATT_STATUS_SUCCESS
+    invalid               = driver.BLE_GATT_STATUS_ATTERR_INVALID
+    invalid_handle        = driver.BLE_GATT_STATUS_ATTERR_INVALID_HANDLE
+    read_not_permitted    = driver.BLE_GATT_STATUS_ATTERR_READ_NOT_PERMITTED
+    write_not_permitted   = driver.BLE_GATT_STATUS_ATTERR_WRITE_NOT_PERMITTED
+    invalid_pdu           = driver.BLE_GATT_STATUS_ATTERR_INVALID_PDU
+    insuf_authentication  = driver.BLE_GATT_STATUS_ATTERR_INSUF_AUTHENTICATION
+    req_not_supp          = driver.BLE_GATT_STATUS_ATTERR_REQUEST_NOT_SUPPORTED
+    invalid_offs          = driver.BLE_GATT_STATUS_ATTERR_INVALID_OFFSET
+    insuf_authorization   = driver.BLE_GATT_STATUS_ATTERR_INSUF_AUTHORIZATION
+    prep_q_full           = driver.BLE_GATT_STATUS_ATTERR_PREPARE_QUEUE_FULL
+    attribute_not_found   = driver.BLE_GATT_STATUS_ATTERR_ATTRIBUTE_NOT_FOUND
+    attribute_not_long    = driver.BLE_GATT_STATUS_ATTERR_ATTRIBUTE_NOT_LONG
+    insuf_enc_key_size    = driver.BLE_GATT_STATUS_ATTERR_INSUF_ENC_KEY_SIZE
     invalid_att_va_length = driver.BLE_GATT_STATUS_ATTERR_INVALID_ATT_VAL_LENGTH
-    unlikely_error = driver.BLE_GATT_STATUS_ATTERR_UNLIKELY_ERROR
-    insuf_encryption = driver.BLE_GATT_STATUS_ATTERR_INSUF_ENCRYPTION
-    unsupp_group_type = driver.BLE_GATT_STATUS_ATTERR_UNSUPPORTED_GROUP_TYPE
-    insuf_resources = driver.BLE_GATT_STATUS_ATTERR_INSUF_RESOURCES
+    unlikely_error        = driver.BLE_GATT_STATUS_ATTERR_UNLIKELY_ERROR
+    insuf_encryption      = driver.BLE_GATT_STATUS_ATTERR_INSUF_ENCRYPTION
+    unsupp_group_type     = driver.BLE_GATT_STATUS_ATTERR_UNSUPPORTED_GROUP_TYPE
+    insuf_resources       = driver.BLE_GATT_STATUS_ATTERR_INSUF_RESOURCES
 
 
 class BLEGattExecWriteFlag(Enum):
@@ -840,7 +1004,7 @@ class SerialPortDescriptor(object):
                    product_id = org.productId)
 
 
-
+#...................................................................................................
 class Flasher(object):
     api_lock = Lock()
     @staticmethod
@@ -1170,11 +1334,9 @@ class BLEDriver(object):
 
     @NordicSemiErrorCheck
     @wrapt.synchronized(api_lock)
-    def ble_gap_sec_params_reply(self, conn_handle, sec_status, sec_params, own_keys, peer_keys):
+    def ble_gap_sec_params_reply(self, conn_handle, sec_status, sec_params):
         assert isinstance(sec_status, BLEGapSecStatus),             'Invalid argument type'
         assert isinstance(sec_params, (BLEGapSecParams, NoneType)), 'Invalid argument type'
-        assert isinstance(own_keys,   NoneType),                    'NOT IMPLEMENTED'
-        assert isinstance(peer_keys,  NoneType),                    'NOT IMPLEMENTED'
 
         keyset                      = driver.ble_gap_sec_keyset_t()
 
@@ -1188,13 +1350,13 @@ class BLEDriver(object):
         keyset.keys_peer.p_sign_key = driver.ble_gap_sign_info_t()
         keyset.keys_peer.p_pk       = driver.ble_gap_lesc_p256_pk_t()
 
-        self.__keyset = keyset
+        self._keyset = keyset
 
         return driver.sd_ble_gap_sec_params_reply(self.rpc_adapter,
                                                   conn_handle,
                                                   sec_status.value,
                                                   sec_params.to_c() if sec_params else None,
-                                                  self.__keyset)
+                                                  self._keyset)
 
 
     @NordicSemiErrorCheck
@@ -1221,10 +1383,12 @@ class BLEDriver(object):
     @NordicSemiErrorCheck
     @wrapt.synchronized(api_lock)
     def ble_gap_encrypt(self, conn_handle, master_id, enc_info):
+        assert isinstance(master_id, BLEGapMasterId), 'Invalid argument type'
+        assert isinstance(enc_info, BLEGapEncInfo), 'Invalid argument type'
         return driver.sd_ble_gap_encrypt(self.rpc_adapter,
                                          conn_handle,
-                                         master_id,
-                                         enc_info)
+                                         master_id.to_c(),
+                                         enc_info.to_c())
 
 
     @NordicSemiErrorCheck
@@ -1451,7 +1615,8 @@ class BLEDriver(object):
 
                 for obs in self.observers:
                     obs.on_gap_evt_conn_sec_update(ble_driver   = self,
-                                                   conn_handle  = ble_event.evt.common_evt.conn_handle)
+                                                   conn_handle  = ble_event.evt.common_evt.conn_handle,
+                                                   conn_sec     = BLEGapConnSec.from_c(conn_sec_update_evt.conn_sec))
 
             elif evt_id == BLEEvtID.evt_tx_complete:
                 tx_complete_evt = ble_event.evt.common_evt.params.tx_complete

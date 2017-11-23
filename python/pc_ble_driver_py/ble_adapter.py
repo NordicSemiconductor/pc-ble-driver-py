@@ -133,6 +133,7 @@ class BLEAdapter(BLEDriverObserver):
         self.observers          = list()
         self.db_conns           = dict()
         self.evt_sync           = dict()
+        self.role               = None
 
 
     def open(self):
@@ -343,7 +344,7 @@ class BLEAdapter(BLEDriverObserver):
         handle = self.db_conns[conn_handle].get_char_value_handle(uuid)
         if handle == None:
             raise NordicSemiException('Characteristic value handler not found')
-        self.driver.ble_gattc_read(conn_handle, handle,0)
+        self.driver.ble_gattc_read(conn_handle, handle, 0)
         result = self.evt_sync[conn_handle].wait(evt = BLEEvtID.gattc_evt_read_rsp)
         gatt_res = result['status']
         if gatt_res == BLEGattStatusCode.success:
@@ -375,33 +376,60 @@ class BLEAdapter(BLEDriverObserver):
         raise NordicSemiException('Unable to successfully call ble_gattc_write')
 
     @NordicSemiErrorCheck(expected = BLEGapSecStatus.success)
-    def authenticate(self, conn_handle):
-        kdist_own   = BLEGapSecKDist(enc  = False,
-                                     id   = False,
-                                     sign = False,
-                                     link = False)
-        kdist_peer  = BLEGapSecKDist(enc  = False,
-                                     id   = False,
-                                     sign = False,
-                                     link = False)
-        sec_params  = BLEGapSecParams(bond          = False,
-                                      mitm          = False,
-                                      lesc          = False,
-                                      keypress      = False,
-                                      io_caps       = BLEGapIOCaps.none,
-                                      oob           = False,
-                                      min_key_size  = 7,
-                                      max_key_size  = 16,
+    def authenticate(self, conn_handle, role=BLEGapRoles.central, bond=False, mitm=False, lesc=False,
+                     keypress=False, io_caps=BLEGapIOCaps.none, oob=False, min_key_size=7,
+                     max_key_size=16, enc_own=True, id_own=False, sign_own=False, link_own=False,
+                     enc_peer=True, id_peer=False, sign_peer=False, link_peer=False):
+        kdist_own   = BLEGapSecKDist(enc  = enc_own,
+                                     id   = id_own,
+                                     sign = sign_own,
+                                     link = link_own)
+        kdist_peer  = BLEGapSecKDist(enc  = enc_peer,
+                                     id   = id_peer,
+                                     sign = sign_peer,
+                                     link = link_peer)
+        sec_params  = BLEGapSecParams(bond          = bond,
+                                      mitm          = mitm,
+                                      lesc          = lesc,
+                                      keypress      = keypress,
+                                      io_caps       = io_caps,
+                                      oob           = oob,
+                                      min_key_size  = min_key_size,
+                                      max_key_size  = max_key_size,
                                       kdist_own     = kdist_own,
                                       kdist_peer    = kdist_peer)
 
         self.driver.ble_gap_authenticate(conn_handle, sec_params)
         self.evt_sync[conn_handle].wait(evt = BLEEvtID.gap_evt_sec_params_request)
 
-        self.driver.ble_gap_sec_params_reply(conn_handle, BLEGapSecStatus.success, None, None, None)
+        # sd_ble_gap_sec_params_reply ... In the central role, sec_params must be set to NULL,
+        # as the parameters have already been provided during a previous call to
+        # sd_ble_gap_authenticate.
+        sec_params = None if self.role == BLEGapRoles.central else sec_params
+        self.driver.ble_gap_sec_params_reply(conn_handle,
+                                             BLEGapSecStatus.success,
+                                             sec_params=sec_params)
         result = self.evt_sync[conn_handle].wait(evt = BLEEvtID.gap_evt_auth_status)
+        # If success then keys are stored in self.driver._keyset.
+        if result['auth_status'] ==  BLEGapSecStatus.success:
+            self._keyset = BLEGapSecKeyset.from_c(self.driver._keyset)
         return result['auth_status']
 
+    def encrypt(self, conn_handle, ediv, rand, ltk, auth=0, lesc=0, ltk_len=16):
+        # @assert note that sd_ble_gap_encrypt results in BLE_ERROR_INVALID_ROLE
+        # if not Central.
+        assert self.role == BLEGapRoles.central, \
+            'Invalid role. Encryption can only be initiated by a Central Device.'
+        master_id = BLEGapMasterId(ediv = ediv, rand = rand)
+        enc_info = BLEGapEncInfo(ltk     = ltk,
+                                 auth    = auth,
+                                 lesc    = lesc,
+                                 ltk_len = ltk_len)
+        self.driver.ble_gap_encrypt(conn_handle, master_id, enc_info)
+        result = self.evt_sync[conn_handle].wait(evt = BLEEvtID.gap_evt_conn_sec_update)
+        return result['conn_sec']
+
+    #...............................................................................................
     def on_evt_data_length_changed(self, ble_driver, **kwargs):
         for i in self.evt_sync:
             self.evt_sync[i].notify(evt=BLEEvtID.evt_data_length_changed, data=kwargs)
@@ -410,6 +438,7 @@ class BLEAdapter(BLEDriverObserver):
         self.db_conns[conn_handle]  = DbConnection()
         self.evt_sync[conn_handle]  = EvtSync(events = BLEEvtID)
         self.conn_in_progress       = False
+        self.role                   = role
 
     def on_gap_evt_disconnected(self, ble_driver, conn_handle, reason):
         del self.db_conns[conn_handle]
@@ -430,6 +459,9 @@ class BLEAdapter(BLEDriverObserver):
 
     def on_gap_evt_auth_status(self, ble_driver, conn_handle, **kwargs):
         self.evt_sync[conn_handle].notify(evt = BLEEvtID.gap_evt_auth_status, data = kwargs)
+
+    def on_gap_evt_conn_sec_update(self, ble_driver, conn_handle, **kwargs):
+        self.evt_sync[conn_handle].notify(evt = BLEEvtID.gap_evt_conn_sec_update, data = kwargs)
 
     def on_gap_evt_auth_key_request(self, ble_driver, conn_handle, **kwargs):
         self.evt_sync[conn_handle].notify(evt=BLEEvtID.gap_evt_auth_key_request, data=kwargs)
