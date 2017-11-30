@@ -185,7 +185,7 @@ class _ObserverMulti(object):
         self.event_q.put(_Event('on_gatts_evt_exchange_mtu_request',
                                 conn_handle=conn_handle,
                                 client_mtu=client_mtu))
-    
+
     def on_gap_evt_data_length_update(self, ble_driver, conn_handle, data_length_params):
         self.event_q.put(_Event('on_gap_evt_data_length_update',
                                 conn_handle=conn_handle,
@@ -195,7 +195,7 @@ class _ObserverMulti(object):
         self.event_q.put(_Event('on_gap_evt_data_length_update_request',
                                 conn_handle=conn_handle,
                                 data_length_params=data_length_params))
-                                
+
     def on_gattc_evt_write_cmd_tx_complete(self, ble_driver, conn_handle, count):
         self.event_q.put(_Event('on_gattc_evt_write_cmd_tx_complete',
                                 conn_handle=conn_handle,
@@ -281,7 +281,7 @@ class BLEDriverMulti(object):
     def ble_enable(self):
         self.command_q.put(_Command('ble_enable'))
         return self._wait_for_result()
-        
+
     def ble_cfg_set(self, cfg_id, cfg):
         self.command_q.put(_Command('ble_cfg_set', cfg_id, cfg))
         return self._wait_for_result()
@@ -325,7 +325,7 @@ class BLEDriverMulti(object):
     def ble_gap_sec_params_reply(self, conn_handle, sec_status, sec_params, own_keys, peer_keys):
         self.command_q.put(_Command('ble_gap_sec_params_reply', conn_handle, sec_status, sec_params, own_keys, peer_keys))
         return self._wait_for_result()
-        
+
     def ble_gap_data_length_update(self, conn_handle, data_length_params, data_length_limitation):
         self.command_q.put(_Command('ble_gap_data_length_update',
                                     conn_handle,
@@ -345,7 +345,7 @@ class BLEDriverMulti(object):
     def ble_gattc_write(self, conn_handle, write_params):
         self.command_q.put(_Command('ble_gattc_write', conn_handle, write_params))
         return self._wait_for_result()
-        
+
     def ble_gattc_hv_confirm(self, conn_handle, handle):
         self.command_q.put(_Command('ble_gattc_hv_confirm', conn_handle, handle))
         return self._wait_for_result()
@@ -369,7 +369,7 @@ class BLEDriverMulti(object):
     def ble_gattc_exchange_mtu_req(self, conn_handle):
         self.command_q.put(_Command('ble_gattc_exchange_mtu_req', conn_handle))
         return self._wait_for_result()
-        
+
     def ble_gatts_exchange_mtu_reply(self, conn_handle, mtu):
         self.command_q.put(_Command('ble_gatts_exchange_mtu_reply', conn_handle, mtu))
         return self._wait_for_result()
