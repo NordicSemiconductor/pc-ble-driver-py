@@ -934,7 +934,7 @@ class Flasher(object):
         data = self.call_cmd(args)
         result = list()
         for line in data.splitlines():
-            line = re.sub(r"(^.*:)|(\|.*$)", '', line)
+            line = re.sub(r"(^.*:)|(\|.*$)", '', str(line))
             result.extend(line.split())
         return result
 
