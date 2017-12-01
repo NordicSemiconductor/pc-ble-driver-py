@@ -716,7 +716,6 @@ class BLEUUIDBase(object):
         return uuid
 
 
-
 class BLEUUID(object):
     class Standard(Enum):
         unknown             = 0x0000
@@ -726,7 +725,6 @@ class BLEUUID(object):
         cccd                = 0x2902
         battery_level       = 0x2A19
         heart_rate          = 0x2A37
-
 
     def __init__(self, value, base=BLEUUIDBase()):
         assert isinstance(base, BLEUUIDBase), 'Invalid argument type'
@@ -1316,9 +1314,9 @@ class BLEDriver(object):
     @wrapt.synchronized(api_lock)
     def ble_gap_conn_param_update(self, conn_handle, conn_params):
         assert isinstance(conn_params, (BLEGapConnParams, type(None))), 'Invalid argument type'
-        if conn_params:
-            conn_params = conn_params.to_c()
-        return driver.sd_ble_gap_conn_param_update(self.rpc_adapter, conn_handle, conn_params)
+        if not conn_params:
+            conn_params = self.conn_params_setup()
+        return driver.sd_ble_gap_conn_param_update(self.rpc_adapter, conn_handle, conn_params.to_c())
 
     @NordicSemiErrorCheck
     @wrapt.synchronized(api_lock)
@@ -1524,7 +1522,6 @@ class BLEDriver(object):
     @NordicSemiErrorCheck
     @wrapt.synchronized(api_lock)
     def ble_gattc_exchange_mtu_req(self, conn_handle, mtu):
-        logger.debug('Sending GATTC MTU exchange request: {}'.format(mtu))
         return driver.sd_ble_gattc_exchange_mtu_request(self.rpc_adapter,
                                                         conn_handle,
                                                         mtu)
@@ -1532,7 +1529,6 @@ class BLEDriver(object):
     @NordicSemiErrorCheck
     @wrapt.synchronized(api_lock)
     def ble_gattc_hv_confirm(self, conn_handle, attr_handle):
-        logger.debug('Sending GATTC Handle value confirmation')
         return driver.sd_ble_gattc_hv_confirm(self.rpc_adapter, conn_handle, attr_handle)
 
     @NordicSemiErrorCheck
