@@ -75,8 +75,8 @@ def conn_ic_hex_get():
 
 
 def get_connectivity_hex_version():
-    return '1.2.0'
+    return '2.0.0'
 
 
 def get_connectivity_hex_baud_rate():
-    return 115200
+    return 1000000

@@ -890,7 +890,7 @@ class Flasher(object):
         return None
 
     NRFJPROG = 'nrfjprog'
-    FW_STRUCT_ADDRESS = 0x20000
+    FW_STRUCT_ADDRESS = 0x30000
     FW_STRUCT_LENGTH = 24
     FW_MAGIC_NUMBER = ['17', 'A5', 'D8', '46']
 
