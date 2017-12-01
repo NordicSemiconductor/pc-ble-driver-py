@@ -851,7 +851,7 @@ class SerialPortDescriptor(object):
         self.location_id = location_id
         self.vendor_id = vendor_id
         self.product_id = product_id
-    
+
     @classmethod
     def to_string(cls, char_arr):
         s = util.char_array_to_list(char_arr, driver.SD_RPC_MAXPATHLEN)
@@ -903,7 +903,7 @@ class Flasher(object):
     def __init__(self, serial_port = None, snr = None):
         if serial_port is None and snr is None:
             raise NordicSemiException('Invalid Flasher initialization')
-        
+
         nrfjprog = Flasher.which(Flasher.NRFJPROG)
         if nrfjprog == None:
             nrfjprog = Flasher.which("{}.exe".format(Flasher.NRFJPROG))
@@ -940,7 +940,7 @@ class Flasher(object):
         data = self.call_cmd(args)
         result = list()
         for line in data.splitlines():
-            line = re.sub(r"(^.*:)|(\|.*$)", '', line)
+            line = re.sub(r"(^.*:)|(\|.*$)", '', str(line))
             result.extend(line.split())
         return result
 
@@ -964,7 +964,7 @@ class Flasher(object):
         except subprocess.CalledProcessError as e:
             if e.returncode == 18:
                 raise RuntimeError("Invalid Connectivity IC ID: {}".format(self.family))
-            else: 
+            else:
                 raise
 
     @staticmethod
@@ -994,7 +994,7 @@ class BLEConfigConnGap(BLEConfigBase):
         self.conn_count = conn_count
         self.event_length = event_length
 
-    def to_c(self):        
+    def to_c(self):
         ble_cfg = driver.ble_cfg_t()
         ble_cfg.conn_cfg.conn_cfg_tag = self.conn_cfg_tag
         ble_cfg.conn_cfg.params.gap_conn_cfg.conn_count = self.conn_count
@@ -1005,7 +1005,7 @@ class BLEConfigConnGattc(BLEConfigBase):
     def __init__(self, write_cmd_tx_queue_size=1):
         self.write_cmd_tx_queue_size = write_cmd_tx_queue_size
 
-    def to_c(self):        
+    def to_c(self):
         ble_cfg = driver.ble_cfg_t()
         ble_cfg.conn_cfg.conn_cfg_tag = self.conn_cfg_tag
         ble_cfg.conn_cfg.params.gattc_conn_cfg.write_cmd_tx_queue_size = self.write_cmd_tx_queue_size
@@ -1025,7 +1025,7 @@ class BLEConfigConnGatt(BLEConfigBase):
     def __init__(self, att_mtu=23):
         self.att_mtu = 23
 
-    def to_c(self):        
+    def to_c(self):
         ble_cfg = driver.ble_cfg_t()
         ble_cfg.conn_cfg.conn_cfg_tag = self.conn_cfg_tag
         ble_cfg.conn_cfg.params.gatt_conn_cfg.att_mtu = self.att_mtu
@@ -1044,7 +1044,7 @@ class BLEConfigConnL2cap(BLEConfigBase):
         self.tx_queue_size = 1
         self.ch_count = 0
 
-    def to_c(self):        
+    def to_c(self):
         ble_cfg = driver.ble_cfg_t()
         ble_cfg.conn_cfg.conn_cfg_tag = self.conn_cfg_tag
         ble_cfg.conn_cfg.params.l2cap_conn_cfg.rx_mps = self.rx_mps
@@ -1058,13 +1058,13 @@ class BLEConfigCommon(BLEConfigBase):
     def __init__(self, vs_uuid_count=1):
         self.vs_uuid_count = vs_uuid_count
 
-    def to_c(self):        
+    def to_c(self):
         ble_cfg = driver.ble_cfg_t()
         ble_cfg.common_cfg.vs_uuid_cfg.vs_uuid_count = self.vs_uuid_count
         return ble_cfg
 
 class BLEConfigGap(BLEConfigBase):
-    def __init__(self, 
+    def __init__(self,
                  central_role_count=1,
                  periph_role_count=1,
                  central_sec_count=1,
@@ -1559,7 +1559,7 @@ class BLEDriver(object):
         return driver.sd_ble_gatts_exchange_mtu_reply(self.rpc_adapter,
                                                       conn_handle,
                                                       mtu)
-    
+
     def status_handler(self, adapter, status_code, status_message):
         # print(status_message)
         pass
