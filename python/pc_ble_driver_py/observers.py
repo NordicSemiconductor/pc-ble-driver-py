@@ -68,6 +68,9 @@ class BLEDriverObserver(object):
     def on_gap_evt_conn_param_update_request(self, ble_driver, conn_handle, conn_params):
         pass
 
+    def on_gap_evt_conn_param_update(self, ble_driver, conn_handle, conn_params):
+        pass
+
     def on_gap_evt_timeout(self, ble_driver, conn_handle, src):
         pass
 
@@ -129,4 +132,4 @@ class BLEAdapterObserver(object):
 
     def on_conn_param_update_request(self, ble_adapter, conn_handle, conn_params):
         # Default behaviour is to accept connection parameter update
-        ble_adapter.conn_param_update(conn_handle, conn_params)
+        ble_adapter.driver.ble_gap_conn_param_update(conn_handle, conn_params)
