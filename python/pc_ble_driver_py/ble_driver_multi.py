@@ -46,10 +46,12 @@ from pc_ble_driver_py.observers import *
 logging.basicConfig()
 log = logging.getLogger(__name__)
 
+
 class _BaseCmdEvt(object):
     def __repr__(self):
         return "<{} object: {}>".format(self.__class__.__name__,
                                         self.__dict__)
+
 
 class _Command(_BaseCmdEvt):
     def __init__(self, cmd, *args, **kwargs):
@@ -57,10 +59,12 @@ class _Command(_BaseCmdEvt):
         self.args = args
         self.kwargs = kwargs
 
+
 class _Event(_BaseCmdEvt):
     def __init__(self, name, **kwargs):
         self.name = name
         self.kwargs = kwargs
+
 
 class _CommandAck(_BaseCmdEvt):
     def __init__(self, exception=None, result=None, retvals=None):
@@ -72,6 +76,7 @@ class _CommandAck(_BaseCmdEvt):
 class _ObserverMulti(object):
     def __init__(self, event_q):
         self.event_q = event_q
+
     def on_gap_evt_connected(self, ble_driver, conn_handle, peer_addr, role, conn_params):
         self.event_q.put(_Event('on_gap_evt_connected',
                                 conn_handle=conn_handle,
@@ -175,7 +180,19 @@ class _ObserverMulti(object):
                                 sec_mode=sec_mode,
                                 encr_key_size=encr_key_size))
 
-    def on_gattc_evt_exchange_mtu_rsp(self, ble_driver,conn_handle,status,att_mtu):
+    def on_gattc_evt_write_cmd_tx_complete(self, ble_driver, conn_handle, count):
+        self.event_q.put(_Event('on_gattc_evt_write_cmd_tx_complete',
+                                conn_handle=conn_handle,
+                                status=status,
+                                count=count))
+
+    def on_gatts_evt_hvn_tx_complete(self, ble_driver, conn_handle, count):
+        self.event_q.put(_Event('on_gatts_evt_hvn_tx_complete',
+                                conn_handle=conn_handle,
+                                status=status,
+                                count=count))
+
+    def on_gattc_evt_exchange_mtu_rsp(self, ble_driver, conn_handle, status, att_mtu):
         self.event_q.put(_Event('on_gattc_evt_exchange_mtu_rsp',
                                 conn_handle=conn_handle,
                                 status=status,
@@ -200,6 +217,7 @@ class _ObserverMulti(object):
         self.event_q.put(_Event('on_gattc_evt_write_cmd_tx_complete',
                                 conn_handle=conn_handle,
                                 count=count))
+
 
 class BLEDriverMulti(object):
     def __init__(self, serial_port, baud_rate=115200, auto_flash=False):
