@@ -303,7 +303,7 @@ class BLEGapConnSec(object):
 
 
     def __str__(self):
-        return "sec_mode({0.sec_mode}) level({0.level}) encr_key_size({0.encr_key_size})".format(self)
+        return ("sec_mode({0.sec_mode}) level({0.level}) encr_key_size({0.encr_key_size})").format(self)
 
 
 
@@ -336,6 +336,12 @@ class BLEGapConnParams(object):
                                                             util.UNIT_10_MS)
         conn_params.slave_latency      = self.slave_latency
         return conn_params
+
+
+    def __str__(self):
+        return ("Connection Parameters min_conn_interval_ms({0.min_conn_interval_ms}) "
+        "max_conn_interval_ms({0.max_conn_interval_ms}) conn_sup_timeout_ms({0.conn_sup_timeout_ms}) "
+        "slave_latency({0.slave_latency})").format(self)
 
 
 
@@ -383,7 +389,7 @@ class BLEGapSecKeyset(object):
 
 
     def __str__(self):
-        return "keys_own({0.keys_own}) keys_peer({0.keys_peer})".format(self)
+        return ("keys_own({0.keys_own}) keys_peer({0.keys_peer})").format(self)
 
 
 
@@ -404,7 +410,7 @@ class BLEGapSecKeys(object):
 
 
     def __str__(self):
-        return "enc_key({0.enc_key}) id_key({0.id_key}) csrk({0.csrk}) pk({0.pk})".format(self)
+        return ("enc_key({0.enc_key}) id_key({0.id_key}) csrk({0.csrk}) pk({0.pk})").format(self)
 
 
 
@@ -421,7 +427,7 @@ class BLEGapEncKey(object):
 
 
     def __str__(self):
-        return "master_id({0.master_id}) enc_info({0.enc_info})".format(self)
+        return ("master_id({0.master_id}) enc_info({0.enc_info})").format(self)
 
 
 
@@ -438,7 +444,7 @@ class BLEGapIdKey(object):
 
 
     def __str__(self):
-        return "irk({0.irk}) id_addr_info({0.id_addr_info})".format(self)
+        return ("irk({0.irk}) id_addr_info({0.id_addr_info})").format(self)
 
 
 
@@ -470,7 +476,7 @@ class BLEGapEncInfo(object):
 
 
     def __str__(self):
-        return "ltk({0.ltk}) auth({0.auth}) lesc({0.lesc}) ltk_len({0.ltk_len})".format(self)
+        return ("ltk({0.ltk}) auth({0.auth}) lesc({0.lesc}) ltk_len({0.ltk_len})").format(self)
 
 
 
@@ -496,7 +502,7 @@ class BLEGapMasterId(object):
 
 
     def __str__(self):
-        return "ediv({0.ediv}) rand({0.rand})".format(self)
+        return ("ediv({0.ediv}) rand({0.rand})").format(self)
 
 
 
@@ -526,7 +532,7 @@ class BLEGapSecKDist(object):
 
 
     def __str__(self):
-        return "enc({0.enc}) id({0.id}) sign({0.sign}) link({0.link})".format(self)
+        return ("enc({0.enc}) id({0.id}) sign({0.sign}) link({0.link})").format(self)
 
 
 
@@ -587,7 +593,7 @@ class BLEGapSecParams(object):
 
 
     def __str__(self):
-        return ('bond({0.bond}) mitm({0.mitm}) lesc({0.lesc}) keypress({0.keypress}) '
+        return ('Security Parameters bond({0.bond}) mitm({0.mitm}) lesc({0.lesc}) keypress({0.keypress}) '
         'io_caps({0.io_caps}) oob({0.oob}) max_key_size({0.max_key_size}) '
         'min_key_size({0.min_key_size}) kdist_own({0.kdist_own}) kdist_peer({0.kdist_peer})').format(self)
 
@@ -798,6 +804,10 @@ class BLEGattcWriteParams(object):
         return write_params
 
 
+    def __str__(self):
+        return ("Write Params write_op({0.write_op}) flags({0.flags}) handle({0.handle}) offset({0.offset}) data({0.data})").format(self)
+
+
 
 class BLEHci(Enum):
     success                                     = driver.BLE_HCI_STATUS_CODE_SUCCESS
@@ -903,7 +913,6 @@ class BLEUUID(object):
 
 class BLEDescriptor(object):
     def __init__(self, uuid, handle):
-        logger.debug('New descriptor uuid: {}, handle: {}'.format(uuid, handle))
         self.handle = handle
         self.uuid   = uuid
 
@@ -912,6 +921,10 @@ class BLEDescriptor(object):
     def from_c(cls, gattc_desc):
         return cls(uuid     = BLEUUID.from_c(gattc_desc.uuid),
                    handle   = gattc_desc.handle)
+
+
+    def __str__(self):
+        return ("Descriptor uuid({0.uuid}) handle({0.handle})").format(self)
 
 
 
@@ -932,7 +945,6 @@ class BLECharProperties(CharProperties):
 
 class BLECharacteristic(object):
     def __init__(self, uuid, char_props, handle_decl, handle_value):
-        logger.debug('New characteristic uuid: {}, properties: {}, declaration handle: {}, value handle: {}'.format(uuid, char_props, handle_decl, handle_value))
         self.uuid           = uuid
         self.char_props     = char_props
         self.handle_decl    = handle_decl
@@ -949,10 +961,14 @@ class BLECharacteristic(object):
                    handle_value = gattc_char.handle_value)
 
 
+    def __str__(self):
+        return ("Characteristic uuid({0.uuid}) properties({0.char_props}) declaration handle({0.handle_decl}) "
+        "value handle({0.handle_value})").format(self)
+
+
 
 class BLEService(object):
     def __init__(self, uuid, start_handle, end_handle):
-        logger.debug('New service uuid: {}, start handle: {}, end handle: {}'.format(uuid, start_handle, end_handle))
         self.uuid           = uuid
         self.start_handle   = start_handle
         self.end_handle     = end_handle
@@ -971,6 +987,11 @@ class BLEService(object):
         self.chars.append(char)
         if len(self.chars) > 1:
             self.chars[-2].end_handle = char.handle_decl - 1
+
+
+    def __str__(self):
+        return ("Service uuid({0.uuid}) start handle({0.start_handle}) end handle({0.end_handle})").format(self)
+
 
 
 class SerialPortDescriptor(object):
@@ -1619,6 +1640,12 @@ class BLEDriver(object):
                 for obs in self.observers:
                     obs.on_gap_evt_auth_status(ble_driver   = self,
                                                conn_handle  = ble_event.evt.common_evt.conn_handle,
+                                               error_src    = auth_status_evt.error_src,
+                                               bonded       = auth_status_evt.bonded,
+                                               sm1_levels   = auth_status_evt.sm1_levels,
+                                               sm2_levels   = auth_status_evt.sm2_levels,
+                                               kdist_own    = BLEGapSecKDist.from_c(auth_status_evt.kdist_own),
+                                               kdist_peer   = BLEGapSecKDist.from_c(auth_status_evt.kdist_peer),
                                                auth_status  = BLEGapSecStatus(auth_status_evt.auth_status))
 
             elif evt_id == BLEEvtID.gap_evt_auth_key_request:
@@ -1713,39 +1740,39 @@ class BLEDriver(object):
             elif evt_id == BLEEvtID.gattc_evt_desc_disc_rsp:
                 desc_disc_rsp_evt = ble_event.evt.gattc_evt.params.desc_disc_rsp
 
-                descriptions = list()
+                descriptors = list()
                 for d in util.desc_array_to_list(desc_disc_rsp_evt.descs, desc_disc_rsp_evt.count):
-                    descriptions.append(BLEDescriptor.from_c(d))
+                    descriptors.append(BLEDescriptor.from_c(d))
 
                 for obs in self.observers:
                     obs.on_gattc_evt_desc_disc_rsp(ble_driver   = self,
                                                    conn_handle  = ble_event.evt.gattc_evt.conn_handle,
                                                    status       = BLEGattStatusCode(ble_event.evt.gattc_evt.gatt_status),
-                                                   descriptions = descriptions)
+                                                   descriptors  = descriptors)
 
             elif evt_id == BLEEvtID.gatts_evt_hvc:
                 hvc_evt = ble_event.evt.gatts_evt.params.hvc
 
                 for obs in self.observers:
-                    obs.on_gatts_evt_hvc(ble_driver=self,
-                                         conn_handle=ble_event.evt.gatts_evt.conn_handle,
-                                         status=BLEGattStatusCode(ble_event.evt.gatts_evt.gatt_status),
-                                         error_handle=ble_event.evt.gatts_evt.error_handle,
-                                         attr_handle=hvc_evt.handle)
+                    obs.on_gatts_evt_hvc(ble_driver   = self,
+                                         conn_handle  = ble_event.evt.gatts_evt.conn_handle,
+                                         status       = BLEGattStatusCode(ble_event.evt.gatts_evt.gatt_status),
+                                         error_handle = ble_event.evt.gatts_evt.error_handle,
+                                         attr_handle  = hvc_evt.handle)
 
             elif evt_id == BLEEvtID.gatts_evt_write:
                 write_evt = ble_event.evt.gatts_evt.params.write
 
                 for obs in self.observers:
-                    obs.on_gatts_evt_write(ble_driver=self,
-                                           conn_handle=ble_event.evt.gatts_evt.conn_handle,
-                                           attr_handle=write_evt.handle,
-                                           uuid=write_evt.uuid,
-                                           op=write_evt.op,
-                                           auth_required=write_evt.auth_required,
-                                           offset=write_evt.offset,
-                                           length=write_evt.len,
-                                           data=write_evt.data)
+                    obs.on_gatts_evt_write(ble_driver    = self,
+                                           conn_handle   = ble_event.evt.gatts_evt.conn_handle,
+                                           attr_handle   = write_evt.handle,
+                                           uuid         = write_evt.uuid,
+                                           op            = write_evt.op,
+                                           auth_required = write_evt.auth_required,
+                                           offset        = write_evt.offset,
+                                           length        = write_evt.len,
+                                           data          = write_evt.data)
 
 
             elif nrf_sd_ble_api_ver >= 3:

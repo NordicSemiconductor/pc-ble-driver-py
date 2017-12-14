@@ -45,6 +45,8 @@ from observers import *
 
 logger  = logging.getLogger(__name__)
 
+MAX_TRIES = 10 # Maximum Number of Tries by driver.ble_gattc_write
+
 class DbConnection(object):
     def __init__(self):
         self.services     = list()
@@ -92,13 +94,22 @@ class DbConnection(object):
                 if (c.handle_decl <= handle) and (c.end_handle >= handle):
                     return c.uuid
 
-    def get_char_props(self, uuid):
-        assert isinstance(uuid, BLEUUID), 'Invalid argument type'
 
+    def get_char_props(self, handle):
         for s in self.services:
             for c in s.chars:
-                if (c.uuid.value == uuid.value) and (c.uuid.base.type == uuid.base.type):
+                if (c.handle_decl <= handle) and (c.end_handle >= handle):
                     return c.char_props
+
+
+
+class Connection(DbConnection):
+    def __init__(self, peer_addr, role):
+      super(Connection, self).__init__()
+      self.role      = role
+      self.peer_addr = peer_addr
+      self._keyset   = None
+
 
 
 class EvtSync(object):
@@ -122,6 +133,7 @@ class EvtSync(object):
             self.conds[evt].notify_all()
 
 
+
 class BLEAdapter(BLEDriverObserver):
     observer_lock   = Lock()
     def __init__(self, ble_driver):
@@ -133,7 +145,6 @@ class BLEAdapter(BLEDriverObserver):
         self.observers          = list()
         self.db_conns           = dict()
         self.evt_sync           = dict()
-        self.role               = None
 
 
     def open(self):
@@ -219,17 +230,17 @@ class BLEAdapter(BLEDriverObserver):
                     response = self.evt_sync[conn_handle].wait(evt = BLEEvtID.gattc_evt_desc_disc_rsp)
 
                     if response['status'] == BLEGattStatusCode.success:
-                        ch.descs.extend(response['descriptions'])
+                        ch.descs.extend(response['descriptors'])
                     elif response['status'] == BLEGattStatusCode.attribute_not_found:
                         break
                     else:
                         return response['status']
 
-                    if response['descriptions'][-1].handle == ch.end_handle:
+                    if response['descriptors'][-1].handle == ch.end_handle:
                         break
                     else:
                         self.driver.ble_gattc_desc_disc(conn_handle,
-                                                        response['descriptions'][-1].handle + 1,
+                                                        response['descriptors'][-1].handle + 1,
                                                         ch.end_handle)
         return BLEGattStatusCode.success
 
@@ -363,9 +374,10 @@ class BLEAdapter(BLEDriverObserver):
                                            0)
 
         # Send packet and skip waiting for TX-complete event. Try maximum 3 times.
-        for _ in range(3):
+        for _ in range(MAX_TRIES):
             try:
-                self.driver.ble_gattc_write(conn_handle, write_params)
+                response = self.driver.ble_gattc_write(conn_handle, write_params)
+                logger.debug("Call ble_gattc_write: response({}) write_params({})".format(response, write_params))
                 return
             except NordicSemiException as e:
                 # Retry if BLE_ERROR_NO_TX_PACKETS error code.
@@ -405,20 +417,20 @@ class BLEAdapter(BLEDriverObserver):
         # sd_ble_gap_sec_params_reply ... In the central role, sec_params must be set to NULL,
         # as the parameters have already been provided during a previous call to
         # sd_ble_gap_authenticate.
-        sec_params = None if self.role == BLEGapRoles.central else sec_params
+        sec_params = None if self.db_conns[conn_handle].role == BLEGapRoles.central else sec_params
         self.driver.ble_gap_sec_params_reply(conn_handle,
                                              BLEGapSecStatus.success,
                                              sec_params=sec_params)
         result = self.evt_sync[conn_handle].wait(evt = BLEEvtID.gap_evt_auth_status)
         # If success then keys are stored in self.driver._keyset.
         if result['auth_status'] ==  BLEGapSecStatus.success:
-            self._keyset = BLEGapSecKeyset.from_c(self.driver._keyset)
+            self.db_conns[conn_handle]._keyset = BLEGapSecKeyset.from_c(self.driver._keyset)
         return result['auth_status']
 
     def encrypt(self, conn_handle, ediv, rand, ltk, auth=0, lesc=0, ltk_len=16):
         # @assert note that sd_ble_gap_encrypt results in BLE_ERROR_INVALID_ROLE
         # if not Central.
-        assert self.role == BLEGapRoles.central, \
+        assert self.db_conns[conn_handle].role == BLEGapRoles.central, \
             'Invalid role. Encryption can only be initiated by a Central Device.'
         master_id = BLEGapMasterId(ediv = ediv, rand = rand)
         enc_info = BLEGapEncInfo(ltk     = ltk,
@@ -435,10 +447,9 @@ class BLEAdapter(BLEDriverObserver):
             self.evt_sync[i].notify(evt=BLEEvtID.evt_data_length_changed, data=kwargs)
 
     def on_gap_evt_connected(self, ble_driver, conn_handle, peer_addr, role, conn_params):
-        self.db_conns[conn_handle]  = DbConnection()
+        self.db_conns[conn_handle]  = Connection(peer_addr, role)
         self.evt_sync[conn_handle]  = EvtSync(events = BLEEvtID)
         self.conn_in_progress       = False
-        self.role                   = role
 
     def on_gap_evt_disconnected(self, ble_driver, conn_handle, reason):
         del self.db_conns[conn_handle]
