@@ -38,10 +38,10 @@ import Queue
 import logging
 import wrapt
 from threading  import Condition, Lock
-from ble_driver import *
-from exceptions import NordicSemiException
+from pc_ble_driver_py.ble_driver import *
+from pc_ble_driver_py.exceptions import NordicSemiException
 
-from observers import *
+from pc_ble_driver_py.observers import *
 
 logger  = logging.getLogger(__name__)
 
