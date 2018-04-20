@@ -42,7 +42,6 @@ import functools
 import traceback
 import subprocess
 from enum       import Enum
-from types      import NoneType
 from threading  import Lock
 
 import sys
@@ -53,14 +52,15 @@ import imp
 import importlib
 import collections
 
-from observers import *
+from pc_ble_driver_py.observers import *
 
 #logging.basicConfig(level=logging.DEBUG)
 logger  = logging.getLogger(__name__)
 
+NoneType = type(None)
 driver = None
 
-import config
+import pc_ble_driver_py.config as config
 nrf_sd_ble_api_ver = config.sd_api_ver_get()
 # Load pc_ble_driver
 SWIG_MODULE_NAME = "pc_ble_driver_sd_api_v{}".format(nrf_sd_ble_api_ver)
@@ -111,8 +111,8 @@ logger.info('Swig module name: {}'.format(SWIG_MODULE_NAME))
 sys.path.append(shlib_dir)
 driver = importlib.import_module(SWIG_MODULE_NAME)
 
-import ble_driver_types as util
-from exceptions import NordicSemiException
+import pc_ble_driver_py.ble_driver_types as util
+from pc_ble_driver_py.exceptions import NordicSemiException
 
 ATT_MTU_DEFAULT                 = driver.GATT_MTU_SIZE_DEFAULT
 
