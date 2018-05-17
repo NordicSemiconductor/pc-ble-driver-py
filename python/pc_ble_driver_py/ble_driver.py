@@ -1764,8 +1764,6 @@ class BLEDriver(object):
                 for obs in self.observers:
                     obs.on_gatts_evt_hvc(ble_driver   = self,
                                          conn_handle  = ble_event.evt.gatts_evt.conn_handle,
-                                         status       = BLEGattStatusCode(ble_event.evt.gatts_evt.gatt_status),
-                                         error_handle = ble_event.evt.gatts_evt.error_handle,
                                          attr_handle  = hvc_evt.handle)
 
             elif evt_id == BLEEvtID.gatts_evt_write:
