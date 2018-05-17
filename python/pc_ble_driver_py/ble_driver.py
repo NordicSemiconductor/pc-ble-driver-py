@@ -1531,6 +1531,14 @@ class BLEDriver(object):
                                                       char_handle)
 
 
+    @NordicSemiErrorCheck
+    @wrapt.synchronized(api_lock)
+    def ble_gatts_hvx(self, conn_handle, hvx_params):
+        return driver.sd_ble_gatts_hvx(self.rpc_adapter,
+                                       conn_handle,
+                                       hvx_params)
+
+
     def status_handler(self, adapter, status_code, status_message):
         # print(status_message)
         pass
