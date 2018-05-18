@@ -1531,6 +1531,14 @@ class BLEDriver(object):
                                                       char_handle)
 
 
+    @NordicSemiErrorCheck
+    @wrapt.synchronized(api_lock)
+    def ble_gatts_hvx(self, conn_handle, hvx_params):
+        return driver.sd_ble_gatts_hvx(self.rpc_adapter,
+                                       conn_handle,
+                                       hvx_params)
+
+
     def status_handler(self, adapter, status_code, status_message):
         # print(status_message)
         pass
@@ -1756,8 +1764,6 @@ class BLEDriver(object):
                 for obs in self.observers:
                     obs.on_gatts_evt_hvc(ble_driver   = self,
                                          conn_handle  = ble_event.evt.gatts_evt.conn_handle,
-                                         status       = BLEGattStatusCode(ble_event.evt.gatts_evt.gatt_status),
-                                         error_handle = ble_event.evt.gatts_evt.error_handle,
                                          attr_handle  = hvc_evt.handle)
 
             elif evt_id == BLEEvtID.gatts_evt_write:

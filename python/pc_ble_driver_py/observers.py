@@ -134,8 +134,8 @@ class BLEDriverObserver(object):
         logger.debug('evt> on_gattc_evt_desc_disc_rsp status({}) conn({})\n {}'.format(status, conn_handle, descs_str))
 
 
-    def on_gatts_evt_hvc(self, ble_driver, status, error_handle, attr_handle):
-        logger.debug('evt> on_gatts_evt_hvc status({}) conn({})\n error_handle({})\n attr_handle({})'.format(status, conn_handle, error_handle, attr_handle))
+    def on_gatts_evt_hvc(self, ble_driver, conn_handle, attr_handle):
+        logger.debug('evt> on_gatts_evt_hvc conn({})\n attr_handle({})'.format(conn_handle, attr_handle))
 
 
     def on_gatts_evt_write(self, ble_driver, conn_handle, attr_handle, uuid, op, auth_required, offset, length, data):
