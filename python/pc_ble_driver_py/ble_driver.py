@@ -764,7 +764,7 @@ class BLEUUID(object):
         return (self.value == other.value) and (self.base.base == other.base.base)
 
     def __hash__(self):
-        return hash(self.value*self.base.base)
+        return hash(self.value*sum(self.base.base))
 
     @classmethod
     def from_c(cls, uuid):
@@ -1721,7 +1721,7 @@ class BLEDriver(object):
 
             elif evt_id == BLEEvtID.gattc_evt_hvx:
                 hvx_evt = ble_event.evt.gattc_evt.params.hvx
-
+                logger.critical("HVX driver")
                 for obs in self.observers:
                     obs.on_gattc_evt_hvx(ble_driver=self,
                                          conn_handle=ble_event.evt.gattc_evt.conn_handle,
