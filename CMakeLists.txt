@@ -1,15 +1,14 @@
-cmake_minimum_required(VERSION 3.3)
+cmake_minimum_required(VERSION 3.11)
 
 # Name of the project
 project (pc-ble-driver-py)
 
 if(NOT ${PYTHON_VERSION})
     # Set default Python version to link with
-    set(PYTHON_VERSION 2.7)
+    set(PYTHON_VERSION 3.4)
 endif()
 
 set(PC_BLE_DRIVER_PY_OUTDIR ${CMAKE_BINARY_DIR}/outdir)
-
 
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${PC_BLE_DRIVER_PY_OUTDIR})
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${PC_BLE_DRIVER_PY_OUTDIR})
@@ -80,7 +79,7 @@ foreach(SD_API_VER ${SD_API_VERS})
     string(REGEX MATCH "[0-9]+$" _SD_API_VER_NUM "${SD_API_VER}")
     set(SD_API_VER_COMPILER_DEF_NUM "-D${SD_API_VER_COMPILER_DEF}=${_SD_API_VER_NUM}")
     set(CMAKE_SWIG_FLAGS ${CMAKE_SWIG_FLAGS} "${SD_API_VER_COMPILER_DEF_NUM}")
-    swig_add_module(${PYTHON_MODULE_${SD_API_VER}} python ${SWIG_I_FILE_${SD_API_VER}})
+    swig_add_library(${PYTHON_MODULE_${SD_API_VER}} LANGUAGE python SOURCES ${SWIG_I_FILE_${SD_API_VER}})
     target_include_directories(${SWIG_MODULE_${PYTHON_MODULE_${SD_API_VER}}_REAL_NAME} PRIVATE ${PC_BLE_DRIVER_${SD_API_VER}_PUBLIC_INCLUDE_DIRS})
 endforeach(SD_API_VER)
 
@@ -198,6 +197,3 @@ foreach(i RANGE ${_COUNT})
         COMMAND ${CMAKE_COMMAND} -E md5sum ${PC_BLE_DRIVER_${SD_API_VER}_SHARED_LIB_FILE} >> ${PY_MODULE_BUILD_INFO_POST_PATH} WORKING_DIRECTORY ${PY_MODULE_SHARED_LIB_DIR}
     )
 endforeach(i)
-
-
-
