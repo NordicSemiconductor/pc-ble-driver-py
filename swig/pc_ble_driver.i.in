@@ -166,7 +166,9 @@
     typedef struct ble_gatts_evt_rw_authorize_request_t ble_gatts_evt_rw_authorize_request_t;
     typedef struct ble_gatts_evt_sys_attr_missing_t ble_gatts_evt_sys_attr_missing_t;
     typedef struct ble_gatts_evt_hvc_t ble_gatts_evt_hvc_t;
+    typedef struct ble_gatts_evt_exchange_mtu_request_t ble_gatts_evt_exchange_mtu_request_t;
     typedef struct ble_gatts_evt_timeout_t ble_gatts_evt_timeout_t;
+    typedef struct ble_gatts_evt_hvn_tx_complete_t ble_gatts_evt_hvn_tx_complete_t;
 
     // From ble_gatts.h
     typedef struct
@@ -188,7 +190,9 @@
         ble_gatts_evt_rw_authorize_request_t  authorize_request;  /**< Read or Write Authorize Request Parameters. */
         ble_gatts_evt_sys_attr_missing_t      sys_attr_missing;   /**< System attributes missing. */
         ble_gatts_evt_hvc_t                   hvc;                /**< Handle Value Confirmation Event Parameters. */
+        ble_gatts_evt_exchange_mtu_request_t  exchange_mtu_request;  /**< Exchange MTU Request Event Parameters. */
         ble_gatts_evt_timeout_t               timeout;            /**< Timeout Event. */
+        ble_gatts_evt_hvn_tx_complete_t       hvn_tx_complete;       /**< Handle Value Notification transmission complete Event Parameters. */
       } params;                                                   /**< Event Parameters. */
     } ble_gatts_evt_t;
 
