@@ -468,7 +468,7 @@ class BLEAdapter(BLEDriverObserver):
     def on_gattc_evt_write_cmd_tx_complete(self, ble_driver, conn_handle, **kwargs):
         self.evt_sync[conn_handle].notify(evt = BLEEvtID.gattc_evt_write_cmd_tx_complete, data = kwargs)
 
-    def on_gattc_evt_write_rsvp(self, ble_driver, conn_handle, **kwargs):
+    def on_gattc_evt_write_rsp(self, ble_driver, conn_handle, **kwargs):
         self.evt_sync[conn_handle].notify(evt = BLEEvtID.gattc_evt_write_rsp, data = kwargs)
 
     def on_gap_evt_conn_param_update(self, ble_driver, conn_handle, **kwargs):
@@ -494,9 +494,6 @@ class BLEAdapter(BLEDriverObserver):
 
     def on_gatts_evt_write(self, ble_driver, conn_handle, **kwargs):
         self.evt_sync[conn_handle].notify(evt=BLEEvtID.gatts_evt_write, data=kwargs)
-
-    def on_gatts_evt_exchange_mtu_request(self, ble_driver, conn_handle, client_mtu):
-        self.driver.ble_gatts_exchange_mtu_reply(conn_handle, self.default_mtu)
 
     def on_gap_evt_data_length_update_request(self, ble_driver, conn_handle, data_length_params):
         self.driver.ble_gap_data_length_update(conn_handle, None, None)
