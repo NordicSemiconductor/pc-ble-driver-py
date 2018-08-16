@@ -65,17 +65,17 @@ def conn_ic_hex_get():
     if __conn_ic_id__.upper() == "NRF51":
         return os.path.join(os.path.dirname(__file__),
                         'hex', 'sd_api_v2',
-                        'connectivity_1.2.0_115k2_with_s130_2.0.1.hex')
+                        'connectivity_1.2.3_115k2_with_s130_2.0.1.hex')
     elif __conn_ic_id__.upper() == "NRF52":
         return os.path.join(os.path.dirname(__file__),
                         'hex', 'sd_api_v3',
-                        'connectivity_1.2.0_115k2_with_s132_3.0.hex')
+                        'connectivity_1.2.3_115k2_with_s132_3.1.hex')
     else:
         raise RuntimeError('Invalid connectivity IC identifier: {}.'.format(__conn_ic_id__))
 
 
 def get_connectivity_hex_version():
-    return '1.2.0'
+    return '1.2.3'
 
 
 def get_connectivity_hex_baud_rate():
