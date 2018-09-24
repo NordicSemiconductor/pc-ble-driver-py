@@ -34,7 +34,7 @@ class FlasherVersionTestCase(unittest.TestCase):
              '02',                    # struct version
              'FF', 'FF', 'FF',        # (reserved for future use)
              '00', '00', '00', '00',  # revision hash
-             '01', '02', '00'         # major, minor, patch
+             '01', '02', '03'         # major, minor, patch
             ]), True)
 
 
