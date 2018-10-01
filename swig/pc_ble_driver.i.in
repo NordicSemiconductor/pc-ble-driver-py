@@ -69,7 +69,7 @@
 
 // Workaround for bug in SWIG, see https://github.com/swig/swig/issues/1305
 %inline %{
-#if NRF_SD_BLE_API_VERSION == 5
+#if NRF_SD_BLE_API_VERSION == 1000
     // SoftDevice V5
 
     // ble.h
@@ -262,7 +262,7 @@
 
 #endif // NRF_SD_BLE_API_VERSION == 5
 
-#if NRF_SD_BLE_API_VERSION == 2
+#if NRF_SD_BLE_API_VERSION == 1000
     // SoftDevice V2
 
     // ble.h
