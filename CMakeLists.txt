@@ -150,9 +150,9 @@ foreach(SD_API_VER ${SD_API_VERS})
     )
 
     # Copy .hex files
+    string(TOLOWER ${SD_API_VER} HEX_DIR)
     add_custom_command(TARGET ${SWIG_MODULE_${PYTHON_MODULE_${SD_API_VER}}_REAL_NAME} POST_BUILD
-        COMMAND ${CMAKE_COMMAND} -E copy_directory ${PC_BLE_DRIVER_HEX_DIR}/${SD_API_VER} ${PY_MODULE_HEX_DIR}/${SD_API_VER}
-    )
+        COMMAND ${CMAKE_COMMAND} -E copy_directory ${PC_BLE_DRIVER_HEX_DIR}/${HEX_DIR} ${PY_MODULE_HEX_DIR}/${HEX_DIR})
 endforeach(SD_API_VER)
 
 # Generate build information file
