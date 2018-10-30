@@ -842,7 +842,7 @@ class BLEHci(Enum):
 class BLEUUIDBase(object):
     def __init__(self, vs_uuid_base=None, uuid_type=None):
         assert isinstance(vs_uuid_base, (list, NoneType)), 'Invalid argument type'
-        assert isinstance(uuid_type, (int, long, NoneType)), 'Invalid argument type'
+        assert isinstance(uuid_type, (int, int, NoneType)), 'Invalid argument type'
         if (vs_uuid_base is None) and uuid_type is None:
             self.base   = [0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x10, 0x00,
                            0x80, 0x00, 0x00, 0x80, 0x5F, 0x9B, 0x34, 0xFB]
@@ -1092,7 +1092,7 @@ class Flasher(object):
         data = self.call_cmd(args)
         result = list()
         for line in data.splitlines():
-            line = re.sub(r"(^.*:)|(\|.*$)", '', line)
+            line = re.sub(b'(^.*:)|(\|.*$)', b'', line)
             result.extend(line.split())
         return result
 

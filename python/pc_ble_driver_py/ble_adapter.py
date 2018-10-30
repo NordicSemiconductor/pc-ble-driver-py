@@ -34,7 +34,7 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
-import Queue
+import queue
 import logging
 import wrapt
 from threading  import Condition, Lock
@@ -209,6 +209,7 @@ class BLEAdapter(BLEDriverObserver):
                                                      response['services'][-1].end_handle + 1)
 
         for s in self.db_conns[conn_handle].services:
+            print(s)
             self.driver.ble_gattc_char_disc(conn_handle, s.start_handle, s.end_handle)
             while True:
                 response = self.evt_sync[conn_handle].wait(evt = BLEEvtID.gattc_evt_char_disc_rsp)
