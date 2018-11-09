@@ -652,7 +652,7 @@ PyObject* sd_rpc_open_py(PyObject *adapter, PyObject *py_status_handler, PyObjec
 
     arg1 = (adapter_t * ) (argp1);
 
-    Py_XDECREF(my_pystatuscallback);  /* Remove any existing callback object */
+//    Py_XDECREF(my_pystatuscallback);  /* Remove any existing callback object */
     Py_XDECREF(my_pyevtcallback);  /* Remove any existing callback object */
     Py_XDECREF(my_pylogcallback); /* Remove any existing callback object */
     Py_XINCREF(py_status_handler);
