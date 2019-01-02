@@ -43,6 +43,7 @@
 # * "NRF52"
 __conn_ic_id__ = None
 
+import os
 
 def sd_api_ver_get():
     if __conn_ic_id__ is None:
@@ -56,27 +57,38 @@ def sd_api_ver_get():
         raise RuntimeError('Invalid connectivity IC identifier: {}.'.format(__conn_ic_id__))
     return _sd_api_v
 
+def _get_hex_path(sd_api_type='s132', sd_api_version='5.1.0'):
+    return os.path.join(
+        os.path.dirname(__file__),
+        'hex',
+        'sd_api_v%s' % sd_api_version.split('.')[0],
+        'connectivity_%s_1m_with_%s_%s.hex' % (
+            get_connectivity_hex_version(),
+            sd_api_type,
+            sd_api_version
+        )
+    )
 
 def conn_ic_hex_get():
     import os
     if __conn_ic_id__ is None:
         raise RuntimeError('Connectivity IC identifier __conn_ic_id__ is not set')
 
-    if __conn_ic_id__.upper() == "NRF51":
-        return os.path.join(os.path.dirname(__file__),
-                            'hex', 'sd_api_v2',
-                            'connectivity_1.2.3_1m_with_s130_2.0.1.hex')
-    elif __conn_ic_id__.upper() == "NRF52":
-        return os.path.join(os.path.dirname(__file__),
-                            'hex', 'sd_api_v5',
-                            'connectivity_1.2.3_1m_with_s132_5.1.0.hex')
+    if __conn_ic_id__.upper() == 'NRF51':
+        return _get_hex_path(
+            sd_api_type='s130',
+            sd_api_version='2.0.1'
+        )
+    elif __conn_ic_id__.upper() == 'NRF52':
+        return _get_hex_path(
+            sd_api_type='s132',
+            sd_api_version='5.1.0'
+        )
     else:
         raise RuntimeError('Invalid connectivity IC identifier: {}.'.format(__conn_ic_id__))
 
-
 def get_connectivity_hex_version():
-    return '1.2.3'
-
+    return '4.0.0'
 
 def get_connectivity_hex_baud_rate():
     return 1000000
