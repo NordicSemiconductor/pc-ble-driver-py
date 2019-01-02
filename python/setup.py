@@ -50,7 +50,6 @@ elif py3:
 
 
 setup(
-    
     name ='pc_ble_driver_py',
     version = pc_ble_driver_py.__version__,
     description = 'Python bindings for the Nordic pc-ble-driver SoftDevice serialization library',
@@ -73,9 +72,17 @@ setup(
         
         'License :: Other/Proprietary License',
 
+        'Programming Language :: Python',
+        'Programming Language :: Python :: 2',
         'Programming Language :: Python :: 2.7',
+        'Programming Language :: Python :: 3',
+        'Programming Language :: Python :: 3.4',
+        'Programming Language :: Python :: 3.5',
+        'Programming Language :: Python :: 3.6',
+        'Programming Language :: Python :: 3.7'
     ],
     keywords = 'nordic nrf51 nrf52 ble bluetooth softdevice serialization bindings pc-ble-driver pc-ble-driver-py pc_ble_driver pc_ble_driver_py',
+    python_requires=">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, <4",
     install_requires = requirements,
     packages = find_packages(),
     package_data = {
@@ -85,8 +92,8 @@ setup(
                 'pc_ble_driver_py.lib.linux.x86_64': ['*.so', '*.txt'],
                 'pc_ble_driver_py.lib.macos_osx': ['*.so', '*.dylib', '*.txt'],
                 'pc_ble_driver_py.hex': ['*.hex', '*.patch', '*.sh'],
-                'pc_ble_driver_py.hex.sd_api_v2': ['*.hex', '*.patch', '*.sh'],
-                'pc_ble_driver_py.hex.sd_api_v5': ['*.hex', '*.patch', '*.sh']
+                'pc_ble_driver_py.hex.sd_api_v2': ['*.hex'],
+                'pc_ble_driver_py.hex.sd_api_v3': ['*.hex'],
+                'pc_ble_driver_py.hex.sd_api_v5': ['*.hex'],
     }
-    
-    )
+)
