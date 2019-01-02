@@ -52,15 +52,19 @@ class DbConnection(object):
         self.services = list()
         self.att_mtu = ATT_MTU_DEFAULT
 
-    def get_char_value_handle(self, uuid):
+    def get_char_value_handle(self, uuid, service_uuid=None):
         assert isinstance(uuid, BLEUUID), 'Invalid argument type'
 
+        if service_uuid is not None:
+            assert isinstance(service_uuid, BLEUUID), 'Invalid argument type'
+
         for s in self.services:
-            for c in s.chars:
-                if (c.uuid.value == uuid.value) and (c.uuid.base.type == uuid.base.type):
-                    for d in c.descs:
-                        if d.uuid.value == uuid.value:
-                            return d.handle
+            if service_uuid is None or ((s.uuid.value == service_uuid.value) and (s.uuid.base.type == service_uuid.base.type)):
+                for c in s.chars:
+                    if (c.uuid.value == uuid.value) and (c.uuid.base.type == uuid.base.type):
+                        for d in c.descs:
+                            if d.uuid.value == uuid.value:
+                                return d.handle
         return None
 
     def get_cccd_handle(self, uuid):

@@ -69,7 +69,7 @@
 
 // Workaround for bug in SWIG, see https://github.com/swig/swig/issues/1305
 %inline %{
-#if NRF_SD_BLE_API_VERSION == 5
+#if NRF_SD_BLE_API_VERSION == 1000
     // SoftDevice V5
 
     // ble.h
@@ -262,7 +262,7 @@
 
 #endif // NRF_SD_BLE_API_VERSION == 5
 
-#if NRF_SD_BLE_API_VERSION == 2
+#if NRF_SD_BLE_API_VERSION == 1000
     // SoftDevice V2
 
     // ble.h
@@ -652,7 +652,7 @@ PyObject* sd_rpc_open_py(PyObject *adapter, PyObject *py_status_handler, PyObjec
 
     arg1 = (adapter_t * ) (argp1);
 
-    Py_XDECREF(my_pystatuscallback);  /* Remove any existing callback object */
+//    Py_XDECREF(my_pystatuscallback);  /* Remove any existing callback object */
     Py_XDECREF(my_pyevtcallback);  /* Remove any existing callback object */
     Py_XDECREF(my_pylogcallback); /* Remove any existing callback object */
     Py_XINCREF(py_status_handler);
