@@ -37,7 +37,7 @@
 
 import importlib
 
-from . import config
+import pc_ble_driver_py.config as config
 nrf_sd_ble_api_ver = config.sd_api_ver_get()
 # Load pc_ble_driver
 SWIG_MODULE_NAME = "pc_ble_driver_sd_api_v{}".format(nrf_sd_ble_api_ver)
