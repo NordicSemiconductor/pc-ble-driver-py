@@ -37,77 +37,67 @@
 
 import sys
 import time
-import Queue
-import logging
-
-from pc_ble_driver_py.observers     import *
+from queue import Queue
+from pc_ble_driver_py.observers import *
 
 TARGET_DEV_NAME = "Nordic_HRM"
-CONNECTIONS     = 1
+CONNECTIONS = 1
+
 
 def init(conn_ic_id):
-    global BLEDriver, BLEAdvData, BLEEvtID, BLEAdapter, BLEEnableParams, BLEGapTimeoutSrc, BLEUUID
+    global config, BLEDriver, BLEAdvData, BLEEvtID, BLEAdapter,\
+        BLEEnableParams, BLEGapTimeoutSrc, BLEUUID, BLEConfigCommon, BLEConfig, BLEConfigConnGatt
     from pc_ble_driver_py import config
     config.__conn_ic_id__ = conn_ic_id
-    from pc_ble_driver_py.ble_driver    import BLEDriver, BLEAdvData, BLEEvtID, BLEEnableParams, BLEGapTimeoutSrc, BLEUUID
-    from pc_ble_driver_py.ble_adapter   import BLEAdapter
+    from pc_ble_driver_py.ble_driver import BLEDriver, BLEAdvData,\
+        BLEEvtID, BLEEnableParams, BLEGapTimeoutSrc, BLEUUID, BLEConfigCommon, BLEConfig, BLEConfigConnGatt
+    from pc_ble_driver_py.ble_adapter import BLEAdapter
     global nrf_sd_ble_api_ver
     nrf_sd_ble_api_ver = config.sd_api_ver_get()
+
 
 class HRCollector(BLEDriverObserver, BLEAdapterObserver):
     def __init__(self, adapter):
         super(HRCollector, self).__init__()
-        self.adapter    = adapter
-        self.conn_q     = Queue.Queue()
+        self.adapter = adapter
+        self.conn_q = Queue()
         self.adapter.observer_register(self)
         self.adapter.driver.observer_register(self)
 
-
     def open(self):
         self.adapter.driver.open()
-
-        ble_enable_params = BLEEnableParams(vs_uuid_count      = 1,
-                                            service_changed    = False,
-                                            periph_conn_count  = 0,
-                                            central_conn_count = CONNECTIONS,
-                                            central_sec_count  = CONNECTIONS)
-        if nrf_sd_ble_api_ver >= 3:
-            print("Enabling larger ATT MTUs")
-            ble_enable_params.att_mtu = 50
-
-        self.adapter.driver.ble_enable(ble_enable_params)
-
+        if config.__conn_ic_id__ == 'NRF51':
+            self.adapter.driver.ble_enable(BLEEnableParams(vs_uuid_count=1,
+                                                           service_changed=0,
+                                                           periph_conn_count=0,
+                                                           central_conn_count=1,
+                                                           central_sec_count=0))
+        elif config.__conn_ic_id__ == 'NRF52':
+            self.adapter.driver.ble_enable()
 
     def close(self):
         self.adapter.driver.close()
 
-
     def connect_and_discover(self):
         self.adapter.driver.ble_gap_scan_start()
-        new_conn = self.conn_q.get(timeout = 60)
-
-        if nrf_sd_ble_api_ver >= 3:
-            att_mtu = self.adapter.att_mtu_exchange(new_conn)
-
+        new_conn = self.conn_q.get(timeout=5)
         self.adapter.service_discovery(new_conn)
+
         self.adapter.enable_notification(new_conn, BLEUUID(BLEUUID.Standard.battery_level))
         self.adapter.enable_notification(new_conn, BLEUUID(BLEUUID.Standard.heart_rate))
+        
         return new_conn
-
 
     def on_gap_evt_connected(self, ble_driver, conn_handle, peer_addr, role, conn_params):
         print('New connection: {}'.format(conn_handle))
         self.conn_q.put(conn_handle)
 
-
     def on_gap_evt_disconnected(self, ble_driver, conn_handle, reason):
         print('Disconnected: {} {}'.format(conn_handle, reason))
-
 
     def on_gap_evt_timeout(self, ble_driver, conn_handle, src):
         if src == BLEGapTimeoutSrc.scan:
             ble_driver.ble_gap_scan_start()
-
 
     def on_gap_evt_adv_report(self, ble_driver, conn_handle, peer_addr, rssi, adv_type, adv_data):
         dev_name_list = None
@@ -120,37 +110,35 @@ class HRCollector(BLEDriverObserver, BLEAdapterObserver):
         else:
             return
 
-        dev_name        = "".join(chr(e) for e in dev_name_list)
-        address_string  = "".join("{0:02X}".format(b) for b in peer_addr.addr)
+        dev_name = "".join(chr(e) for e in dev_name_list)
+        address_string = "".join("{0:02X}".format(b) for b in peer_addr.addr)
         print('Received advertisment report, address: 0x{}, device_name: {}'.format(address_string,
                                                                                     dev_name))
 
         if (dev_name == TARGET_DEV_NAME):
             self.adapter.connect(peer_addr)
 
-
     def on_notification(self, ble_adapter, conn_handle, uuid, data):
+        if len(data) > 32:
+            data = "({}...)".format(data[0:10])
         print('Connection: {}, {} = {}'.format(conn_handle, uuid, data))
 
+    def on_gap_evt_data_length_update_request(self, ble_driver, conn_handle, data_length_params):
+        ble_driver.ble_gap_data_length_update(conn_handle, None, None)
 
-    def on_att_mtu_exchanged(self, ble_driver, conn_handle, att_mtu):
-        print('ATT MTU exchanged: conn_handle={} att_mtu={}'.format(conn_handle, att_mtu))
+    def on_gatts_evt_exchange_mtu_request(self, ble_driver, conn_handle, client_mtu):
+        ble_driver.ble_gatts_exchange_mtu_reply(conn_handle, 23)
 
-
-    def on_gattc_evt_exchange_mtu_rsp(self, ble_driver, conn_handle, **kwargs):
-        print('ATT MTU exchange response: conn_handle={}'.format(conn_handle))
-    
 
 def main(serial_port):
     print('Serial port used: {}'.format(serial_port))
-    driver    = BLEDriver(serial_port=serial_port, auto_flash=True)
-    adapter   = BLEAdapter(driver)
+    driver = BLEDriver(serial_port=serial_port, auto_flash=False, baud_rate=1000000)
+    adapter = BLEAdapter(driver)
     collector = HRCollector(adapter)
     collector.open()
-    for i in xrange(CONNECTIONS):
-        conn_handle = collector.connect_and_discover()
-
-    time.sleep(30)
+    for i in range(CONNECTIONS):
+        collector.connect_and_discover()
+    time.sleep(10)
     print('Closing')
     collector.close()
 
@@ -167,7 +155,7 @@ def item_choose(item_list):
                 break
         except Exception:
             pass
-        print ('\tTry again...')
+        print('\tTry again...')
     return choice
 
 
@@ -180,9 +168,9 @@ if __name__ == "__main__":
     if len(sys.argv) == 3:
         serial_port = sys.argv[2]
     else:
-        descs       = BLEDriver.enum_serial_ports()
-        choices     = ['{}: {}'.format(d.port, d.serial_number) for d in descs]
-        choice      = item_choose(choices)
+        descs = BLEDriver.enum_serial_ports()
+        choices = ['{}: {}'.format(d.port, d.serial_number) for d in descs]
+        choice = item_choose(choices)
         serial_port = descs[choice].port
     main(serial_port)
     quit()

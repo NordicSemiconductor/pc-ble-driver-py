@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.3)
+cmake_minimum_required(VERSION 3.13)
 
 # Name of the project
 project (pc-ble-driver-py)
@@ -17,6 +17,12 @@ foreach( OUTPUTCONFIG ${CMAKE_CONFIGURATION_TYPES} )
 endforeach( OUTPUTCONFIG CMAKE_CONFIGURATION_TYPES )
 
 # All projects depending on pc-ble-driver need to include this first
+
+# There is no reason to compile more than two SoftDevice API versions
+# The Python module only supports one SoftDevice API
+# version for NRF51 and one for NRF52
+set(SD_API_VER_NUMS "2;5")
+
 include(pc-ble-driver/cmake/pc-ble-driver.cmake)
 add_subdirectory(pc-ble-driver)
 
@@ -27,8 +33,15 @@ include_directories(${PC_BLE_DRIVER_INCLUDE_DIR})
 find_package(SWIG REQUIRED)
 include(${SWIG_USE_FILE})
 
-find_package(PythonLibs 2.7 REQUIRED)
-include_directories(${PYTHON_INCLUDE_PATH})
+if(WIN32)
+    set(Python_FIND_REGISTRY NEVER)
+endif()
+
+find_package(Python COMPONENTS Development REQUIRED)
+
+message(STATUS "Found Python ${Python_VERSION} in directory ${Python_EXECUTABLE}")
+
+include_directories(${Python_INCLUDE_DIRS})
 
 foreach(SD_API_VER ${SD_API_VERS})
     set(PYTHON_MODULE_${SD_API_VER} ${PC_BLE_DRIVER_${SD_API_VER}_PROJECT_NAME})
@@ -37,11 +50,11 @@ endforeach(SD_API_VER)
 set(SWIG_I_FILE ${CMAKE_CURRENT_LIST_DIR}/swig/pc_ble_driver.i.in)
 
 # Use release lib of Python even when building with DEBUG
-add_definitions( -DSWIG_PYTHON_INTERPRETER_NO_DEBUG -DHAVE_ROUND=1)
+add_definitions(-DSWIG_PYTHON_INTERPRETER_NO_DEBUG -DHAVE_ROUND=1)
 
 # Avoid warning on Windows
 if(WIN32)
-    add_definitions( -DHAVE_ROUND )
+    add_definitions(-DHAVE_ROUND)
 endif()
 
 # Copy .i file into N variant files
@@ -66,15 +79,14 @@ foreach(SD_API_VER ${SD_API_VERS})
 
     set(CMAKE_SWIG_FLAGS)
     foreach(it ${PC_BLE_DRIVER_${SD_API_VER}_PUBLIC_INCLUDE_DIRS})
-        #MESSAGE( STATUS "${SD_API_VER} it: " "${it}" )
+      #MESSAGE( STATUS "${SD_API_VER} it: " "${it}" )
       set(CMAKE_SWIG_FLAGS ${CMAKE_SWIG_FLAGS} "-I${it}")
     endforeach()
 
     string(REGEX MATCH "[0-9]+$" _SD_API_VER_NUM "${SD_API_VER}")
     set(SD_API_VER_COMPILER_DEF_NUM "-D${SD_API_VER_COMPILER_DEF}=${_SD_API_VER_NUM}")
     set(CMAKE_SWIG_FLAGS ${CMAKE_SWIG_FLAGS} "${SD_API_VER_COMPILER_DEF_NUM}")
-
-    swig_add_module(${PYTHON_MODULE_${SD_API_VER}} python ${SWIG_I_FILE_${SD_API_VER}})
+    swig_add_library(${PYTHON_MODULE_${SD_API_VER}} LANGUAGE python SOURCES ${SWIG_I_FILE_${SD_API_VER}})
     target_include_directories(${SWIG_MODULE_${PYTHON_MODULE_${SD_API_VER}}_REAL_NAME} PRIVATE ${PC_BLE_DRIVER_${SD_API_VER}_PUBLIC_INCLUDE_DIRS})
 endforeach(SD_API_VER)
 
@@ -96,7 +108,7 @@ endforeach(SD_API_VER)
 # libpc_ble_driver_<variant>_shared.dylib
 
 foreach(SD_API_VER ${SD_API_VERS})
-    swig_link_libraries(${PYTHON_MODULE_${SD_API_VER}} ${PYTHON_LIBRARIES} ${PC_BLE_DRIVER_${SD_API_VER}_SHARED_LIB})
+    swig_link_libraries(${PYTHON_MODULE_${SD_API_VER}} ${Python_LIBRARIES} ${PC_BLE_DRIVER_${SD_API_VER}_SHARED_LIB})
 endforeach(SD_API_VER)
 
 set(PY_PACKAGE_DIR ${CMAKE_CURRENT_LIST_DIR}/python)
@@ -145,9 +157,9 @@ foreach(SD_API_VER ${SD_API_VERS})
     )
 
     # Copy .hex files
+    string(TOLOWER ${SD_API_VER} HEX_DIR)
     add_custom_command(TARGET ${SWIG_MODULE_${PYTHON_MODULE_${SD_API_VER}}_REAL_NAME} POST_BUILD
-        COMMAND ${CMAKE_COMMAND} -E copy_directory ${PC_BLE_DRIVER_HEX_DIR}/${SD_API_VER} ${PY_MODULE_HEX_DIR}/${SD_API_VER}
-    )
+        COMMAND ${CMAKE_COMMAND} -E copy_directory ${PC_BLE_DRIVER_HEX_DIR}/${HEX_DIR} ${PY_MODULE_HEX_DIR}/${HEX_DIR})
 endforeach(SD_API_VER)
 
 # Generate build information file
@@ -192,6 +204,3 @@ foreach(i RANGE ${_COUNT})
         COMMAND ${CMAKE_COMMAND} -E md5sum ${PC_BLE_DRIVER_${SD_API_VER}_SHARED_LIB_FILE} >> ${PY_MODULE_BUILD_INFO_POST_PATH} WORKING_DIRECTORY ${PY_MODULE_SHARED_LIB_DIR}
     )
 endforeach(i)
-
-
-

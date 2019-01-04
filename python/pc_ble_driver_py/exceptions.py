@@ -35,11 +35,16 @@
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
+
 class NordicSemiException(Exception):
     """
     Exception used as based exception for other exceptions defined in this package.
     """
-    pass
+
+    def __init__(self, msg, error_code=None):
+        super(NordicSemiException, self).__init__(msg)
+        self.msg = msg
+        self.error_code = error_code
 
 
 class NotImplementedException(NordicSemiException):
@@ -54,6 +59,7 @@ class InvalidArgumentException(NordicSemiException):
     Exception used when a argument is of wrong type
     """
     pass
+
 
 class MissingArgumentException(NordicSemiException):
     """"
