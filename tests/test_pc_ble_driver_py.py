@@ -36,9 +36,6 @@
 #
 
 
-import time
-import logging
-from queue import Queue
 from pc_ble_driver_py.ble_driver import *
 
 logging.basicConfig()
