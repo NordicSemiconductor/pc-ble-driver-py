@@ -111,7 +111,7 @@ foreach(SD_API_VER ${SD_API_VERS})
     swig_link_libraries(${PYTHON_MODULE_${SD_API_VER}} ${Python_LIBRARIES} ${PC_BLE_DRIVER_${SD_API_VER}_SHARED_LIB})
 endforeach(SD_API_VER)
 
-set(PY_PACKAGE_DIR ${CMAKE_CURRENT_LIST_DIR}/python)
+set(PY_PACKAGE_DIR ${CMAKE_CURRENT_LIST_DIR})
 set(PY_MODULE_DIR ${PY_PACKAGE_DIR}/pc_ble_driver_py)
 set(PY_MODULE_HEX_DIR ${PY_MODULE_DIR}/hex)
 
