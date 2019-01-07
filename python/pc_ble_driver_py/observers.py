@@ -36,14 +36,17 @@
 #
 
 import logging
-logger  = logging.getLogger(__name__)
+
+logger = logging.getLogger(__name__)
+
 
 def gen_conn_params_str(conn_params):
-    conn_params_str  = '\n'
+    conn_params_str = '\n'
     conn_params_str += '  min_conn_interval_ms({})\n'.format(conn_params.min_conn_interval_ms)
     conn_params_str += '  max_conn_interval_ms({})\n'.format(conn_params.max_conn_interval_ms)
     conn_params_str += '  slave_latency({})'.format(conn_params.slave_latency)
     return conn_params_str
+
 
 def get_addr_str(addr):
     return ':'.join('{:02X}'.format(a) for a in addr.addr)
@@ -64,7 +67,11 @@ class BLEDriverObserver(object):
         pass
 
     def on_gap_evt_connected(self, ble_driver, conn_handle, peer_addr, role, conn_params):
-        logger.debug('evt> connected conn({})\n peer_addr({})\n role({})\n conn_params({})'.format(conn_handle, get_addr_str(peer_addr), role, gen_conn_params_str(conn_params)))
+        logger.debug('evt> connected conn({})\n peer_addr({})\n role({})\n conn_params({})'.format(conn_handle,
+                                                                                                   get_addr_str(
+                                                                                                       peer_addr), role,
+                                                                                                   gen_conn_params_str(
+                                                                                                       conn_params)))
 
     def on_gap_evt_disconnected(self, ble_driver, conn_handle, reason):
         logger.debug('evt> disconnected conn({})\n reason({})'.format(conn_handle, reason))
@@ -73,13 +80,20 @@ class BLEDriverObserver(object):
         logger.debug('evt> sec_params_request conn({})\n peer_params({})'.format(conn_handle, peer_params))
 
     def on_gap_evt_sec_info_request(self, ble_driver, conn_handle, peer_addr, master_id, enc_info, id_info, sign_info):
-        logger.debug('evt> sec_info_request conn({})\n peer_addr({})\n master_id({})\n enc_info({})\n id_info({})\n sign_info({})'.format(conn_handle, get_addr_str(peer_addr), master_id, enc_info, id_info, sign_info))
+        logger.debug(
+            'evt> sec_info_request conn({})\n peer_addr({})\n master_id({})\n'
+            ' enc_info({})\n id_info({})\n sign_info({})'.format(
+                conn_handle, get_addr_str(peer_addr), master_id, enc_info, id_info, sign_info))
 
     def on_gap_evt_sec_request(self, ble_driver, conn_handle, bond, mitm, lesc, keypress):
-        logger.debug('evt> sec_request conn({})\n bond({})\n mitm({})\n lesc({})\n keypress({})'.format(conn_handle, bond, mitm, lesc, keypress))
+        logger.debug(
+            'evt> sec_request conn({})\n bond({})\n mitm({})\n lesc({})\n keypress({})'.format(conn_handle, bond, mitm,
+                                                                                               lesc, keypress))
 
     def on_gap_evt_conn_param_update_request(self, ble_driver, conn_handle, conn_params):
-        logger.debug('evt> conn_param_update_request conn({})\n conn_params({})'.format(conn_handle, gen_conn_params_str(conn_params)))
+        logger.debug('evt> conn_param_update_request conn({})\n conn_params({})'.format(conn_handle,
+                                                                                        gen_conn_params_str(
+                                                                                            conn_params)))
 
     def on_gap_evt_conn_param_update(self, ble_driver, conn_handle, conn_params):
         pass
@@ -88,10 +102,17 @@ class BLEDriverObserver(object):
         logger.debug('evt> timeout conn({})\n src({})'.format(conn_handle, src))
 
     def on_gap_evt_adv_report(self, ble_driver, conn_handle, peer_addr, rssi, adv_type, adv_data):
-        logger.debug('evt> adv_report conn({})\n peer_addr({})\n rssi({})\n adv_type({})'.format(conn_handle, get_addr_str(peer_addr), rssi, adv_type))
+        logger.debug('evt> adv_report conn({})\n peer_addr({})\n rssi({})\n adv_type({})'.format(conn_handle,
+                                                                                                 get_addr_str(
+                                                                                                     peer_addr), rssi,
+                                                                                                 adv_type))
 
-    def on_gap_evt_auth_status(self, ble_driver, conn_handle, error_src, bonded, sm1_levels, sm2_levels, kdist_own, kdist_peer, auth_status):
-        logger.debug('evt> auth_status conn({})\n error_src({})\n bonded({})\n sm1_levels({})\n sm2_levels({})\n kdist_own({})\n kdist_peer({})\n auth_status({})'.format(conn_handle, error_src, bonded, sm1_levels, sm2_levels, kdist_own, kdist_peer, auth_status))
+    def on_gap_evt_auth_status(self, ble_driver, conn_handle, error_src, bonded, sm1_levels, sm2_levels, kdist_own,
+                               kdist_peer, auth_status):
+        logger.debug(
+            'evt> auth_status conn({})\n error_src({})\n bonded({})\n sm1_levels({})\n'
+            ' sm2_levels({})\n kdist_own({})\n kdist_peer({})\n auth_status({})'.format(
+                conn_handle, error_src, bonded, sm1_levels, sm2_levels, kdist_own, kdist_peer, auth_status))
 
     def on_gap_evt_auth_key_request(self, ble_driver, conn_handle, key_type):
         logger.debug('evt> auth_key_request conn({})\n key_type({})'.format(conn_handle, key_type))
@@ -102,18 +123,29 @@ class BLEDriverObserver(object):
     def on_evt_tx_complete(self, ble_driver, conn_handle, count):
         logger.debug('evt> tx_complete conn({})\n count({})'.format(conn_handle, count))
 
-    def on_gattc_evt_write_rsp(self, ble_driver, conn_handle, status, error_handle, attr_handle, write_op, offset, data):
-        logger.debug('evt> on_gattc_evt_write_rsp conn({})\n status({})\n error_handle({})\n attr_handle({})\n write_op({})\n offset({})\n data({})'.format(conn_handle, status, error_handle, attr_handle, write_op, offset, data))
+    def on_gattc_evt_write_rsp(self, ble_driver, conn_handle, status, error_handle, attr_handle, write_op, offset,
+                               data):
+        logger.debug(
+            'evt> on_gattc_evt_write_rsp conn({})\n status({})\n error_handle({})\n'
+            ' attr_handle({})\n write_op({})\n offset({})\n data({})'.format(
+                conn_handle, status, error_handle, attr_handle, write_op, offset, data))
 
     def on_gattc_evt_hvx(self, ble_driver, conn_handle, status, error_handle, attr_handle, hvx_type, data):
-        logger.debug('evt> on_gattc_evt_hvx status({}) conn({})\n error_handle({})\n attr_handle({})\n hvx_type({})\n data({})'.format(status, conn_handle, error_handle, attr_handle, hvx_type, data))
+        logger.debug(
+            'evt> on_gattc_evt_hvx status({}) conn({})\n error_handle({})\n attr_handle({})\n'
+            ' hvx_type({})\n data({})'.format(
+                status, conn_handle, error_handle, attr_handle, hvx_type, data))
 
     def on_gattc_evt_read_rsp(self, ble_driver, conn_handle, status, error_handle, attr_handle, offset, data):
-        logger.debug('evt> on_gattc_evt_read_rsp status({}) conn({})\n error_handle({})\n attr_handle({})\n offset({})\n data({})'.format(status, conn_handle, error_handle, attr_handle, offset, data))
+        logger.debug(
+            'evt> on_gattc_evt_read_rsp status({}) conn({})\n error_handle({})\n'
+            ' attr_handle({})\n offset({})\n data({})'.format(
+                status, conn_handle, error_handle, attr_handle, offset, data))
 
     def on_gattc_evt_prim_srvc_disc_rsp(self, ble_driver, conn_handle, status, services):
         services_str = "\n ".join(str(s) for s in services)
-        logger.debug('evt> on_gattc_evt_prim_srvc_disc_rsp status({}) conn({})\n {}'.format(status, conn_handle, services_str))
+        logger.debug(
+            'evt> on_gattc_evt_prim_srvc_disc_rsp status({}) conn({})\n {}'.format(status, conn_handle, services_str))
 
     def on_gattc_evt_char_disc_rsp(self, ble_driver, conn_handle, status, characteristics):
         chars_str = "\n ".join(str(c) for c in characteristics)
@@ -130,13 +162,17 @@ class BLEDriverObserver(object):
         logger.debug('evt> on_gatts_evt_hvc conn({})\n attr_handle({})'.format(conn_handle, attr_handle))
 
     def on_gatts_evt_write(self, ble_driver, conn_handle, attr_handle, uuid, op, auth_required, offset, length, data):
-        logger.debug('evt> on_gatts_evt_write conn({})\n attr_handle({})\n uuid({})\n op({})\n auth_required({})\n offset({})\n length({})\n data({})'.format(conn_handle, attr_handle, uuid, op, auth_required, offset, length, data))
+        logger.debug(
+            'evt> on_gatts_evt_write conn({})\n attr_handle({})\n uuid({})\n'
+            ' op({})\n auth_required({})\n offset({})\n length({})\n data({})'.format(
+                conn_handle, attr_handle, uuid, op, auth_required, offset, length, data))
 
     def on_gatts_evt_exchange_mtu_request(self, ble_driver, conn_handle, client_mtu):
         pass
 
     def on_att_mtu_exchanged(self, ble_driver, conn_handle, att_mtu):
         logger.debug('evt> att_mtu_exchanged conn({})\n att_mtu({})'.format(conn_handle, att_mtu))
+
 
 class BLEAdapterObserver(object):
     def __init__(self, *args, **kwargs):
@@ -148,5 +184,8 @@ class BLEAdapterObserver(object):
     def on_notification(self, ble_adapter, conn_handle, uuid, data):
         pass
 
-    def on_conn_param_update_request(self, ble_adapter, conn_handle, conn_params):
-        logger.debug('evt> conn_param_update_request conn({})\n conn_params({})'.format(conn_handle, gen_conn_params_str(conn_params)))
+    def on_conn_param_update_request(self, _ble_adapter, conn_handle, conn_params):
+        logger.debug('evt> conn_param_update_request conn({})\n conn_params({})'.format(conn_handle,
+                                                                                        gen_conn_params_str(
+                                                                                            conn_params)))
+        pass

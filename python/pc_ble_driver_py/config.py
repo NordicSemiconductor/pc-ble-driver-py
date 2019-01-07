@@ -45,6 +45,7 @@ __conn_ic_id__ = None
 
 import os
 
+
 def sd_api_ver_get():
     if __conn_ic_id__ is None:
         raise RuntimeError('Connectivity IC identifier __conn_ic_id__ is not set')
@@ -56,6 +57,7 @@ def sd_api_ver_get():
     else:
         raise RuntimeError('Invalid connectivity IC identifier: {}.'.format(__conn_ic_id__))
     return _sd_api_v
+
 
 def _get_hex_path(sd_api_type='s132', sd_api_version='5.1.0'):
     return os.path.join(
@@ -69,8 +71,8 @@ def _get_hex_path(sd_api_type='s132', sd_api_version='5.1.0'):
         )
     )
 
+
 def conn_ic_hex_get():
-    import os
     if __conn_ic_id__ is None:
         raise RuntimeError('Connectivity IC identifier __conn_ic_id__ is not set')
 
@@ -87,8 +89,10 @@ def conn_ic_hex_get():
     else:
         raise RuntimeError('Invalid connectivity IC identifier: {}.'.format(__conn_ic_id__))
 
+
 def get_connectivity_hex_version():
     return '4.0.0'
+
 
 def get_connectivity_hex_baud_rate():
     return 1000000

@@ -38,6 +38,7 @@
 import importlib
 
 import pc_ble_driver_py.config as config
+
 nrf_sd_ble_api_ver = config.sd_api_ver_get()
 # Load pc_ble_driver
 SWIG_MODULE_NAME = "pc_ble_driver_sd_api_v{}".format(nrf_sd_ble_api_ver)
@@ -45,7 +46,6 @@ try:
     ble_driver = importlib.import_module(SWIG_MODULE_NAME)
 except Exception:
     print("Error. No ble_driver module found.")
-
 
 UNIT_0_625_MS = 625  # Unit used for scanning and advertising parameters
 UNIT_1_25_MS = 1250  # Unit used for connection interval parameters
@@ -63,11 +63,13 @@ def units_to_msec(units, resolution):
     time_ms = units * float(resolution) / 1000
     return time_ms
 
+
 def char_array_to_list(array_pointer, length):
     """Convert char_array to python list."""
     data_array = ble_driver.char_array.frompointer(array_pointer)
     data_list = _populate_list(data_array, length)
     return data_list
+
 
 def uint8_array_to_list(array_pointer, length):
     """Convert uint8_array to python list."""
@@ -145,17 +147,20 @@ def serial_port_desc_array_to_list(array_pointer, length):
     data_list = _populate_list(data_array, length)
     return data_list
 
+
 def _populate_list(data_array, length):
     data_list = []
     for i in range(0, length):
         data_list.append(data_array[i])
     return data_list
 
+
 def list_to_char_array(data_list):
     """Convert python list to char_array."""
 
     data_array = _populate_array(data_list, ble_driver.char_array)
     return data_array
+
 
 def list_to_uint8_array(data_list):
     """Convert python list to uint8_array."""
@@ -205,11 +210,13 @@ def list_to_handle_value_array(data_list):
     data_array = _populate_array(data_list, ble_driver.ble_gattc_handle_value_array)
     return data_array
 
+
 def list_to_serial_port_desc_array(data_list):
     """Convert python list to sd_rpc_serial_port_desc_array."""
 
     data_array = _populate_array(data_list, ble_driver.sd_rpc_serial_port_desc_array)
     return data_array
+
 
 def _populate_array(data_list, array_type):
     length = len(data_list)

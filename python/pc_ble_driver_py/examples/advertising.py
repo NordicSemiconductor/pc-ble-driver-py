@@ -41,9 +41,11 @@ from pc_ble_driver_py.observers import BLEDriverObserver
 
 
 def init(conn_ic_id):
+    # noinspection PyGlobalUndefined
     global BLEDriver, BLEAdvData, BLEEvtID, BLEEnableParams, config
     from pc_ble_driver_py import config
     config.__conn_ic_id__ = conn_ic_id
+    # noinspection PyUnresolvedReferences
     from pc_ble_driver_py.ble_driver import BLEDriver, BLEAdvData, BLEEvtID, BLEEnableParams
 
 
@@ -72,7 +74,8 @@ def main(serial_port):
 
 
 class TimeoutObserver(BLEDriverObserver):
-    def __init__(self):
+    def __init__(self, *args, **kwargs):
+        super(BLEDriverObserver, self).__init__(*args, **kwargs)
         self.cond = Condition(Lock())
 
     def on_gap_evt_timeout(self, ble_driver, conn_handle, src):

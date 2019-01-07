@@ -45,12 +45,15 @@ CONNECTIONS = 1
 
 
 def init(conn_ic_id):
+    # noinspection PyGlobalUndefined
     global config, BLEDriver, BLEAdvData, BLEEvtID, BLEAdapter,\
         BLEEnableParams, BLEGapTimeoutSrc, BLEUUID, BLEConfigCommon, BLEConfig, BLEConfigConnGatt
     from pc_ble_driver_py import config
     config.__conn_ic_id__ = conn_ic_id
+    # noinspection PyUnresolvedReferences
     from pc_ble_driver_py.ble_driver import BLEDriver, BLEAdvData,\
         BLEEvtID, BLEEnableParams, BLEGapTimeoutSrc, BLEUUID, BLEConfigCommon, BLEConfig, BLEConfigConnGatt
+    # noinspection PyUnresolvedReferences
     from pc_ble_driver_py.ble_adapter import BLEAdapter
     global nrf_sd_ble_api_ver
     nrf_sd_ble_api_ver = config.sd_api_ver_get()
@@ -100,7 +103,6 @@ class HRCollector(BLEDriverObserver, BLEAdapterObserver):
             ble_driver.ble_gap_scan_start()
 
     def on_gap_evt_adv_report(self, ble_driver, conn_handle, peer_addr, rssi, adv_type, adv_data):
-        dev_name_list = None
         if BLEAdvData.Types.complete_local_name in adv_data.records:
             dev_name_list = adv_data.records[BLEAdvData.Types.complete_local_name]
 
@@ -115,7 +117,7 @@ class HRCollector(BLEDriverObserver, BLEAdapterObserver):
         print('Received advertisment report, address: 0x{}, device_name: {}'.format(address_string,
                                                                                     dev_name))
 
-        if (dev_name == TARGET_DEV_NAME):
+        if dev_name == TARGET_DEV_NAME:
             self.adapter.connect(peer_addr)
 
     def on_notification(self, ble_adapter, conn_handle, uuid, data):
@@ -130,9 +132,9 @@ class HRCollector(BLEDriverObserver, BLEAdapterObserver):
         ble_driver.ble_gatts_exchange_mtu_reply(conn_handle, 23)
 
 
-def main(serial_port):
-    print('Serial port used: {}'.format(serial_port))
-    driver = BLEDriver(serial_port=serial_port, auto_flash=False, baud_rate=1000000)
+def main(selected_serial_port):
+    print('Serial port used: {}'.format(selected_serial_port))
+    driver = BLEDriver(serial_port=selected_serial_port, auto_flash=False, baud_rate=1000000)
     adapter = BLEAdapter(driver)
     collector = HRCollector(adapter)
     collector.open()
@@ -151,7 +153,7 @@ def item_choose(item_list):
     while True:
         try:
             choice = int(raw_input('Enter your choice: '))
-            if ((choice >= 0) and (choice < len(item_list))):
+            if (choice >= 0) and (choice < len(item_list)):
                 break
         except Exception:
             pass
