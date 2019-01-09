@@ -49,10 +49,10 @@ from threading import Lock
 
 import wrapt
 from enum import Enum
+from typing import List
 
 from pc_ble_driver_py.observers import *
 
-logging.basicConfig(level=logging.WARNING)
 logger = logging.getLogger(__name__)
 
 NoneType = type(None)
@@ -115,6 +115,7 @@ driver = importlib.import_module(SWIG_MODULE_NAME)
 import pc_ble_driver_py.ble_driver_types as util
 from pc_ble_driver_py.exceptions import NordicSemiException
 
+# TODO: redefine this according to what is supported in SDv2 or SDv5
 ATT_MTU_DEFAULT = 23
 
 
@@ -1028,121 +1029,6 @@ class SerialPortDescriptor(object):
                    product_id=org.productId)
 
 
-# ...................................................................................................
-class Flasher(object):
-    api_lock = Lock()
-
-    @staticmethod
-    def which(program):
-        import os
-
-        def is_exe(fpath):
-            return os.path.isfile(fpath) and os.access(fpath, os.X_OK)
-
-        fpath, fname = os.path.split(program)
-        if fpath:
-            if is_exe(program):
-                return program
-        else:
-            for path in os.environ["PATH"].split(os.pathsep):
-                path = path.strip('"')
-                exe_file = os.path.join(path, program)
-                if is_exe(exe_file):
-                    return exe_file
-
-        return None
-
-    NRFJPROG = 'nrfjprog'
-    FW_STRUCT_ADDRESS = 0x30000
-    FW_STRUCT_LENGTH = 24
-    FW_MAGIC_NUMBER = ['17', 'A5', 'D8', '46']
-
-    def __init__(self, serial_port=None, snr=None):
-        if serial_port is None and snr is None:
-            raise NordicSemiException('Invalid Flasher initialization')
-
-        nrfjprog = Flasher.which(Flasher.NRFJPROG)
-        if nrfjprog is None:
-            nrfjprog = Flasher.which("{}.exe".format(Flasher.NRFJPROG))
-            if nrfjprog is None:
-                raise NordicSemiException('nrfjprog not installed')
-
-        serial_ports = BLEDriver.enum_serial_ports()
-        try:
-            if serial_port is None:
-                serial_port = [d.port for d in serial_ports if d.serial_number == snr][0]
-            elif snr is None:
-                snr = [d.serial_number for d in serial_ports if d.port == serial_port][0]
-        except IndexError:
-            raise NordicSemiException('board not found')
-
-        self.serial_port = serial_port
-        self.snr = snr.lstrip("0")
-        self.family = config.__conn_ic_id__
-
-    def fw_check(self):
-        fw_struct = self.read_fw_struct()
-        return (len(fw_struct) == Flasher.FW_STRUCT_LENGTH and
-                Flasher.is_valid_magic_number(fw_struct) and
-                Flasher.is_valid_version(fw_struct) and
-                Flasher.is_valid_baud_rate(fw_struct))
-
-    def fw_flash(self):
-        self.erase()
-        hex_file = config.conn_ic_hex_get()
-        self.program(hex_file)
-
-    def read_fw_struct(self):
-        args = ['--memrd', str(Flasher.FW_STRUCT_ADDRESS), '--w', '8', '--n', str(Flasher.FW_STRUCT_LENGTH)]
-        data = self.call_cmd(args)
-        result = list()
-        for line in data.splitlines():
-            line = re.sub(r"(^.*:)|(\|.*$)", '', str(line))
-            result.extend(line.split())
-        return result
-
-    def reset(self):
-        args = ['--reset']
-        self.call_cmd(args)
-
-    def erase(self):
-        args = ['--eraseall']
-        self.call_cmd(args)
-
-    def program(self, path):
-        args = ['--program', path]
-        self.call_cmd(args)
-
-    @wrapt.synchronized(api_lock)
-    def call_cmd(self, args):
-        args = [Flasher.NRFJPROG, '--snr', str(self.snr)] + args + ['--family']
-        try:
-            return subprocess.check_output(args + [self.family], stderr=subprocess.STDOUT)
-        except subprocess.CalledProcessError as e:
-            if e.returncode == 18:
-                raise RuntimeError("Invalid Connectivity IC ID: {}".format(self.family))
-            else:
-                raise
-
-    @staticmethod
-    def is_valid_magic_number(fw_struct):
-        magic_number = fw_struct[:4]
-        return magic_number == Flasher.FW_MAGIC_NUMBER
-
-    @staticmethod
-    def is_valid_version(fw_struct):
-        major = int(fw_struct[12], 16)
-        minor = int(fw_struct[13], 16)
-        patch = int(fw_struct[14], 16)
-        version = '.'.join(map(str, [major, minor, patch]))
-        return config.get_connectivity_hex_version() == version
-
-    @staticmethod
-    def is_valid_baud_rate(fw_struct):
-        baud_rate = int(''.join(fw_struct[20:24][::-1]), 16)
-        return config.get_connectivity_hex_baud_rate() == baud_rate
-
-
 class BLEConfigBase(object):
     conn_cfg_tag = 1
 
@@ -1327,13 +1213,40 @@ class BLEGapDataLengthLimitation(object):
                    tx_rx_time_limited_us=data_length_limitation.tx_rx_time_limited_us)
 
 
+class RpcAppStatus(Enum):
+    pktSendMaxRetriesReached = driver.PKT_SEND_MAX_RETRIES_REACHED
+    pktUnexpected = driver.PKT_UNEXPECTED
+    pktEncodeError = driver.PKT_ENCODE_ERROR
+    pktDecodeError = driver.PKT_DECODE_ERROR
+    pktSendError = driver.PKT_SEND_ERROR
+    ioResourcesUnavailable = driver.IO_RESOURCES_UNAVAILABLE
+    resetPerformed = driver.RESET_PERFORMED
+    connectionActive = driver.CONNECTION_ACTIVE
+
+
+class RpcLogSeverity(Enum):
+    trace = driver.SD_RPC_LOG_TRACE
+    debug = driver.SD_RPC_LOG_DEBUG
+    info = driver.SD_RPC_LOG_INFO
+    warning = driver.SD_RPC_LOG_WARNING
+    error = driver.SD_RPC_LOG_ERROR
+    fatal = driver.SD_RPC_LOG_FATAL
+
+
 class BLEDriver(object):
     observer_lock = Lock()
     api_lock = Lock()
 
-    def __init__(self, serial_port, baud_rate=115200, auto_flash=False):
+    def __init__(self,
+                 serial_port,  # type: str
+                 baud_rate=1000000,  # type: int
+                 auto_flash=False,  # type: bool
+                 retransmission_interval=300,  # type: int
+                 response_timeout=1500,  # type: int
+                 log_severity_level=RpcLogSeverity.trace  # type: RpcLogSeverity
+                 ):
         super(BLEDriver, self).__init__()
-        self.observers = list()
+        self.observers = list()  # type: List[BLEDriverObserver]
         if auto_flash:
             try:
                 flasher = Flasher(serial_port=serial_port)
@@ -1352,10 +1265,17 @@ class BLEDriver(object):
                                                              baud_rate,
                                                              driver.SD_RPC_FLOW_CONTROL_NONE,
                                                              driver.SD_RPC_PARITY_NONE)
-        link_layer = driver.sd_rpc_data_link_layer_create_bt_three_wire(phy_layer, 100)
-        transport_layer = driver.sd_rpc_transport_layer_create(link_layer, 100)
+        link_layer = driver.sd_rpc_data_link_layer_create_bt_three_wire(phy_layer, retransmission_interval)
+        transport_layer = driver.sd_rpc_transport_layer_create(link_layer, response_timeout)
         self.rpc_adapter = driver.sd_rpc_adapter_create(transport_layer)
+        self.rpc_log_severity_filter(log_severity_level)
         self._keyset = None
+
+    @NordicSemiErrorCheck
+    @wrapt.synchronized(api_lock)
+    def rpc_log_severity_filter(self, severity):
+        # type: (RpcLogSeverity) -> ()
+        return driver.sd_rpc_log_handler_severity_filter_set(self.rpc_adapter, severity.value)
 
     @NordicSemiErrorCheck
     @wrapt.synchronized(api_lock)
@@ -1736,13 +1656,31 @@ class BLEDriver(object):
                                        conn_handle,
                                        hvx_params)
 
+    @wrapt.synchronized(observer_lock)
     def status_handler(self, adapter, status_code, status_message):
-        # print(status_message)
-        pass
+        statusEnum = RpcAppStatus(status_code)
 
+        for obs in self.observers:
+            obs.on_rpc_status(adapter, statusEnum, status_message)
+
+    @wrapt.synchronized(observer_lock)
     def log_message_handler(self, adapter, severity, log_message):
-        # print(log_message)
-        pass
+        severityEnum = RpcLogSeverity(severity)
+        logLevel = None  # type: int
+
+        if severityEnum in (RpcLogSeverity.trace, RpcLogSeverity.debug):
+            logLevel = logging.DEBUG
+        elif severityEnum == RpcLogSeverity.info:
+            logLevel = logging.INFO
+        elif severityEnum == RpcLogSeverity.warning:
+            logLevel = logging.WARNING
+        elif severityEnum == RpcLogSeverity.error:
+            logLevel = logging.ERROR
+        elif severityEnum == RpcLogSeverity.fatal:
+            logLevel = logging.FATAL
+
+        for obs in self.observers:
+            obs.on_rpc_log_entry(adapter, logLevel, log_message)
 
     def ble_evt_handler(self, adapter, ble_event):
         self.sync_ble_evt_handler(adapter, ble_event)
@@ -2042,3 +1980,118 @@ class BLEDriver(object):
             for line in traceback.extract_tb(sys.exc_info()[2]):
                 logger.error(line)
             logger.error("")
+
+
+# ...................................................................................................
+class Flasher(object):
+    api_lock = Lock()
+
+    @staticmethod
+    def which(program):
+        import os
+
+        def is_exe(fpath):
+            return os.path.isfile(fpath) and os.access(fpath, os.X_OK)
+
+        fpath, fname = os.path.split(program)
+        if fpath:
+            if is_exe(program):
+                return program
+        else:
+            for path in os.environ["PATH"].split(os.pathsep):
+                path = path.strip('"')
+                exe_file = os.path.join(path, program)
+                if is_exe(exe_file):
+                    return exe_file
+
+        return None
+
+    NRFJPROG = 'nrfjprog'
+    FW_STRUCT_ADDRESS = 0x30000
+    FW_STRUCT_LENGTH = 24
+    FW_MAGIC_NUMBER = ['17', 'A5', 'D8', '46']
+
+    def __init__(self, serial_port=None, snr=None):
+        if serial_port is None and snr is None:
+            raise NordicSemiException('Invalid Flasher initialization')
+
+        nrfjprog = Flasher.which(Flasher.NRFJPROG)
+        if nrfjprog is None:
+            nrfjprog = Flasher.which("{}.exe".format(Flasher.NRFJPROG))
+            if nrfjprog is None:
+                raise NordicSemiException('nrfjprog not installed')
+
+        serial_ports = BLEDriver.enum_serial_ports()
+        try:
+            if serial_port is None:
+                serial_port = [d.port for d in serial_ports if d.serial_number == snr][0]
+            elif snr is None:
+                snr = [d.serial_number for d in serial_ports if d.port == serial_port][0]
+        except IndexError:
+            raise NordicSemiException('board not found')
+
+        self.serial_port = serial_port
+        self.snr = snr.lstrip("0")
+        self.family = config.__conn_ic_id__
+
+    def fw_check(self):
+        fw_struct = self.read_fw_struct()
+        return (len(fw_struct) == Flasher.FW_STRUCT_LENGTH and
+                Flasher.is_valid_magic_number(fw_struct) and
+                Flasher.is_valid_version(fw_struct) and
+                Flasher.is_valid_baud_rate(fw_struct))
+
+    def fw_flash(self):
+        self.erase()
+        hex_file = config.conn_ic_hex_get()
+        self.program(hex_file)
+
+    def read_fw_struct(self):
+        args = ['--memrd', str(Flasher.FW_STRUCT_ADDRESS), '--w', '8', '--n', str(Flasher.FW_STRUCT_LENGTH)]
+        data = self.call_cmd(args)
+        result = list()
+        for line in data.splitlines():
+            line = re.sub(r"(^.*:)|(\|.*$)", '', str(line))
+            result.extend(line.split())
+        return result
+
+    def reset(self):
+        args = ['--reset']
+        self.call_cmd(args)
+
+    def erase(self):
+        args = ['--eraseall']
+        self.call_cmd(args)
+
+    def program(self, path):
+        args = ['--program', path]
+        self.call_cmd(args)
+
+    @wrapt.synchronized(api_lock)
+    def call_cmd(self, args):
+        args = [Flasher.NRFJPROG, '--snr', str(self.snr)] + args + ['--family']
+        try:
+            return subprocess.check_output(args + [self.family], stderr=subprocess.STDOUT)
+        except subprocess.CalledProcessError as e:
+            if e.returncode == 18:
+                raise RuntimeError("Invalid Connectivity IC ID: {}".format(self.family))
+            else:
+                raise
+
+    @staticmethod
+    def is_valid_magic_number(fw_struct):
+        magic_number = fw_struct[:4]
+        return magic_number == Flasher.FW_MAGIC_NUMBER
+
+    @staticmethod
+    def is_valid_version(fw_struct):
+        major = int(fw_struct[12], 16)
+        minor = int(fw_struct[13], 16)
+        patch = int(fw_struct[14], 16)
+        version = '.'.join(map(str, [major, minor, patch]))
+        return config.get_connectivity_hex_version() == version
+
+    @staticmethod
+    def is_valid_baud_rate(fw_struct):
+        baud_rate = int(''.join(fw_struct[20:24][::-1]), 16)
+        return config.get_connectivity_hex_baud_rate() == baud_rate

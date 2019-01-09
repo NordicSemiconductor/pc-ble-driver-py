@@ -35,15 +35,19 @@
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
+"""
+This module implements convenience methods on top of ble_driver
+"""
+
 from threading import Condition
 
 from pc_ble_driver_py.ble_driver import *
 from pc_ble_driver_py.exceptions import NordicSemiException
 from pc_ble_driver_py.observers import *
 
-logging.basicConfig()
+import logging
+
 logger = logging.getLogger(__name__)
-logger.setLevel(logging.INFO)
 
 MAX_TRIES = 10  # Maximum Number of Tries by driver.ble_gattc_write
 
@@ -554,6 +558,12 @@ class BLEAdapter(BLEDriverObserver):
 
     def on_gattc_evt_exchange_mtu_rsp(self, _ble_driver, conn_handle, **kwargs):
         self.evt_sync[conn_handle].notify(evt=BLEEvtID.gattc_evt_exchange_mtu_rsp, data=kwargs)
+
+    def on_rpc_log_entry(self, ble_driver, severity, message):
+        logger.log(severity, message)
+
+    def on_rpc_status(self, ble_driver, code, message):
+        logger.debug('{}: {}'.format(code, message))
 
     @wrapt.synchronized(observer_lock)
     def on_gap_evt_conn_param_update_request(self, ble_driver, conn_handle, conn_params):

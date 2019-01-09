@@ -173,8 +173,17 @@ class BLEDriverObserver(object):
     def on_att_mtu_exchanged(self, ble_driver, conn_handle, att_mtu):
         logger.debug('evt> att_mtu_exchanged conn({})\n att_mtu({})'.format(conn_handle, att_mtu))
 
+    def on_rpc_status(self, ble_driver, code, message):
+        logger.debug('evt> status code({}) message({})'.format(code, message))
+
+    def on_rpc_log_entry(self, ble_driver, severity, message):
+        logger.debug('evt> severity({}) message({})'.format(severity, message))
+
 
 class BLEAdapterObserver(object):
+    """
+    Observer used by BLEAdapter
+    """
     def __init__(self, *args, **kwargs):
         super(BLEAdapterObserver, self).__init__()
 
@@ -188,4 +197,4 @@ class BLEAdapterObserver(object):
         logger.debug('evt> conn_param_update_request conn({})\n conn_params({})'.format(conn_handle,
                                                                                         gen_conn_params_str(
                                                                                             conn_params)))
-        pass
+
