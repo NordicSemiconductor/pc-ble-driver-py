@@ -8,6 +8,7 @@
 
 import sys
 import argparse
+import logging
 
 from typing import List
 
@@ -19,17 +20,21 @@ class Settings(object):
     """
     settings = None  # type: Settings
 
-    def __init__(self, serial_ports, number_of_iterations, driver_log_level, baud_rate, retransmission_interval,
+    def __init__(self, serial_ports, number_of_iterations,
+                 log_level, driver_log_level,
+                 baud_rate, retransmission_interval,
                  response_timeout, mtu, nrf_family):
-        # type: (List[str], int, str, int, int, int, int) -> Settings
+        # type: (List[str], int, str, str, int, int, int, int, str) -> Settings
         self.serial_ports = serial_ports  # type: List[str]
         self.number_of_iterations = number_of_iterations  # type: int
+        self.log_level = getattr(logging, log_level.upper(), None)  # type: int
         self.driver_log_level = driver_log_level  # type: str
         self.baud_rate = baud_rate  # type: int
         self.retransmission_interval = retransmission_interval  # type: int
         self.response_timeout = response_timeout  # type: int
         self.mtu = mtu  # type: int
         self.nrf_family = nrf_family  # type: str
+
 
     @classmethod
     def current(cls):
@@ -51,7 +56,8 @@ class Settings(object):
             '--retransmission-interval',
             '--mtu',
             '--iterations',
-            '--log-level'
+            '--log-level',
+            '--driver-log-level',
             '--nrf-family'
         ]
 
@@ -72,10 +78,13 @@ class Settings(object):
     def parse_args(cls):
         # type: () -> Settings
         parser = argparse.ArgumentParser()
-        parser.add_argument('--port-a', required=True, help='serial port A, usually BLE central')
-        parser.add_argument('--port-b', required=True, help='serial port B, usually BLE peripheral')
+        parser.add_argument('--port-a', required=True,
+                            help='serial port A, usually BLE central')
+        parser.add_argument('--port-b', required=True,
+                            help='serial port B, usually BLE peripheral')
         parser.add_argument('--baud-rate', help='baud rate', default=1000000)
-        parser.add_argument('--response-timeout', type=int, help='transport response timeout', default=1500)
+        parser.add_argument('--response-timeout', type=int,
+                            help='transport response timeout', default=1500)
         parser.add_argument('--retransmission-interval',
                             type=int,
                             default=300,
@@ -88,12 +97,20 @@ class Settings(object):
         parser.add_argument('--iterations',
                             type=int,
                             default=10,
-                            help='number of iterations (for tests supporting that')
+                            help='number of iterations (for tests supporting that)')
         parser.add_argument('--log-level',
-                            help='pc-ble-driver log level (trace|debug|info|warning|error|fatal)',
+                            help='logging log level',
+                            choices=['debug', 'info',
+                                     'warning', 'error', 'critical'],
+                            default='info')
+        parser.add_argument('--driver-log-level',
+                            help='pc-ble-driver log level',
+                            choices=['trace', 'debug', 'info',
+                                     'warning', 'error', 'fatal'],
                             default='info')
         parser.add_argument('--nrf-family',
-                            help='nRF family decides version of SoftDevice to use (NRF51|NRF52)',
+                            help='nRF family decides version of SoftDevice to use',
+                            choices=['NRF51', 'NRF52'],
                             default='NRF52'
                             )
 
@@ -103,6 +120,7 @@ class Settings(object):
             [args.port_a, args.port_b],
             args.iterations,
             args.log_level,
+            args.driver_log_level,
             args.baud_rate,
             args.retransmission_interval,
             args.response_timeout,
@@ -112,14 +130,16 @@ class Settings(object):
 
         return cls.settings
 
-
 from pc_ble_driver_py import config
-
 config.__conn_ic_id__ = Settings.current().nrf_family
 
-from pc_ble_driver_py.ble_driver import BLEDriver, BLEAdvData, \
-    BLEEvtID, BLEEnableParams, BLEGapTimeoutSrc, BLEUUID, BLEConfigCommon, BLEConfig, BLEConfigConnGatt
 from pc_ble_driver_py.ble_adapter import BLEAdapter
+
+from pc_ble_driver_py.ble_driver import \
+    BLEDriver, BLEAdvData,\
+    RpcLogSeverity, RpcAppStatus,\
+    BLEEvtID, BLEEnableParams,\
+    BLEGapTimeoutSrc, BLEUUID, BLEConfigCommon, BLEConfig, BLEConfigConnGatt
 
 
 __all__ = [

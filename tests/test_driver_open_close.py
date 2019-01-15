@@ -1,5 +1,6 @@
 import unittest
 from driver_setup import *
+import logging
 
 
 class DriverOpenClose(unittest.TestCase):
@@ -13,7 +14,8 @@ class DriverOpenClose(unittest.TestCase):
             auto_flash=False,
             baud_rate=settings.baud_rate,
             retransmission_interval=settings.retransmission_interval,
-            response_timeout=settings.response_timeout
+            response_timeout=settings.response_timeout,
+            log_severity_level=settings.driver_log_level
         )
         adapter = BLEAdapter(driver)
 
@@ -40,4 +42,5 @@ def test_suite():
 
 
 if __name__ == '__main__':
+    logging.basicConfig(level=Settings.current().log_level)
     unittest.main(argv=Settings.clean_args())

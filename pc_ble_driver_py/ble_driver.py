@@ -1243,7 +1243,7 @@ class BLEDriver(object):
                  auto_flash=False,  # type: bool
                  retransmission_interval=300,  # type: int
                  response_timeout=1500,  # type: int
-                 log_severity_level=RpcLogSeverity.trace  # type: RpcLogSeverity
+                 log_severity_level='info'  # type: str
                  ):
         super(BLEDriver, self).__init__()
         self.observers = list()  # type: List[BLEDriverObserver]
@@ -1268,7 +1268,8 @@ class BLEDriver(object):
         link_layer = driver.sd_rpc_data_link_layer_create_bt_three_wire(phy_layer, retransmission_interval)
         transport_layer = driver.sd_rpc_transport_layer_create(link_layer, response_timeout)
         self.rpc_adapter = driver.sd_rpc_adapter_create(transport_layer)
-        self.rpc_log_severity_filter(log_severity_level)
+        log_severity_level_enum = getattr(RpcLogSeverity, log_severity_level.lower(), RpcLogSeverity.info)
+        self.rpc_log_severity_filter(log_severity_level_enum)
         self._keyset = None
 
     @NordicSemiErrorCheck
