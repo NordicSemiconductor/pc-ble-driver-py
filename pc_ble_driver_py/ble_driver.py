@@ -1656,15 +1656,29 @@ class BLEDriver(object):
                                        conn_handle,
                                        hvx_params)
 
-    @wrapt.synchronized(observer_lock)
+    # IMPORTANT: Python annotations on callbacks make the reference count
+    # IMPORTANT: for the object become zero in the binding. This makes the
+    # IMPORTANT: interpreter crash since it tries to garbage collect
+    # IMPORTANT: the object from the binding.
     def status_handler(self, adapter, status_code, status_message):
+        self.status_handler_sync(adapter, status_code, status_message)
+
+    @wrapt.synchronized(observer_lock)
+    def status_handler_sync(self, adapter, status_code, status_message):
         statusEnum = RpcAppStatus(status_code)
 
         for obs in self.observers:
             obs.on_rpc_status(adapter, statusEnum, status_message)
 
-    @wrapt.synchronized(observer_lock)
+    # IMPORTANT: Python annotations on callbacks make the reference count
+    # IMPORTANT: for the object become zero in the binding. This makes the
+    # IMPORTANT: interpreter crash since it tries to garbage collect
+    # IMPORTANT: the object from the binding.
     def log_message_handler(self, adapter, severity, log_message):
+        self.log_message_handler_sync(adapter, severity, log_message)
+
+    @wrapt.synchronized(observer_lock)
+    def log_message_handler_sync(self, adapter, severity, log_message):
         severityEnum = RpcLogSeverity(severity)
         logLevel = None  # type: int
 
@@ -1682,6 +1696,10 @@ class BLEDriver(object):
         for obs in self.observers:
             obs.on_rpc_log_entry(adapter, logLevel, log_message)
 
+    # IMPORTANT: Python annotations on callbacks make the reference count
+    # IMPORTANT: for the object become zero in the binding. This makes the
+    # IMPORTANT: interpreter crash since it tries to garbage collect
+    # IMPORTANT: the object from the binding.
     def ble_evt_handler(self, adapter, ble_event):
         self.sync_ble_evt_handler(adapter, ble_event)
 
