@@ -36,7 +36,8 @@
 #
 import sys
 
-from setuptools import setup, find_packages
+from skbuild import setup
+from setuptools import find_packages
 
 import pc_ble_driver_py
 

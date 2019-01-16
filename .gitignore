@@ -11,3 +11,5 @@ dist/**
 *.egg-info/**
 .idea
 .vs
+.tox
+_skbuild
