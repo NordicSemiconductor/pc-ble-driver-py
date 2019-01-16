@@ -174,7 +174,9 @@ static void PythonEvtCallBack(adapter_t *adapter, ble_evt_t *ble_event)
     ble_evt_obj = SWIG_NewPointerObj(SWIG_as_voidptr(copied_ble_event), SWIGTYPE_p_ble_evt_t, SWIG_POINTER_OWN);
     arglist = Py_BuildValue("(OO)", adapter_obj, ble_evt_obj);
 
-    PyEval_CallObject(func, arglist);
+    PyObject *result;
+    result = PyEval_CallObject(func, arglist);
+    Py_XDECREF(result);
 
     Py_XDECREF(adapter_obj);
     Py_XDECREF(ble_evt_obj);
@@ -192,7 +194,6 @@ static void PythonStatusCallBack(adapter_t *adapter, sd_rpc_app_status_t status_
 {
     PyObject *func;
     PyObject *arglist;
-    PyObject *result;
     PyObject *adapter_obj;
     PyObject *status_code_obj;
     PyObject *status_message_obj;
@@ -223,13 +224,14 @@ static void PythonStatusCallBack(adapter_t *adapter, sd_rpc_app_status_t status_
     status_message_obj = SWIG_Python_str_FromChar((const char *)status_message);
     arglist = Py_BuildValue("(OOO)", adapter_obj, status_code_obj, status_message_obj);
 
+    PyObject *result;
     result = PyEval_CallObject(func, arglist);
+    Py_XDECREF(result);
 
     Py_XDECREF(adapter_obj);
     Py_XDECREF(status_code_obj);
     Py_XDECREF(status_message_obj);
     Py_DECREF(arglist);
-    Py_XDECREF(result);
 
     PyGILState_Release(gstate);
 }
@@ -243,7 +245,6 @@ static void PythonLogCallBack(adapter_t *adapter, sd_rpc_log_severity_t severity
 {
     PyObject *func;
     PyObject *arglist;
-    PyObject *result;
     PyObject *adapter_obj;
     PyObject *severity_obj;
     PyObject *message_obj;
@@ -274,13 +275,14 @@ static void PythonLogCallBack(adapter_t *adapter, sd_rpc_log_severity_t severity
     message_obj = SWIG_Python_str_FromChar((const char *)log_message);
     arglist = Py_BuildValue("(OOO)", adapter_obj, severity_obj, message_obj);
 
+    PyObject *result;
     result = PyEval_CallObject(func, arglist);
+    Py_XDECREF(result);
 
     Py_XDECREF(adapter_obj);
     Py_XDECREF(message_obj);
     Py_XDECREF(severity_obj);
     Py_DECREF(arglist);
-    Py_XDECREF(result);
 
     PyGILState_Release(gstate);
 }
@@ -296,7 +298,7 @@ PyObject* sd_rpc_open_py(PyObject *adapter, PyObject *py_status_handler, PyObjec
     void *argp1 = 0 ;
     int res1 = 0 ;
     uint32_t result;
- 
+
     res1 = SWIG_ConvertPtr(adapter, &argp1,SWIGTYPE_p_adapter_t, 0 |  0 );
     if (!SWIG_IsOK(res1)) {
       SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "sd_rpc_open" "', argument " "1"" of type '" "adapter_t *""'"); 
@@ -304,8 +306,8 @@ PyObject* sd_rpc_open_py(PyObject *adapter, PyObject *py_status_handler, PyObjec
 
     arg1 = (adapter_t * ) (argp1);
 
-//    Py_XDECREF(my_pystatuscallback);  /* Remove any existing callback object */
-    Py_XDECREF(my_pyevtcallback);  /* Remove any existing callback object */
+    Py_XDECREF(my_pystatuscallback); /* Remove any existing callback object */
+    Py_XDECREF(my_pyevtcallback); /* Remove any existing callback object */
     Py_XDECREF(my_pylogcallback); /* Remove any existing callback object */
     Py_XINCREF(py_status_handler);
     Py_XINCREF(py_evt_handler);
