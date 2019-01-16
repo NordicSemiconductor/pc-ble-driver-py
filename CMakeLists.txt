@@ -33,16 +33,10 @@ include_directories(${PC_BLE_DRIVER_INCLUDE_DIR})
 find_package(SWIG REQUIRED)
 include(${SWIG_USE_FILE})
 
-if(WIN32)
-    set(Python_FIND_REGISTRY NEVER)
-endif()
+message(STATUS "Found Python ${PYTHON_VERSION_STRING} in directory ${PYTHON_EXECUTABLE}")
+message(STATUS "Linking towards Python library ${PYTHON_LIBRARY}")
 
-find_package(Python COMPONENTS Development REQUIRED)
-
-message(STATUS "Found Python ${Python_VERSION} in directory ${Python_EXECUTABLE}")
-message(STATUS "Linking towards Python library ${Python_LIBRARIES}")
-
-include_directories(${Python_INCLUDE_DIRS})
+include_directories(${PYTHON_INCLUDE_DIR})
 
 foreach(SD_API_VER ${SD_API_VERS})
     set(PYTHON_MODULE_${SD_API_VER} ${PC_BLE_DRIVER_${SD_API_VER}_PROJECT_NAME})
@@ -114,7 +108,7 @@ endforeach(SD_API_VER)
 # libpc_ble_driver_<variant>_shared.dylib
 
 foreach(SD_API_VER ${SD_API_VERS})
-    target_link_libraries(${SWIG_MODULE_${PYTHON_MODULE_${SD_API_VER}}_REAL_NAME} PRIVATE ${PC_BLE_DRIVER_${SD_API_VER}_SHARED_LIB} ${Python_LIBRARIES})
+    target_link_libraries(${SWIG_MODULE_${PYTHON_MODULE_${SD_API_VER}}_REAL_NAME} PRIVATE ${PC_BLE_DRIVER_${SD_API_VER}_SHARED_LIB} ${PYTHON_LIBRARY})
 endforeach(SD_API_VER)
 
 set(PY_PACKAGE_DIR ${CMAKE_CURRENT_LIST_DIR})
