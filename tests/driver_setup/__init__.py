@@ -69,7 +69,7 @@ class Settings(object):
                 # Remove argument and argument value
                 del retval[idx]
                 del retval[idx]
-            except ValueError, _:
+            except ValueError as _:
                 pass
 
         return retval
@@ -137,7 +137,6 @@ from pc_ble_driver_py.ble_adapter import BLEAdapter
 
 from pc_ble_driver_py.ble_driver import \
     BLEDriver, BLEAdvData,\
-    RpcLogSeverity, RpcAppStatus,\
     BLEEvtID, BLEEnableParams,\
     BLEGapTimeoutSrc, BLEUUID, BLEConfigCommon, BLEConfig, BLEConfigConnGatt
 
