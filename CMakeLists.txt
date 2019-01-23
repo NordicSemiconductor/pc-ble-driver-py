@@ -23,15 +23,12 @@ endforeach( OUTPUTCONFIG CMAKE_CONFIGURATION_TYPES)
 # version for NRF51 and one for NRF52
 set(SD_API_VER_NUMS "2;5")
 
-include(pc-ble-driver/cmake/pc-ble-driver.cmake)
-add_subdirectory(pc-ble-driver)
-
-# Include folders
-include_directories(${PC_BLE_DRIVER_INCLUDE_DIR})
-
 # SWIG
 find_package(SWIG REQUIRED)
 include(${SWIG_USE_FILE})
+
+# nrf-ble-driver
+find_package(nrf-ble-driver CONFIG REQUIRED)
 
 message(STATUS "Found Python ${PYTHON_VERSION_STRING} in directory ${PYTHON_EXECUTABLE}")
 message(STATUS "Linking towards Python library ${PYTHON_LIBRARY}")
@@ -87,7 +84,7 @@ foreach(SD_API_VER ${SD_API_VERS})
         LANGUAGE python
         SOURCES ${SWIG_I_FILE_${SD_API_VER}}
     )
-    target_include_directories(${SWIG_MODULE_${PYTHON_MODULE_${SD_API_VER}}_REAL_NAME} PRIVATE ${PC_BLE_DRIVER_${SD_API_VER}_PUBLIC_INCLUDE_DIRS})
+    #target_include_directories(${SWIG_MODULE_${PYTHON_MODULE_${SD_API_VER}}_REAL_NAME} PRIVATE ${PC_BLE_DRIVER_${SD_API_VER}_PUBLIC_INCLUDE_DIRS})
 endforeach(SD_API_VER)
 
 # These are the files required for the pc_ble_driver Python module:
@@ -108,7 +105,7 @@ endforeach(SD_API_VER)
 # libpc_ble_driver_<variant>_shared.dylib
 
 foreach(SD_API_VER ${SD_API_VERS})
-    target_link_libraries(${SWIG_MODULE_${PYTHON_MODULE_${SD_API_VER}}_REAL_NAME} PRIVATE ${PC_BLE_DRIVER_${SD_API_VER}_SHARED_LIB} ${PYTHON_LIBRARY})
+    target_link_libraries(${SWIG_MODULE_${PYTHON_MODULE_${SD_API_VER}}_REAL_NAME} PRIVATE nrf::nrf_ble_driver_${SD_API_VERS}_shared ${PYTHON_LIBRARY})
 endforeach(SD_API_VER)
 
 set(PY_PACKAGE_DIR ${CMAKE_CURRENT_LIST_DIR})
@@ -131,7 +128,6 @@ set(PY_MODULE_BUILD_INFO_PRE_PATH ${PC_BLE_DRIVER_PY_OUTDIR}/${PY_MODULE_BUILD_I
 set(PY_MODULE_BUILD_INFO_POST_PATH ${PY_MODULE_SHARED_LIB_DIR}/${PY_MODULE_BUILD_INFO})
 
 foreach(SD_API_VER ${SD_API_VERS})
-
     set(SWIG_WRAPPER_${SD_API_VER}_PY_FILE ${PYTHON_MODULE_${SD_API_VER}}.py)
     set(SWIG_WRAPPER_${SD_API_VER}_PY_PATH ${PC_BLE_DRIVER_PY_OUTDIR}/${SWIG_WRAPPER_${SD_API_VER}_PY_FILE})
 
@@ -164,43 +160,15 @@ endforeach(SD_API_VER)
 
 # Generate build information file
 set(BUILD_INFO "Build information:\n")
-
-build_metadata(${CMAKE_CURRENT_LIST_DIR} BUILD_MD_STRING)
 string(CONCAT BUILD_INFO ${BUILD_INFO} ${BUILD_MD_STRING} ) 
 string(CONCAT BUILD_INFO ${BUILD_INFO} "* SWIG version: " ${SWIG_VERSION} "\n") 
-string(CONCAT BUILD_INFO ${BUILD_INFO} "* Pyhon version: " ${PYTHONLIBS_VERSION_STRING} "\n") 
-string(CONCAT BUILD_INFO ${BUILD_INFO} "* Pyhon libs: " ${PYTHON_LIBRARIES} "\n") 
-git_repo_metadata(${CMAKE_CURRENT_LIST_DIR} PY_GIT_COMMIT PY_GIT_BRANCH PY_GIT_REMOTES)
+string(CONCAT BUILD_INFO ${BUILD_INFO} "* Pyhon version: " ${PYTHON_VERSION_STRING} "\n") 
+string(CONCAT BUILD_INFO ${BUILD_INFO} "* Pyhon libs: " ${PYTHON_LIBRARY} "\n") 
 string(CONCAT BUILD_INFO ${BUILD_INFO} "* Git repo: " ${PROJECT_NAME} "\n") 
 string(CONCAT BUILD_INFO ${BUILD_INFO} "** Git revision: " ${PY_GIT_COMMIT} "\n") 
 string(CONCAT BUILD_INFO ${BUILD_INFO} "** Git branch: " ${PY_GIT_BRANCH} "\n") 
-git_repo_metadata(${PC_BLE_DRIVER_ROOT_DIR} DRIVER_GIT_COMMIT DRIVER_GIT_BRANCH DRIVER_GIT_REMOTES)
 string(CONCAT BUILD_INFO ${BUILD_INFO} "* Git repo: " "pc-ble-driver" "\n") 
 string(CONCAT BUILD_INFO ${BUILD_INFO} "** Git revision: " ${DRIVER_GIT_COMMIT} "\n") 
 string(CONCAT BUILD_INFO ${BUILD_INFO} "** Git branch: " ${DRIVER_GIT_BRANCH} "\n") 
 
 file(WRITE ${PY_MODULE_BUILD_INFO_PRE_PATH} ${BUILD_INFO})
-
-# iterate to count-1
-math(EXPR _COUNT "${SD_API_VER_COUNT} - 1")
-# Post-build build info
-foreach(i RANGE ${_COUNT})
-    list(GET SD_API_VERS ${i} SD_API_VER)
-
-    # copy the build info only once, on the first iteration
-    if(${i} EQUAL 0)
-        add_custom_command(TARGET ${SWIG_MODULE_${PYTHON_MODULE_${SD_API_VER}}_REAL_NAME} POST_BUILD
-            COMMAND ${CMAKE_COMMAND} -E copy ${PY_MODULE_BUILD_INFO_PRE_PATH} ${PY_MODULE_BUILD_INFO_POST_PATH}
-            COMMAND ${CMAKE_COMMAND} -E echo "* MD5 sums: " >> ${PY_MODULE_BUILD_INFO_POST_PATH}
-        )
-    endif()
-
-    add_custom_command(TARGET ${SWIG_MODULE_${PYTHON_MODULE_${SD_API_VER}}_REAL_NAME} POST_BUILD
-        COMMAND ${CMAKE_COMMAND} -E echo_append "** " >> ${PY_MODULE_BUILD_INFO_POST_PATH}
-        COMMAND ${CMAKE_COMMAND} -E md5sum ${SWIG_WRAPPER_${SD_API_VER}_PY_FILE} >> ${PY_MODULE_BUILD_INFO_POST_PATH} WORKING_DIRECTORY ${PY_MODULE_SHARED_LIB_DIR}
-        COMMAND ${CMAKE_COMMAND} -E echo_append "** " >> ${PY_MODULE_BUILD_INFO_POST_PATH}
-        COMMAND ${CMAKE_COMMAND} -E md5sum ${SWIG_WRAPPER_${SD_API_VER}_SHARED_LIB_FILE} >> ${PY_MODULE_BUILD_INFO_POST_PATH} WORKING_DIRECTORY ${PY_MODULE_SHARED_LIB_DIR}
-        COMMAND ${CMAKE_COMMAND} -E echo_append "** " >> ${PY_MODULE_BUILD_INFO_POST_PATH}
-        COMMAND ${CMAKE_COMMAND} -E md5sum ${PC_BLE_DRIVER_${SD_API_VER}_SHARED_LIB_FILE} >> ${PY_MODULE_BUILD_INFO_POST_PATH} WORKING_DIRECTORY ${PY_MODULE_SHARED_LIB_DIR}
-    )
-endforeach(i)
