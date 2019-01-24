@@ -37,6 +37,12 @@
 
 %module @SWIG_MODULE_NAME@
 
+#ifdef _MSC_VER
+    #if _MSC_VER == 1500 // 1500 == VC+ 9.0
+        #include "stdint.h"
+    #endif
+#endif
+
 %include "stdint.i"
 %include "carrays.i"
 %include "cpointer.i"
@@ -132,6 +138,7 @@ static void PythonEvtCallBack(adapter_t *adapter, ble_evt_t *ble_event)
     PyObject *ble_evt_obj;
     PyGILState_STATE gstate;
     ble_evt_t* copied_ble_event;
+    PyObject *result;
 
 #if DEBUG
     unsigned long int tr;
@@ -174,7 +181,6 @@ static void PythonEvtCallBack(adapter_t *adapter, ble_evt_t *ble_event)
     ble_evt_obj = SWIG_NewPointerObj(SWIG_as_voidptr(copied_ble_event), SWIGTYPE_p_ble_evt_t, SWIG_POINTER_OWN);
     arglist = Py_BuildValue("(OO)", adapter_obj, ble_evt_obj);
 
-    PyObject *result;
     result = PyEval_CallObject(func, arglist);
     Py_XDECREF(result);
 
@@ -198,6 +204,7 @@ static void PythonStatusCallBack(adapter_t *adapter, sd_rpc_app_status_t status_
     PyObject *status_code_obj;
     PyObject *status_message_obj;
     PyGILState_STATE gstate;
+    PyObject *result;
 
     func = my_pystatuscallback;
 
@@ -224,7 +231,6 @@ static void PythonStatusCallBack(adapter_t *adapter, sd_rpc_app_status_t status_
     status_message_obj = SWIG_Python_str_FromChar((const char *)status_message);
     arglist = Py_BuildValue("(OOO)", adapter_obj, status_code_obj, status_message_obj);
 
-    PyObject *result;
     result = PyEval_CallObject(func, arglist);
     Py_XDECREF(result);
 
@@ -249,6 +255,7 @@ static void PythonLogCallBack(adapter_t *adapter, sd_rpc_log_severity_t severity
     PyObject *severity_obj;
     PyObject *message_obj;
     PyGILState_STATE gstate;
+    PyObject *result;
 
     func = my_pylogcallback;
 
@@ -275,7 +282,6 @@ static void PythonLogCallBack(adapter_t *adapter, sd_rpc_log_severity_t severity
     message_obj = SWIG_Python_str_FromChar((const char *)log_message);
     arglist = Py_BuildValue("(OOO)", adapter_obj, severity_obj, message_obj);
 
-    PyObject *result;
     result = PyEval_CallObject(func, arglist);
     Py_XDECREF(result);
 
