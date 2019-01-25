@@ -69,7 +69,7 @@ class Settings(object):
                 # Remove argument and argument value
                 del retval[idx]
                 del retval[idx]
-            except ValueError, _:
+            except ValueError:
                 pass
 
         return retval

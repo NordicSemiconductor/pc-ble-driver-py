@@ -88,7 +88,7 @@ class HRCollector(BLEDriverObserver, BLEAdapterObserver):
 
         self.adapter.enable_notification(new_conn, BLEUUID(BLEUUID.Standard.battery_level))
         self.adapter.enable_notification(new_conn, BLEUUID(BLEUUID.Standard.heart_rate))
-        
+
         return new_conn
 
     def on_gap_evt_connected(self, ble_driver, conn_handle, peer_addr, role, conn_params):
@@ -129,7 +129,7 @@ class HRCollector(BLEDriverObserver, BLEAdapterObserver):
         ble_driver.ble_gap_data_length_update(conn_handle, None, None)
 
     def on_gatts_evt_exchange_mtu_request(self, ble_driver, conn_handle, client_mtu):
-        ble_driver.ble_gatts_exchange_mtu_reply(conn_handle, 23)
+        pass
 
 
 def main(selected_serial_port):
