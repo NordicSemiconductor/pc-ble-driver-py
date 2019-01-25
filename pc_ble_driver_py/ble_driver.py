@@ -1836,14 +1836,6 @@ class BLEDriver(object):
                                                    conn_handle=ble_event.evt.common_evt.conn_handle,
                                                    conn_sec=BLEGapConnSec.from_c(conn_sec_update_evt.conn_sec))
 
-            elif evt_id == BLEEvtID.evt_tx_complete:
-                tx_complete_evt = ble_event.evt.common_evt.params.tx_complete
-
-                for obs in self.observers:
-                    obs.on_evt_tx_complete(ble_driver=self,
-                                           conn_handle=ble_event.evt.common_evt.conn_handle,
-                                           count=tx_complete_evt.count)
-
             elif evt_id == BLEEvtID.gattc_evt_write_rsp:
                 write_rsp_evt = ble_event.evt.gattc_evt.params.write_rsp
 

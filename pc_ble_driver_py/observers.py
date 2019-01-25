@@ -63,9 +63,6 @@ class BLEDriverObserver(object):
     def on_gap_evt_data_length_update_request(self, ble_driver, conn_handle, data_length_params):
         pass
 
-    def on_evt_tx_complete(self, ble_driver, conn_handle, count):
-        pass
-
     def on_gap_evt_connected(self, ble_driver, conn_handle, peer_addr, role, conn_params):
         logger.debug('evt> connected conn({})\n peer_addr({})\n role({})\n conn_params({})'.format(conn_handle,
                                                                                                    get_addr_str(
@@ -154,9 +151,6 @@ class BLEDriverObserver(object):
     def on_gattc_evt_desc_disc_rsp(self, ble_driver, conn_handle, status, descriptors):
         descs_str = "\n ".join(str(d) for d in descriptors)
         logger.debug('evt> on_gattc_evt_desc_disc_rsp status({}) conn({})\n {}'.format(status, conn_handle, descs_str))
-
-    def on_gatts_evt_hvn_tx_complete(self, ble_driver, conn_handle, count):
-        pass
 
     def on_gatts_evt_hvc(self, ble_driver, conn_handle, attr_handle):
         logger.debug('evt> on_gatts_evt_hvc conn({})\n attr_handle({})'.format(conn_handle, attr_handle))
