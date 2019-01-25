@@ -152,6 +152,9 @@ class BLEDriverObserver(object):
         descs_str = "\n ".join(str(d) for d in descriptors)
         logger.debug('evt> on_gattc_evt_desc_disc_rsp status({}) conn({})\n {}'.format(status, conn_handle, descs_str))
 
+    def on_gatts_evt_hvn_tx_complete(self, ble_driver, conn_handle, count):
+        pass
+
     def on_gatts_evt_hvc(self, ble_driver, conn_handle, attr_handle):
         logger.debug('evt> on_gatts_evt_hvc conn({})\n attr_handle({})'.format(conn_handle, attr_handle))
 
