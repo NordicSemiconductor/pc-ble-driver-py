@@ -23,10 +23,6 @@ message(STATUS "Linking towards Python library ${PYTHON_LIBRARY}")
 # PYTHON_INCLUDE_DIR provided by scikit-build
 include_directories(${PYTHON_INCLUDE_DIR})
 
-#foreach(SD_API_VER ${SD_API_VERS})
-#    set(PYTHON_MODULE_${SD_API_VER} nrf_ble_driver_sd_api_v${SD_API_VER})
-#endforeach()
-
 set(SWIG_I_FILE ${CMAKE_CURRENT_LIST_DIR}/swig/pc_ble_driver.i.in)
 
 # Use release lib of Python even when building with DEBUG
