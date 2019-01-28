@@ -46,7 +46,16 @@ foreach(SD_API_VER ${SD_API_VERS})
     set_property(SOURCE ${SWIG_I_FILE_${SD_API_VER}} APPEND PROPERTY SWIG_FLAGS "-DPC_BLE_DRIVER_STATIC")
 endforeach()
 
-if(WIN32)
+set(MSFT_NON_STANDARD_COMPILER 0)
+
+if(WIN32 AND MSVC_VERSION LESS 1600)
+    # See https://cmake.org/cmake/help/v3.12/variable/MSVC_VERSION.html for more details on compiler version
+    # See https://en.cppreference.com/w/c/types/integer for more details on fixed width integer types
+    set(MSFT_NON_STANDARD_COMPILER 1)
+    message(STATUS "Detected non-standard C99 MSVC compiler, adding stdint.h")
+endif()
+
+if(MSFT_NON_STANDARD_COMPILER)
     execute_process(
         COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_LIST_DIR}/swig/win32/vc90-compat/stdint.h ${PC_BLE_DRIVER_PY_OUTDIR}
         RESULT_VARIABLE result
@@ -82,24 +91,17 @@ foreach(SD_API_VER ${SD_API_VERS})
     )
 
     set_source_files_properties(${PC_BLE_DRIVER_PY_OUTDIR}/${PYTHON_MODULE_${SD_API_VER}}PYTHON_wrap.c PROPERTIES LANGUAGE CXX)
-    target_include_directories(${PYTHON_MODULE_${SD_API_VER}} PRIVATE ${PC_BLE_DRIVER_PY_OUTDIR})
+
+    if(MSFT_NON_STANDARD_COMPILER)
+        target_include_directories(${PYTHON_MODULE_${SD_API_VER}} PRIVATE ${PC_BLE_DRIVER_PY_OUTDIR})
+    endif()
+
     target_link_libraries(${PYTHON_MODULE_${SD_API_VER}} PRIVATE nrf::nrf_ble_driver_sd_api_v${SD_API_VER}_shared ${PYTHON_LIBRARY})
 endforeach()
 
 set(PY_PACKAGE_DIR ${CMAKE_CURRENT_LIST_DIR})
 set(PY_MODULE_DIR ${PY_PACKAGE_DIR}/pc_ble_driver_py)
 set(PY_MODULE_HEX_DIR ${PY_MODULE_DIR}/hex)
-
-#if(WIN32)
-#    set(SWIG_WRAPPER_SHARED_LIB_EXT pyd)
-#elseif(APPLE)
-#    set(SWIG_WRAPPER_SHARED_LIB_EXT so)
-#else()
-#    set(SWIG_WRAPPER_SHARED_LIB_EXT so)
-#endif()
-
-#set(PY_MODULE_BUILD_INFO build_info.txt)
-#set(PY_MODULE_BUILD_INFO_PRE_PATH ${PC_BLE_DRIVER_PY_OUTDIR}/${PY_MODULE_BUILD_INFO})
 
 set(BUILD_OUTPUT "pc_ble_driver_py/lib")
 
