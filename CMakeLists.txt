@@ -119,8 +119,10 @@ foreach(SD_API_VER ${SD_API_VERS})
         ARCHIVE DESTINATION ${BUILD_OUTPUT}
     )
 
-    install(
-        FILES $<TARGET_FILE:nrf::nrf_ble_driver_sd_api_v${SD_API_VER}_${NRF_BLE_DRIVER_LINKAGE_TYPE}>
-        DESTINATION ${BUILD_OUTPUT}
-    )
+    if(NRF_BLE_DRIVER_LINKAGE_TYPE STREQUAL "shared")
+        install(
+            FILES $<TARGET_FILE:nrf::nrf_ble_driver_sd_api_v${SD_API_VER}_${NRF_BLE_DRIVER_LINKAGE_TYPE}>
+            DESTINATION ${BUILD_OUTPUT}
+        )
+    endif()
 endforeach()
