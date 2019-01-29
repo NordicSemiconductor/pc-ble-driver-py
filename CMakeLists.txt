@@ -55,6 +55,12 @@ if(WIN32 AND MSVC_VERSION LESS 1600)
     message(STATUS "Detected non-standard C99 MSVC compiler, adding stdint.h")
 endif()
 
+set(NRF_BLE_DRIVER_LINKAGE_TYPE "static")
+
+if(WIN32)
+    set(NRF_BLE_DRIVER_LINKAGE_TYPE "shared")
+endif()
+
 if(MSFT_NON_STANDARD_COMPILER)
     execute_process(
         COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_LIST_DIR}/swig/win32/vc90-compat/stdint.h ${PC_BLE_DRIVER_PY_OUTDIR}
@@ -96,7 +102,7 @@ foreach(SD_API_VER ${SD_API_VERS})
         target_include_directories(${PYTHON_MODULE_${SD_API_VER}} PRIVATE ${PC_BLE_DRIVER_PY_OUTDIR})
     endif()
 
-    target_link_libraries(${PYTHON_MODULE_${SD_API_VER}} PRIVATE nrf::nrf_ble_driver_sd_api_v${SD_API_VER}_shared ${PYTHON_LIBRARY})
+    target_link_libraries(${PYTHON_MODULE_${SD_API_VER}} PRIVATE nrf::nrf_ble_driver_sd_api_v${SD_API_VER}_${NRF_BLE_DRIVER_LINKAGE_TYPE} ${PYTHON_LIBRARY})
 endforeach()
 
 set(PY_PACKAGE_DIR ${CMAKE_CURRENT_LIST_DIR})
@@ -114,7 +120,7 @@ foreach(SD_API_VER ${SD_API_VERS})
     )
 
     install(
-        FILES $<TARGET_FILE:nrf::nrf_ble_driver_sd_api_v${SD_API_VER}_shared>
+        FILES $<TARGET_FILE:nrf::nrf_ble_driver_sd_api_v${SD_API_VER}_${NRF_BLE_DRIVER_LINKAGE_TYPE}>
         DESTINATION ${BUILD_OUTPUT}
     )
 endforeach()
