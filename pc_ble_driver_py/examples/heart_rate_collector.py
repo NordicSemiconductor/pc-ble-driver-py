@@ -42,19 +42,20 @@ from pc_ble_driver_py.observers import *
 
 TARGET_DEV_NAME = "Nordic_HRM"
 CONNECTIONS = 1
+CFG_TAG = 1
 
 
 def init(conn_ic_id):
     # noinspection PyGlobalUndefined
     global config, BLEDriver, BLEAdvData, BLEEvtID, BLEAdapter,\
         BLEEnableParams, BLEGapTimeoutSrc, BLEUUID, BLEConfigCommon, BLEConfig, BLEConfigConnGatt, \
-        BLEConfigGapRoleCount, BLEConfigGapDeviceName, BLEConfigConnGatt
+        BLEConfigGapRoleCount, BLEConfigGapDeviceName
     from pc_ble_driver_py import config
     config.__conn_ic_id__ = conn_ic_id
     # noinspection PyUnresolvedReferences
     from pc_ble_driver_py.ble_driver import BLEDriver, BLEAdvData,\
         BLEEvtID, BLEEnableParams, BLEGapTimeoutSrc, BLEUUID, BLEConfigCommon, BLEConfig, BLEConfigConnGatt, \
-        BLEConfigGapRoleCount, BLEConfigGapDeviceName, BLEConfigConnGatt
+        BLEConfigGapRoleCount, BLEConfigGapDeviceName
     # noinspection PyUnresolvedReferences
     from pc_ble_driver_py.ble_adapter import BLEAdapter
     global nrf_sd_ble_api_ver
@@ -82,11 +83,12 @@ class HRCollector(BLEDriverObserver, BLEAdapterObserver):
             gap_cfg.periph_role_count = 1
             gap_cfg.central_role_count = 1
             gap_cfg.central_sec_count = 0
+            gap_cfg.tag = CFG_TAG
             self.adapter.driver.ble_cfg_set(BLEConfig.role_count, gap_cfg)
 
             gatt_cfg = BLEConfigConnGatt()
-            gatt_cfg.att_mtu = 273
-            gatt_cfg.tag = 1
+            gatt_cfg.att_mtu = 250
+            gatt_cfg.tag = CFG_TAG
             self.adapter.driver.ble_cfg_set(BLEConfig.conn_gatt, gatt_cfg)
 
             self.adapter.driver.ble_enable()
@@ -131,7 +133,7 @@ class HRCollector(BLEDriverObserver, BLEAdapterObserver):
                                                                                     dev_name))
 
         if dev_name == TARGET_DEV_NAME:
-            self.adapter.connect(peer_addr, tag=1)
+            self.adapter.connect(peer_addr, tag=CFG_TAG)
 
     def on_notification(self, ble_adapter, conn_handle, uuid, data):
         if len(data) > 32:
