@@ -103,26 +103,33 @@ foreach(SD_API_VER ${SD_API_VERS})
     endif()
 
     target_link_libraries(${PYTHON_MODULE_${SD_API_VER}} PRIVATE nrf::nrf_ble_driver_sd_api_v${SD_API_VER}_${NRF_BLE_DRIVER_LINKAGE_TYPE} ${PYTHON_LIBRARY})
+
+    get_target_property(CONNECTIVITY_SD_API_V${SD_API_VER}_PATH nrf::nrf_ble_driver_sd_api_v${SD_API_VER}_${NRF_BLE_DRIVER_LINKAGE_TYPE} INTERFACE_INCLUDE_DIRECTORIES)
+    set(CONNECTIVITY_SD_API_V${SD_API_VER}_PATH ${CONNECTIVITY_SD_API_V${SD_API_VER}_PATH}/../../share/nrf-ble-driver/hex/sd_api_v${SD_API_VER})
+    file(GLOB_RECURSE CONNECTIVITY_SD_API_V${SD_API_VER}_FILES "${CONNECTIVITY_SD_API_V${SD_API_VER}_PATH}/*.hex")
+
+    set_property(
+        TARGET ${PYTHON_MODULE_${SD_API_VER}}
+        PROPERTY RESOURCE "${CONNECTIVITY_SD_API_V${SD_API_VER}_FILES}"
+    )
 endforeach()
 
-set(PY_PACKAGE_DIR ${CMAKE_CURRENT_LIST_DIR})
-set(PY_MODULE_DIR ${PY_PACKAGE_DIR}/pc_ble_driver_py)
-set(PY_MODULE_HEX_DIR ${PY_MODULE_DIR}/hex)
-
-set(BUILD_OUTPUT "pc_ble_driver_py/lib")
+set(BUILD_OUTPUT_LIB_DIR "pc_ble_driver_py/lib")
+set(BUILD_OUTPUT_HEX_DIR "pc_ble_driver_py/hex")
 
 foreach(SD_API_VER ${SD_API_VERS})
     install(
         TARGETS ${PYTHON_MODULE_${SD_API_VER}}
-        RUNTIME DESTINATION ${BUILD_OUTPUT}
-        LIBRARY DESTINATION ${BUILD_OUTPUT}
-        ARCHIVE DESTINATION ${BUILD_OUTPUT}
+        RUNTIME DESTINATION ${BUILD_OUTPUT_LIB_DIR}
+        LIBRARY DESTINATION ${BUILD_OUTPUT_LIB_DIR}
+        ARCHIVE DESTINATION ${BUILD_OUTPUT_LIB_DIR}
+        RESOURCE DESTINATION "${BUILD_OUTPUT_HEX_DIR}/sd_api_v${SD_API_VER}"
     )
 
     if(NRF_BLE_DRIVER_LINKAGE_TYPE STREQUAL "shared")
         install(
             FILES $<TARGET_FILE:nrf::nrf_ble_driver_sd_api_v${SD_API_VER}_${NRF_BLE_DRIVER_LINKAGE_TYPE}>
-            DESTINATION ${BUILD_OUTPUT}
+            DESTINATION ${BUILD_OUTPUT_LIB_DIR}
         )
     endif()
 endforeach()
