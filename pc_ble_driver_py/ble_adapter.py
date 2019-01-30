@@ -550,9 +550,6 @@ class BLEAdapter(BLEDriverObserver):
     def on_gap_evt_data_length_update_request(self, ble_driver, conn_handle, data_length_params):
         self.driver.ble_gap_data_length_update(conn_handle, None, None)
 
-    def on_gatts_evt_exchange_mtu_request(self, ble_driver, conn_handle, client_mtu):
-        self.driver.ble_gatts_exchange_mtu_reply(conn_handle, self.default_mtu)
-
     def on_att_mtu_exchanged(self, ble_driver, conn_handle, att_mtu):
         self.db_conns[conn_handle].att_mtu = att_mtu
 

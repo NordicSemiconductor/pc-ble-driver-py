@@ -47,12 +47,14 @@ CONNECTIONS = 1
 def init(conn_ic_id):
     # noinspection PyGlobalUndefined
     global config, BLEDriver, BLEAdvData, BLEEvtID, BLEAdapter,\
-        BLEEnableParams, BLEGapTimeoutSrc, BLEUUID, BLEConfigCommon, BLEConfig, BLEConfigConnGatt
+        BLEEnableParams, BLEGapTimeoutSrc, BLEUUID, BLEConfigCommon, BLEConfig, BLEConfigConnGatt, \
+        BLEConfigGapRoleCount, BLEConfigGapDeviceName, BLEConfigConnGatt
     from pc_ble_driver_py import config
     config.__conn_ic_id__ = conn_ic_id
     # noinspection PyUnresolvedReferences
     from pc_ble_driver_py.ble_driver import BLEDriver, BLEAdvData,\
-        BLEEvtID, BLEEnableParams, BLEGapTimeoutSrc, BLEUUID, BLEConfigCommon, BLEConfig, BLEConfigConnGatt
+        BLEEvtID, BLEEnableParams, BLEGapTimeoutSrc, BLEUUID, BLEConfigCommon, BLEConfig, BLEConfigConnGatt, \
+        BLEConfigGapRoleCount, BLEConfigGapDeviceName, BLEConfigConnGatt
     # noinspection PyUnresolvedReferences
     from pc_ble_driver_py.ble_adapter import BLEAdapter
     global nrf_sd_ble_api_ver
@@ -76,6 +78,17 @@ class HRCollector(BLEDriverObserver, BLEAdapterObserver):
                                                            central_conn_count=1,
                                                            central_sec_count=0))
         elif config.__conn_ic_id__ == 'NRF52':
+            gap_cfg = BLEConfigGapRoleCount()
+            gap_cfg.periph_role_count = 1
+            gap_cfg.central_role_count = 1
+            gap_cfg.central_sec_count = 0
+            self.adapter.driver.ble_cfg_set(BLEConfig.role_count, gap_cfg)
+
+            gatt_cfg = BLEConfigConnGatt()
+            gatt_cfg.att_mtu = 273
+            gatt_cfg.tag = 1
+            self.adapter.driver.ble_cfg_set(BLEConfig.conn_gatt, gatt_cfg)
+
             self.adapter.driver.ble_enable()
 
     def close(self):
@@ -118,7 +131,7 @@ class HRCollector(BLEDriverObserver, BLEAdapterObserver):
                                                                                     dev_name))
 
         if dev_name == TARGET_DEV_NAME:
-            self.adapter.connect(peer_addr)
+            self.adapter.connect(peer_addr, tag=1)
 
     def on_notification(self, ble_adapter, conn_handle, uuid, data):
         if len(data) > 32:
@@ -129,7 +142,7 @@ class HRCollector(BLEDriverObserver, BLEAdapterObserver):
         ble_driver.ble_gap_data_length_update(conn_handle, None, None)
 
     def on_gatts_evt_exchange_mtu_request(self, ble_driver, conn_handle, client_mtu):
-        pass
+        ble_driver.ble_gatts_exchange_mtu_reply(conn_handle, client_mtu)
 
 
 def main(selected_serial_port):
