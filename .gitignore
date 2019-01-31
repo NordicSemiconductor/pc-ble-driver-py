@@ -7,9 +7,15 @@ pc_ble_driver_py/**/*.hex
 pc_ble_driver_py/**/*.txt
 pc_ble_driver_py/**/*.zip
 pc_ble_driver_py/lib/**/*.py
-dist/**
+pc_ble_driver_py/**/*.pyc
+pc_ble_driver_py/**/__pycache__
+tests/**/*.pyc
+tests/**/__pycache__
+
+dist
 *.egg-info/**
 .idea
 .vs
 .tox
 _skbuild
+_cmake_test_compile
