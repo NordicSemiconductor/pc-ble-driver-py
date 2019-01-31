@@ -35,37 +35,67 @@
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 import sys
+import re
+import codecs
+import os
 
 from skbuild import setup
 from setuptools import find_packages
 
-import pc_ble_driver_py
-
 py2 = sys.version_info[0] == 2
 py3 = sys.version_info[0] == 3
 
+py_version_old_message = 'pc-ble-driver-py only supports Python version 2.7 and 3.6 and newer'
+
 if py2:
+    if sys.version_info[1] < 7:
+        print(py_version_old_message)
+        os.exit(-1)
     requirements = ['enum34', 'wrapt', 'future', 'typing']
 elif py3:
+    if sys.version_info[1] < 6:
+        print(py_version_old_message)
+        os.exit(-1)
+
     requirements = ['wrapt', 'future']
 
-    # Typing is supported from Python 3.5 and onward
-    if sys.version_info[1] == 4:
-        requirements.append('typing')
 else:
-    print('pc-ble-driver-py only supports Python version 2 and 3')
+    print(py_version_old_message)
     sys.exit(-1)
+
+if os.path.exists('MANIFEST'):
+    os.remove('MANIFEST')
+
+here = os.path.abspath(os.path.dirname(__file__))
+
+def read(*parts):
+    # intentionally *not* adding an encoding option to open, See:
+    #   https://github.com/pypa/virtualenv/issues/201#issuecomment-3145690
+    with codecs.open(os.path.join(here, *parts), 'r') as fp:
+        return fp.read()
+
+def find_version(*file_paths):
+    version_file = read(*file_paths)
+    version_match = re.search(
+        r"^__version__ = ['\"]([^'\"]*)['\"]",
+        version_file,
+        re.M,
+    )
+    if version_match:
+        return version_match.group(1)
+
+    raise RuntimeError("Unable to find version string.")
 
 setup(
     name='pc_ble_driver_py',
-    version=pc_ble_driver_py.__version__,
+    version=find_version("pc_ble_driver_py", "__init__.py"),
     description='Python bindings for the Nordic pc-ble-driver SoftDevice serialization library',
     long_description='A Python interface and library for pc-ble-driver. This allows Python applications to interface '
                      'with a Nordic Semiconductor IC (both nRF51 and nRF52 series) over a serial port to obtain '
                      'access to the full serialized SoftDevice API.',
     url='https://github.com/NordicSemiconductor/pc-ble-driver-py',
-    author='Nordic Semiconductor ASA',
     license='Modified BSD License',
+    author='Nordic Semiconductor ASA',
     classifiers=[
         'Development Status :: 4 - Beta',
 
@@ -85,8 +115,6 @@ setup(
         'Programming Language :: Python :: 2',
         'Programming Language :: Python :: 2.7',
         'Programming Language :: Python :: 3',
-        'Programming Language :: Python :: 3.4',
-        'Programming Language :: Python :: 3.5',
         'Programming Language :: Python :: 3.6',
         'Programming Language :: Python :: 3.7'
     ],
