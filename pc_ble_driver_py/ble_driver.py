@@ -1086,25 +1086,32 @@ class BLEConfigCommon(BLEConfigBase):
         return ble_cfg
 
 
-class BLEConfigGap(BLEConfigBase):
+class BLEConfigGapRoleCount(BLEConfigBase):
     def __init__(self,
                  central_role_count=1,
                  periph_role_count=1,
-                 central_sec_count=1,
-                 device_name="nRF5x-py",
-                 device_name_read_only=True):
+                 central_sec_count=1):
         self.central_role_count = central_role_count
         self.periph_role_count = periph_role_count
         self.central_sec_count = central_sec_count
-        self.device_name = device_name
-        self.device_name_read_only = device_name_read_only
-        self.__device_name = None
 
     def to_c(self):
         ble_cfg = driver.ble_cfg_t()
         ble_cfg.gap_cfg.role_count_cfg.periph_role_count = self.periph_role_count
         ble_cfg.gap_cfg.role_count_cfg.central_role_count = self.central_role_count
         ble_cfg.gap_cfg.role_count_cfg.central_sec_count = self.central_sec_count
+        return ble_cfg
+
+class BLEConfigGapDeviceName(BLEConfigBase):
+    def __init__(self,
+                 device_name="nRF5x-py",
+                 device_name_read_only=True):
+        self.device_name = device_name
+        self.device_name_read_only = device_name_read_only
+        self.__device_name = None
+
+    def to_c(self):
+        ble_cfg = driver.ble_cfg_t()
         if self.device_name_read_only:
             ble_cfg.gap_cfg.device_name_cfg.write_perm.sm = 0
             ble_cfg.gap_cfg.device_name_cfg.write_perm.lv = 0
@@ -1804,14 +1811,6 @@ class BLEDriver(object):
                     obs.on_gap_evt_conn_sec_update(ble_driver=self,
                                                    conn_handle=ble_event.evt.common_evt.conn_handle,
                                                    conn_sec=BLEGapConnSec.from_c(conn_sec_update_evt.conn_sec))
-
-            elif evt_id == BLEEvtID.evt_tx_complete:
-                tx_complete_evt = ble_event.evt.common_evt.params.tx_complete
-
-                for obs in self.observers:
-                    obs.on_evt_tx_complete(ble_driver=self,
-                                           conn_handle=ble_event.evt.common_evt.conn_handle,
-                                           count=tx_complete_evt.count)
 
             elif evt_id == BLEEvtID.gattc_evt_write_rsp:
                 write_rsp_evt = ble_event.evt.gattc_evt.params.write_rsp

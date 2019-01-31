@@ -63,9 +63,6 @@ class BLEDriverObserver(object):
     def on_gap_evt_data_length_update_request(self, ble_driver, conn_handle, data_length_params):
         pass
 
-    def on_evt_tx_complete(self, ble_driver, conn_handle, count):
-        pass
-
     def on_gap_evt_connected(self, ble_driver, conn_handle, peer_addr, role, conn_params):
         logger.debug('evt> connected conn({})\n peer_addr({})\n role({})\n conn_params({})'.format(conn_handle,
                                                                                                    get_addr_str(
