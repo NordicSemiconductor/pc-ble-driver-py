@@ -1117,25 +1117,32 @@ class BLEConfigCommon(BLEConfigBase):
         return ble_cfg
 
 
-class BLEConfigGap(BLEConfigBase):
+class BLEConfigGapRoleCount(BLEConfigBase):
     def __init__(self,
                  central_role_count=1,
                  periph_role_count=1,
-                 central_sec_count=1,
-                 device_name="nRF5x-py",
-                 device_name_read_only=True):
+                 central_sec_count=1):
         self.central_role_count = central_role_count
         self.periph_role_count = periph_role_count
         self.central_sec_count = central_sec_count
-        self.device_name = device_name
-        self.device_name_read_only = device_name_read_only
-        self.__device_name = None
 
     def to_c(self):
         ble_cfg = driver.ble_cfg_t()
         ble_cfg.gap_cfg.role_count_cfg.periph_role_count = self.periph_role_count
         ble_cfg.gap_cfg.role_count_cfg.central_role_count = self.central_role_count
         ble_cfg.gap_cfg.role_count_cfg.central_sec_count = self.central_sec_count
+        return ble_cfg
+
+class BLEConfigGapDeviceName(BLEConfigBase):
+    def __init__(self,
+                 device_name="nRF5x-py",
+                 device_name_read_only=True):
+        self.device_name = device_name
+        self.device_name_read_only = device_name_read_only
+        self.__device_name = None
+
+    def to_c(self):
+        ble_cfg = driver.ble_cfg_t()
         if self.device_name_read_only:
             ble_cfg.gap_cfg.device_name_cfg.write_perm.sm = 0
             ble_cfg.gap_cfg.device_name_cfg.write_perm.lv = 0
