@@ -45,9 +45,13 @@ py2 = sys.version_info[0] == 2
 py3 = sys.version_info[0] == 3
 
 if py2:
-    requirements = ['enum34', 'wrapt', 'future']
+    requirements = ['enum34', 'wrapt', 'future', 'typing']
 elif py3:
     requirements = ['wrapt', 'future']
+
+    # Typing is supported from Python 3.5 and onward
+    if sys.version_info[1] == 4:
+        requirements.append('typing')
 else:
     print('pc-ble-driver-py only supports Python version 2 and 3')
     sys.exit(-1)
@@ -88,7 +92,7 @@ setup(
     ],
     keywords='nordic nrf51 nrf52 ble bluetooth softdevice serialization bindings pc-ble-driver pc-ble-driver-py '
              'pc_ble_driver pc_ble_driver_py',
-    python_requires=">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, <4",
+    python_requires=">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, !=3.4.*, !=3.5.*, <4",
     install_requires=requirements,
     packages=find_packages(),
     package_data={
