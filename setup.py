@@ -55,7 +55,7 @@ if py2:
 
     requirements = ['enum34', 'wrapt', 'future', 'typing']
 elif py3:
-    if sys.version_info[1] < 6:
+    if sys.version_info[1] < 5:
         print(py_version_old_message)
         os.exit(-1)
 
@@ -116,12 +116,13 @@ setup(
         'Programming Language :: Python :: 2',
         'Programming Language :: Python :: 2.7',
         'Programming Language :: Python :: 3',
+        'Programming Language :: Python :: 3.5',
         'Programming Language :: Python :: 3.6',
         'Programming Language :: Python :: 3.7'
     ],
     keywords='nordic nrf51 nrf52 ble bluetooth softdevice serialization bindings pc-ble-driver pc-ble-driver-py '
              'pc_ble_driver pc_ble_driver_py',
-    python_requires=">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, !=3.4.*, !=3.5.*, <4",
+    python_requires=">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, !=3.4.*, <4",
     install_requires=requirements,
     packages=find_packages(),
     package_data={
