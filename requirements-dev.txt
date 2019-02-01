@@ -1,0 +1,6 @@
+setuptools >= 40.7.1
+wheel >= 0.32.3
+scikit-build >= 0.8.1
+cmake >= 3.13.3
+ninja >= 1.8.2
+tox >= 3.7.0

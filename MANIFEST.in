@@ -1,2 +1,14 @@
-
 include README.rst
+include README.md
+include LICENSE
+include CMakeLists.txt
+include tox.ini
+include requirements-dev.txt
+include pyproject.toml
+
+recursive-include pc_ble_driver_py *
+recursive-include swig *
+recursive-include tests *
+
+recursive-exclude * __pycache__
+recursive-exclude * *.py[co]
