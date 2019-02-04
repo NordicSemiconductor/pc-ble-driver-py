@@ -2,6 +2,10 @@ import unittest
 from driver_setup import *
 import logging
 
+logger = logging.getLogger(__name__)
+
+from pc_ble_driver_py.ble_driver import BLEDriver, \
+    BLEEnableParams, BLEConfig, BLEConfigConnGatt
 
 class DriverOpenClose(unittest.TestCase):
     def setUp(self):
@@ -19,8 +23,12 @@ class DriverOpenClose(unittest.TestCase):
         )
         adapter = BLEAdapter(driver)
 
-        for _ in range(settings.number_of_iterations):
-            adapter.driver.open()
+        logger.info('Number of iterations: %s', settings.number_of_iterations)
+
+        for _ in range(0, settings.number_of_iterations):
+            logger.debug('Starting open')
+            adapter.open()
+            logger.debug('Open complete')
 
             if settings.nrf_family == 'NRF51':
                 adapter.driver.ble_enable(BLEEnableParams(vs_uuid_count=1,
@@ -29,9 +37,13 @@ class DriverOpenClose(unittest.TestCase):
                                                           central_conn_count=1,
                                                           central_sec_count=0))
             elif settings.nrf_family == 'NRF52':
+                gatt_cfg = BLEConfigConnGatt()
+                gatt_cfg.att_mtu = adapter.default_mtu
+                gatt_cfg.tag = 1
+                adapter.driver.ble_cfg_set(BLEConfig.conn_gatt, gatt_cfg)
                 adapter.driver.ble_enable()
 
-            adapter.driver.close()
+            adapter.close()
 
     def tearDown(self):
         pass
