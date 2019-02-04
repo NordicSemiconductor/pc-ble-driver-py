@@ -1,2 +1,4 @@
 [flake8]
 exclude = .git,_skbuild,dist,.tox
+max-line-length = 100
+
