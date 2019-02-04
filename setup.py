@@ -87,6 +87,8 @@ def find_version(*file_paths):
 
     raise RuntimeError("Unable to find version string.")
 
+packages = find_packages(exclude=["tests.*"])
+
 setup(
     name='pc_ble_driver_py',
     version=find_version("pc_ble_driver_py", "__init__.py"),
@@ -123,12 +125,9 @@ setup(
              'pc_ble_driver pc_ble_driver_py',
     python_requires=">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, !=3.4.*, !=3.5.*, <4",
     install_requires=requirements,
-    packages=find_packages(),
+    packages=packages,
     package_data={
-        'pc_ble_driver_py.lib.win.x86_32': ['*.pyd', '*.dll', '*.txt'],
-        'pc_ble_driver_py.lib.win.x86_64': ['*.pyd', '*.dll', '*.txt'],
-        'pc_ble_driver_py.lib.linux.x86_64': ['*.so', '*.txt'],
-        'pc_ble_driver_py.lib.macos_osx': ['*.so', '*.dylib', '*.txt'],
+        'pc_ble_driver_py.lib': ['*.pyd', '*.dll', '*.txt','*.so','*.dylib'],
         'pc_ble_driver_py.hex': ['*.hex'],
         'pc_ble_driver_py.hex.sd_api_v2': ['*.hex'],
         'pc_ble_driver_py.hex.sd_api_v5': ['*.hex'],

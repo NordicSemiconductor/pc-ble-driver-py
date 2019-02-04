@@ -62,30 +62,20 @@ import pc_ble_driver_py.config as config
 
 nrf_sd_ble_api_ver = config.sd_api_ver_get()
 # Load pc_ble_driver
-SWIG_MODULE_NAME = "_nrf_ble_driver_sd_api_v{}".format(nrf_sd_ble_api_ver)
 
-if getattr(sys, 'frozen', False):
-    # we are running in a bundle
-    this_dir = sys._MEIPASS
+ATT_MTU_DEFAULT = None
+
+if nrf_sd_ble_api_ver == 2:
+    import pc_ble_driver_py.lib.nrf_ble_driver_sd_api_v2 as driver
+    ATT_MTU_DEFAULT = driver.GATT_MTU_SIZE_DEFAULT
+elif nrf_sd_ble_api_ver == 5:
+    import pc_ble_driver_py.lib.nrf_ble_driver_sd_api_v5 as driver
+    ATT_MTU_DEFAULT = driver.BLE_GATT_ATT_MTU_DEFAULT
 else:
-    # we are running in a normal Python environment
-    this_dir, this_file = os.path.split(__file__)
-
-shlib_dir = os.path.join(os.path.abspath(this_dir), 'lib')
-
-if not os.path.exists(shlib_dir):
-    raise RuntimeError('Failed to locate the Python binding in path: {}.'.format(shlib_dir))
-
-logger.info('Swig module name: {}'.format(SWIG_MODULE_NAME))
-
-sys.path.append(shlib_dir)
-driver = importlib.import_module(SWIG_MODULE_NAME)
+    raise NordicSemiException('SoftDevice API {} not supported', nrf_sd_ble_api_ver)
 
 import pc_ble_driver_py.ble_driver_types as util
 from pc_ble_driver_py.exceptions import NordicSemiException
-
-# TODO: redefine this according to what is supported in SDv2 or SDv5
-ATT_MTU_DEFAULT = 23
 
 
 def NordicSemiErrorCheck(wrapped=None, expected=driver.NRF_SUCCESS):
