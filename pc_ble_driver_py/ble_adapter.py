@@ -145,7 +145,7 @@ class BLEAdapter(BLEDriverObserver):
         self.observers = list()
         self.db_conns = dict()
         self.evt_sync = dict()
-        self.default_mtu = 23
+        self.default_mtu = ATT_MTU_DEFAULT
 
     def open(self):
         self.driver.open()
