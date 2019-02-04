@@ -40,12 +40,13 @@ import importlib
 import pc_ble_driver_py.config as config
 
 nrf_sd_ble_api_ver = config.sd_api_ver_get()
-# Load pc_ble_driver
-SWIG_MODULE_NAME = "_nrf_ble_driver_sd_api_v{}".format(nrf_sd_ble_api_ver)
-try:
-    ble_driver = importlib.import_module(SWIG_MODULE_NAME)
-except Exception:
-    print("Error. No ble_driver module found.")
+
+if nrf_sd_ble_api_ver == 2:
+    import pc_ble_driver_py.lib.nrf_ble_driver_sd_api_v2 as ble_driver
+elif nrf_sd_ble_api_ver == 5:
+    import pc_ble_driver_py.lib.nrf_ble_driver_sd_api_v5 as ble_driver
+else:
+    raise NordicSemiException('SoftDevice API {} not supported', nrf_sd_ble_api_ver)
 
 UNIT_0_625_MS = 625  # Unit used for scanning and advertising parameters
 UNIT_1_25_MS = 1250  # Unit used for connection interval parameters

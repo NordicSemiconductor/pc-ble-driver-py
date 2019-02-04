@@ -126,6 +126,11 @@ foreach(SD_API_VER ${SD_API_VERS})
         RESOURCE DESTINATION "${BUILD_OUTPUT_HEX_DIR}/sd_api_v${SD_API_VER}"
     )
 
+    install(
+        FILES ${PC_BLE_DRIVER_PY_OUTDIR}/nrf_ble_driver_sd_api_v${SD_API_VER}.py
+        DESTINATION ${BUILD_OUTPUT_LIB_DIR}
+    )
+
     if(NRF_BLE_DRIVER_LINKAGE_TYPE STREQUAL "shared")
         install(
             FILES $<TARGET_FILE:nrf::nrf_ble_driver_sd_api_v${SD_API_VER}_${NRF_BLE_DRIVER_LINKAGE_TYPE}>
