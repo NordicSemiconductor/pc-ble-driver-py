@@ -93,6 +93,7 @@
 %include "sd_rpc_types.h"
 
 %pointer_functions(uint8_t, uint8);
+%pointer_functions(int8_t, int8);
 %pointer_functions(uint16_t, uint16);
 %pointer_functions(uint32_t, uint32);
 
@@ -115,6 +116,7 @@
 #if NRF_SD_BLE_API_VERSION >= 5
 %pointer_functions(ble_gap_data_length_limitation_t, ble_gap_data_length_limitation);
 #endif
+
 // Grab a Python function object as a Python object.
 %typemap(in) PyObject *pyfunc {
     if (!PyCallable_Check($input)) {
@@ -123,6 +125,7 @@
     }
     $1 = $input;
 }
+
 %rename(sd_rpc_open) sd_rpc_open_py;
 extern PyObject* sd_rpc_open_py(PyObject *adapter, PyObject *py_status_handler, PyObject *py_evt_handler, PyObject *py_log_handler);
 
