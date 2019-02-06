@@ -5,14 +5,9 @@
 
 ## Introduction
 pc-ble-driver-py is a serialization library over serial port that provides Python bindings
-for the [pc-ble-driver  library](https://github.com/NordicSemiconductor/pc-ble-driver).
+for the [nrf-ble-driver library](https://github.com/NordicSemiconductor/pc-ble-driver).
 
-pc-ble-driver-py depends on the pc-ble-driver repository referrenced as a submodule.
-
-These bindings include two different components:
-
-* A set of shared libraries written in C that encapsulate the different SoftDevice APIs and serialize them over UART.
-* A set of Python files generated with SWIG that present the shared libraries APIs to Python applications.
+pc-ble-driver-py depends on nrf-ble-driver that is provided with the Python binding.
 
 To run the Python bindings you will need to set up your boards to be able to communicate with your computer.
 You can find additional information here:
@@ -39,25 +34,45 @@ please install the redistributable installer for [Visual Studio 2013](https://ww
 
 ## Compiling from source
 
-Before building pc-ble-driver-py you will need to have Boost installed and some of its libraries statically compiled.
-To install and compile Boost, please follow the instructions here:
+Before building pc-ble-driver-py you will need make nrf-ble-driver available as a CMake module. The easiest way to do this is to install it with [vcpkg](https://github.com/NordicPlayground/vcpkg).
 
-[Building Boost](https://github.com/NordicSemiconductor/pc-ble-driver/blob/master/Installation.md#building-boost)
+    vcpkg install nrf-ble-driver:<[triplet](https://github.com/Microsoft/vcpkg/blob/master/docs/users/triplets.md)> --head
 
-Assuming that you have built the Boost libraries and installed the tools required to do so, you can now build and install the Python bindings and the accompanying shared library.
+*TODO: remove --head argument when port PR of nrf-ble-driver is merged with MSFT master*
+triplet must match the version of python you are building the binding for. To see the triplets supported, type:
 
-**Note**: Make sure you have built the Boost libraries for the architecture (32 or 64-bit) required by your Python installation.
+    vcpkg help triplet
+
+Running vcpkg install starts compilation and installation of nrf-ble-driver.
+
+Before compiling the binding do the following:
+
+* make sure the VCPKG_ROOT environment variable is set to the location of the vcpkg directory
+* install the python install requirements:
+
+    pip install -r requirements-dev.txt
+
+Compilation of the binding can be initiated with [tox](https://tox.readthedocs.io/en/latest/).
+tox is a generic virtualenv management and test command line tool.
+
+The config tox.ini contains the Python interpreter versions currently supported. Python wheels will be created for every supported version it finds on the system. To run tox, type:
+
+    tox -e <python environment> # For example py37, if you have that installed
+
 
 ### Dependencies
 
 To build this project you will need the following tools:
 
-* [CMake](https://cmake.org/) (>=2.8.12)
-* [SWIG](http://www.swig.org/)
+* [SWIG](http://www.swig.org/) (>= 3.10)
 * [Python](https://www.python.org/) (>= 2.7 && <= 3.0)
-* A C/C++ toolchain (should already have been installed to build Boost)
+* [vcpkg](https://github.com/NordicPlayground/vcpkg) (TODO: update repo URL when port PR of nrf-ble-driver is merged with MSFT master)
+* A C/C++ toolchain (should already have been installed to build nrf-ble-driver)
+
 
 See the following sections for platform-specific instructions on the installation of the dependencies.
+
+*TODO: rewrite below instructions to reflect that nrf-ble-driver is available as a cmake module and that boost is no longer used*
 
 #### Windows 
 

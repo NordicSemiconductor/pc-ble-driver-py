@@ -35,7 +35,6 @@
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 import collections
-import ctypes
 import functools
 import importlib
 import os
@@ -45,6 +44,7 @@ import sys
 import time
 import traceback
 import queue
+import logging
 from abc import abstractmethod
 from threading import Thread, Lock
 
@@ -63,61 +63,20 @@ import pc_ble_driver_py.config as config
 
 nrf_sd_ble_api_ver = config.sd_api_ver_get()
 # Load pc_ble_driver
-SWIG_MODULE_NAME = "pc_ble_driver_sd_api_v{}".format(nrf_sd_ble_api_ver)
-SHLIB_NAME = "pc_ble_driver_shared_sd_api_v{}".format(nrf_sd_ble_api_ver)
 
-if getattr(sys, 'frozen', False):
-    # we are running in a bundle
-    this_dir = sys._MEIPASS
+ATT_MTU_DEFAULT = None
+
+if nrf_sd_ble_api_ver == 2:
+    import pc_ble_driver_py.lib.nrf_ble_driver_sd_api_v2 as driver
+    ATT_MTU_DEFAULT = driver.GATT_MTU_SIZE_DEFAULT
+elif nrf_sd_ble_api_ver == 5:
+    import pc_ble_driver_py.lib.nrf_ble_driver_sd_api_v5 as driver
+    ATT_MTU_DEFAULT = driver.BLE_GATT_ATT_MTU_DEFAULT
 else:
-    # we are running in a normal Python environment
-    this_dir, this_file = os.path.split(__file__)
-
-if sys.maxsize > 2 ** 32:
-    shlib_arch = 'x86_64'
-else:
-    shlib_arch = 'x86_32'
-
-shlib_prefix = ""
-shlib_postfix = ""
-
-if sys.platform.lower().startswith('win'):
-    shlib_plat = 'win'
-    shlib_postfix = ".dll"
-elif sys.platform.lower().startswith('linux'):
-    shlib_plat = 'linux'
-    shlib_prefix = "lib"
-    shlib_postfix = ".so"
-elif sys.platform.startswith('dar'):
-    shlib_plat = 'macos_osx'
-    shlib_prefix = "lib"
-    shlib_postfix = ".dylib"
-    # OS X uses a single library for both archs
-    shlib_arch = ""
-
-shlib_file = '{}{}{}'.format(shlib_prefix, SHLIB_NAME, shlib_postfix)
-shlib_dir = os.path.join(os.path.abspath(this_dir), 'lib', shlib_plat, shlib_arch)
-shlib_path = os.path.join(shlib_dir, shlib_file)
-
-if not os.path.exists(shlib_path):
-    raise RuntimeError('Failed to locate the pc_ble_driver shared library: {}.'.format(shlib_path))
-
-try:
-    _shlib = ctypes.cdll.LoadLibrary(shlib_path)
-except Exception as error:
-    raise RuntimeError("Could not load shared library {} : '{}'.".format(shlib_path, error))
-
-logger.info('Shared library: {}'.format(shlib_path))
-logger.info('Swig module name: {}'.format(SWIG_MODULE_NAME))
-
-sys.path.append(shlib_dir)
-driver = importlib.import_module(SWIG_MODULE_NAME)
+    raise NordicSemiException('SoftDevice API {} not supported', nrf_sd_ble_api_ver)
 
 import pc_ble_driver_py.ble_driver_types as util
 from pc_ble_driver_py.exceptions import NordicSemiException
-
-# TODO: redefine this according to what is supported in SDv2 or SDv5
-ATT_MTU_DEFAULT = 23
 
 
 def NordicSemiErrorCheck(wrapped=None, expected=driver.NRF_SUCCESS):
