@@ -1737,10 +1737,10 @@ class BLEDriver(object):
     # IMPORTANT: interpreter crash since it tries to garbage collect
     # IMPORTANT: the object from the binding.
     def ble_evt_handler(self, adapter, ble_event):
-        self.sync_ble_evt_handler(adapter, ble_event)
+        self.ble_evt_handler_sync(adapter, ble_event)
 
     @wrapt.synchronized(observer_lock)
-    def sync_ble_evt_handler(self, _adapter, ble_event):
+    def ble_evt_handler_sync(self, _adapter, ble_event):
         try:
             evt_id = BLEEvtID(ble_event.header.evt_id)
         except Exception:
