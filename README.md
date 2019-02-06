@@ -36,7 +36,7 @@ please install the redistributable installer for [Visual Studio 2013](https://ww
 
 Before building pc-ble-driver-py you will need make nrf-ble-driver available as a CMake module. The easiest way to do this is to install it with [vcpkg](https://github.com/NordicPlayground/vcpkg).
 
-    vcpkg install nrf-ble-driver:<triplet> --head
+    vcpkg install nrf-ble-driver:<[triplet](https://github.com/Microsoft/vcpkg/blob/master/docs/users/triplets.md)> --head
 
 *TODO: remove --head argument when port PR of nrf-ble-driver is merged with MSFT master*
 triplet must match the version of python you are building the binding for. To see the triplets supported, type:
