@@ -1,5 +1,10 @@
 cmake_minimum_required(VERSION 3.13)
 
+if(DEFINED ENV{VCPKG_ROOT} AND NOT DEFINED CMAKE_TOOLCHAIN_FILE)
+  set(CMAKE_TOOLCHAIN_FILE "$ENV{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake"
+      CACHE STRING "")
+endif()
+
 # Name of the project
 project (pc-ble-driver-py)
 
@@ -26,7 +31,7 @@ include_directories(${PYTHON_INCLUDE_DIR})
 set(SWIG_I_FILE ${CMAKE_CURRENT_LIST_DIR}/swig/pc_ble_driver.i.in)
 
 # Use release lib of Python even when building with DEBUG
-add_definitions(-DSWIG_PYTHON_INTERPRETER_NO_DEBUG -DHAVE_ROUND=1)
+add_definitions(-DSWIG_PYTHON_INTERPRETER_NO_DEBUG)
 
 # Avoid warning on Windows
 if(WIN32)
@@ -40,10 +45,10 @@ foreach(SD_API_VER ${SD_API_VERS})
     set(SWIG_I_FILE_${SD_API_VER} ${PC_BLE_DRIVER_PY_OUTDIR}/${PYTHON_MODULE_${SD_API_VER}}.i)
     set(SWIG_MODULE_NAME ${PYTHON_MODULE_${SD_API_VER}})
     configure_file(${SWIG_I_FILE} ${SWIG_I_FILE_${SD_API_VER}})
-    set_property(SOURCE ${SWIG_I_FILE_${SD_API_VER}} PROPERTY CPLUSPLUS OFF)
-    set_property(SOURCE ${SWIG_I_FILE_${SD_API_VER}} PROPERTY INCLUDE_DIRECTORIES ${nrf-ble-driver_SD_API_V${SD_API_VER}_INCLUDE_DIR})
     set_property(SOURCE ${SWIG_I_FILE_${SD_API_VER}} APPEND PROPERTY SWIG_FLAGS "-threads")
-    set_property(SOURCE ${SWIG_I_FILE_${SD_API_VER}} APPEND PROPERTY SWIG_FLAGS "-DPC_BLE_DRIVER_STATIC")
+    set_property(SOURCE ${SWIG_I_FILE_${SD_API_VER}} APPEND PROPERTY SWIG_FLAGS "-Wall")
+    # Builtin is not supported in the customized wrappers for callbacks yet
+    # set_property(SOURCE ${SWIG_I_FILE_${SD_API_VER}} APPEND PROPERTY SWIG_FLAGS "-builtin")
 endforeach()
 
 set(MSFT_NON_STANDARD_COMPILER 0)
@@ -75,6 +80,8 @@ endif()
 foreach(SD_API_VER ${SD_API_VERS})
     set_property(
         SOURCE ${SWIG_I_FILE_${SD_API_VER}}
+        # C++ must be off since SWIG C++ parser does not handle nested structs/classes
+        # Warning 312. Unnamed nested class not currently supported (ignored)
         PROPERTY CPLUSPLUS OFF
     )
 
@@ -85,7 +92,7 @@ foreach(SD_API_VER ${SD_API_VERS})
 
     set_property(
         SOURCE ${SWIG_I_FILE_${SD_API_VER}}
-        PROPERTY COMPILE_DEFINITIONS "-DNRF_SD_BLE_API_VERSION=${SD_API_VER}"
+        PROPERTY COMPILE_DEFINITIONS "NRF_SD_BLE_API_VERSION=${SD_API_VER}" "SUPPRESS_INLINE_IMPLEMENTATION" "PC_BLE_DRIVER_STATIC"
     )
 
     swig_add_library(
