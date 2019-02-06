@@ -34,7 +34,7 @@ please install the redistributable installer for [Visual Studio 2013](https://ww
 
 ## Compiling from source
 
-Before building pc-ble-driver-py you will need make nrf-ble-driver available as a CMake module. The easiest way to do this is to install it with [vcpkg](https://github.com/Microsoft/vcpkg).
+Before building pc-ble-driver-py you will need make nrf-ble-driver available as a CMake module. The easiest way to do this is to install it with [vcpkg](https://github.com/NordicPlayground/vcpkg).
 
     vcpkg install nrf-ble-driver:<triplet> --head
 
@@ -64,7 +64,7 @@ To build this project you will need the following tools:
 
 * [SWIG](http://www.swig.org/) (>= 3.10)
 * [Python](https://www.python.org/) (>= 2.7 && <= 3.0)
-* [vcpkg](https://github.com/kenr/vcpkg) (TODO: update repo URL when port PR of nrf-ble-driver is merged with MSFT master)
+* [vcpkg](https://github.com/NordicPlayground/vcpkg) (TODO: update repo URL when port PR of nrf-ble-driver is merged with MSFT master)
 * A C/C++ toolchain (should already have been installed to build nrf-ble-driver)
 
 
