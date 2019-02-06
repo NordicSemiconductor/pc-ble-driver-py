@@ -57,7 +57,7 @@ tox is a generic virtualenv management and test command line tool.
 
 The config tox.ini contains the Python interpreter versions currently supported. Python wheels will be created for every supported version it finds on the system. To run tox, type:
 
-    tox -e <python environment> # For example py37
+    tox -e <python environment> # For example py37, if you have that installed
 
 
 ### Dependencies
