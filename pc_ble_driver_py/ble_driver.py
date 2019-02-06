@@ -1652,7 +1652,7 @@ class BLEDriver(object):
                     continue
                 self.status_handler_sync(*item)
             except Exception as ex:
-                print('Exception in status handler: {}'.format(ex))
+                logger.exception('Exception in status handler: {}'.format(ex))
 
 
     # IMPORTANT: Python annotations on callbacks make the reference count
@@ -1689,7 +1689,7 @@ class BLEDriver(object):
                     continue
                 self.log_message_handler_sync(*item)
             except Exception as ex:
-                print('Exception in log handler: {}'.format(ex))
+                logger.exception('Exception in log handler: {}'.format(ex))
 
     # IMPORTANT: Python annotations on callbacks make the reference count
     # IMPORTANT: for the object become zero in the binding. This makes the
