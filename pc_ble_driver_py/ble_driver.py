@@ -43,9 +43,10 @@ import subprocess
 import sys
 import time
 import traceback
+import queue
 import logging
 from abc import abstractmethod
-from threading import Lock
+from threading import Thread, Lock
 
 import wrapt
 from enum import Enum
@@ -1213,6 +1214,12 @@ class BLEDriver(object):
                  ):
         super(BLEDriver, self).__init__()
         self.observers = list()  # type: List[BLEDriverObserver]
+        self.log_queue = queue.Queue()
+        self.log_worker = Thread(target=self.log_message_handler_thread, name='Log Thread', daemon=True)
+        self.log_worker.start()
+        self.status_queue = queue.Queue()
+        self.status_worker = Thread(target=self.status_handler_thread, name='Status Thread', daemon=True)
+        self.status_worker.start()
         if auto_flash:
             try:
                 flasher = Flasher(serial_port=serial_port)
@@ -1628,7 +1635,7 @@ class BLEDriver(object):
     # IMPORTANT: interpreter crash since it tries to garbage collect
     # IMPORTANT: the object from the binding.
     def status_handler(self, adapter, status_code, status_message):
-        self.status_handler_sync(adapter, status_code, status_message)
+        self.status_queue.put([adapter, status_code, status_message])
 
     @wrapt.synchronized(observer_lock)
     def status_handler_sync(self, adapter, status_code, status_message):
@@ -1637,12 +1644,23 @@ class BLEDriver(object):
         for obs in self.observers:
             obs.on_rpc_status(adapter, statusEnum, status_message)
 
+    def status_handler_thread(self):
+        while True:
+            try:
+                item = self.status_queue.get()
+                if item is None:
+                    continue
+                self.status_handler_sync(*item)
+            except Exception as ex:
+                logger.exception('Exception in status handler: {}'.format(ex))
+
+
     # IMPORTANT: Python annotations on callbacks make the reference count
     # IMPORTANT: for the object become zero in the binding. This makes the
     # IMPORTANT: interpreter crash since it tries to garbage collect
     # IMPORTANT: the object from the binding.
     def log_message_handler(self, adapter, severity, log_message):
-        self.log_message_handler_sync(adapter, severity, log_message)
+        self.log_queue.put([adapter, severity, log_message])
 
     @wrapt.synchronized(observer_lock)
     def log_message_handler_sync(self, adapter, severity, log_message):
@@ -1663,15 +1681,25 @@ class BLEDriver(object):
         for obs in self.observers:
             obs.on_rpc_log_entry(adapter, logLevel, log_message)
 
+    def log_message_handler_thread(self):
+        while True:
+            try:
+                item = self.log_queue.get()
+                if item is None:
+                    continue
+                self.log_message_handler_sync(*item)
+            except Exception as ex:
+                logger.exception('Exception in log handler: {}'.format(ex))
+
     # IMPORTANT: Python annotations on callbacks make the reference count
     # IMPORTANT: for the object become zero in the binding. This makes the
     # IMPORTANT: interpreter crash since it tries to garbage collect
     # IMPORTANT: the object from the binding.
     def ble_evt_handler(self, adapter, ble_event):
-        self.sync_ble_evt_handler(adapter, ble_event)
+        self.ble_evt_handler_sync(adapter, ble_event)
 
     @wrapt.synchronized(observer_lock)
-    def sync_ble_evt_handler(self, _adapter, ble_event):
+    def ble_evt_handler_sync(self, _adapter, ble_event):
         try:
             evt_id = BLEEvtID(ble_event.header.evt_id)
         except Exception:
