@@ -762,6 +762,9 @@ class BLEGattStatusCode(Enum):
     insuf_encryption      = driver.BLE_GATT_STATUS_ATTERR_INSUF_ENCRYPTION
     unsupp_group_type     = driver.BLE_GATT_STATUS_ATTERR_UNSUPPORTED_GROUP_TYPE
     insuf_resources       = driver.BLE_GATT_STATUS_ATTERR_INSUF_RESOURCES
+    cccd_config_error     = driver.BLE_GATT_STATUS_ATTERR_CPS_CCCD_CONFIG_ERROR
+    procedure_in_progress = driver.BLE_GATT_STATUS_ATTERR_CPS_PROC_ALR_IN_PROG
+    cps_out_of_range      = driver.BLE_GATT_STATUS_ATTERR_CPS_OUT_OF_RANGE
 
 
 class BLEGattExecWriteFlag(Enum):
