@@ -152,7 +152,12 @@ static void PythonEvtCallBack(adapter_t *adapter, ble_evt_t *ble_event)
     ble_evt_t* copied_ble_event;
     PyObject *result;
 
-    spdlog::info("ble_evt_callback --begin-- adapter:{}", fmt::ptr(adapter));
+    spdlog::info(
+        "ble_evt_callback;{};adapter:{};adapter_py:{}",
+        "begin",
+        fmt::ptr(adapter),
+        nullptr
+    );
 
 #if DEBUG
     unsigned long int tr;
@@ -190,6 +195,13 @@ static void PythonEvtCallBack(adapter_t *adapter, ble_evt_t *ble_event)
     // Handling of Python Global Interpretor Lock (GIL)
     gstate = PyGILState_Ensure();
 
+    spdlog::info(
+        "ble_evt_callback;{};adapter:{};adapter_py:{}",
+        "begin",
+        fmt::ptr(adapter),
+        nullptr
+    );
+
     PyObject *self = Py_None;
     Py_INCREF(self);
 
@@ -200,6 +212,14 @@ static void PythonEvtCallBack(adapter_t *adapter, ble_evt_t *ble_event)
     arglist = Py_BuildValue("(OO)", adapter_obj, ble_evt_obj);
 
     result = PyEval_CallObject(func, arglist);
+
+    spdlog::info(
+        "ble_evt_callback;{};adapter:{};adapter_py:{}",
+        "end",
+        fmt::ptr(adapter),
+        fmt::ptr(adapter_obj)
+    );
+
     Py_XDECREF(result);
 
     Py_XDECREF(adapter_obj);
@@ -210,7 +230,12 @@ static void PythonEvtCallBack(adapter_t *adapter, ble_evt_t *ble_event)
 
     PyGILState_Release(gstate);
 
-    spdlog::info("ble_evt_callback -- end -- adapter:{}", fmt::ptr(adapter));
+    spdlog::info(
+        "ble_evt_callback;{};adapter:{};adapter_py:{}",
+        "PyGILState_Release",
+        fmt::ptr(adapter),
+        nullptr
+    );
 }
 %}
 
@@ -228,7 +253,14 @@ static void PythonStatusCallBack(adapter_t *adapter, sd_rpc_app_status_t status_
     PyGILState_STATE gstate;
     PyObject *result;
 
-    spdlog::info("status_callback --begin-- adapter:{} code:{} message:{}", fmt::ptr(adapter), status_code, status_message);
+    spdlog::info(
+        "status_callback;{};adapter:{};adapter_py:{};code:{};message:{}",
+        "begin",
+        fmt::ptr(adapter),
+        nullptr,
+        status_code,
+        status_message
+    );
 
     if(my_pystatuscallback == NULL) {
         printf("Callback not set, returning\n");
@@ -245,6 +277,14 @@ static void PythonStatusCallBack(adapter_t *adapter, sd_rpc_app_status_t status_
 #endif // DEBUG
 
     gstate = PyGILState_Ensure();
+    spdlog::info(
+        "status_callback;{};adapter:{};adapter_py:{};code:{};message:{}",
+        "PyGILState_Ensure",
+        fmt::ptr(adapter), 
+        nullptr,
+        status_code, 
+        status_message
+    );
 
     func = my_pystatuscallback;
     Py_INCREF(func);
@@ -260,6 +300,16 @@ static void PythonStatusCallBack(adapter_t *adapter, sd_rpc_app_status_t status_
     arglist = Py_BuildValue("(OOO)", adapter_obj, status_code_obj, status_message_obj);
 
     result = PyEval_CallObject(func, arglist);
+
+    spdlog::info(
+        "status_callback;{};adapter:{};adapter_py:{};code:{};message:{}",
+        "PyEval_CallObject",
+        fmt::ptr(adapter),
+        fmt::ptr(adapter_obj),
+        status_code,
+        status_message
+    );
+
     Py_XDECREF(result);
 
     Py_XDECREF(adapter_obj);
@@ -272,7 +322,15 @@ static void PythonStatusCallBack(adapter_t *adapter, sd_rpc_app_status_t status_
 
     PyGILState_Release(gstate);
 
-    spdlog::info("status_callback -- end -- adapter:{} code:{} message:{}", fmt::ptr(adapter), status_code, status_message);
+    spdlog::info(
+        "status_callback;{};adapter:{};adapter_py:{};code:{};message:{}",
+        "PyGILState_Release",
+        fmt::ptr(adapter),
+        nullptr,
+        status_code,
+        status_message
+    );
+
 }
 %}
 
@@ -290,7 +348,14 @@ static void PythonLogCallBack(adapter_t *adapter, sd_rpc_log_severity_t severity
     PyGILState_STATE gstate;
     PyObject *result;
 
-    spdlog::info("log_callback --begin-- adapter:{} code:{} message:{}", fmt::ptr(adapter), severity, log_message);
+    spdlog::info(
+        "log_callback;{};adapter:{};adapter_py:{};code:{};message:{}",
+        "begin",
+        fmt::ptr(adapter),
+        nullptr,
+        severity,
+        log_message
+    );
 
     if(my_pylogcallback == NULL) {
         printf("Callback not set, returning\n");
@@ -322,6 +387,15 @@ static void PythonLogCallBack(adapter_t *adapter, sd_rpc_log_severity_t severity
     arglist = Py_BuildValue("(OOO)", adapter_obj, severity_obj, message_obj);
 
     result = PyEval_CallObject(func, arglist);
+
+    spdlog::info(
+        "log_callback;{};adapter:{};adapter_py:{};code:{};message:{}",
+        "PyEval_CallObject",
+        fmt::ptr(adapter),
+        fmt::ptr(adapter_obj),
+        severity,
+        log_message);
+
     Py_XDECREF(result);
 
     Py_XDECREF(adapter_obj);
@@ -333,7 +407,13 @@ static void PythonLogCallBack(adapter_t *adapter, sd_rpc_log_severity_t severity
 
     PyGILState_Release(gstate);
 
-    spdlog::info("log_callback -- end -- adapter:{} code:{} message:{}", fmt::ptr(adapter), severity, log_message);
+    spdlog::info(
+        "log_callback;{};adapter:{};adapter_py:{};code:{};message:{}",
+        "end",
+        fmt::ptr(adapter),
+        nullptr,
+        severity,
+        log_message);
 }
 %}
 
@@ -350,13 +430,17 @@ PyObject* sd_rpc_open_py(PyObject *adapter, PyObject *py_status_handler, PyObjec
 
     if(!isLoggingEnabled)
     {
-        auto file_logger = spdlog::basic_logger_mt("basic_logger", "internal-log.txt");
+        auto file_logger = spdlog::basic_logger_mt("basic_logger", "internal-log.csv");
         spdlog::set_default_logger(file_logger);
-        spdlog::set_pattern("[%H:%M:%S.%f] [t:%t] %v");
+        spdlog::set_pattern("%H:%M:%S.%f;t:%t;%v");
+        file_logger->flush_on(spdlog::level::info);
         isLoggingEnabled = true;
     }
 
-    spdlog::info("sd_rpc_open --begin-- adapter:{} py_status_handler:{} py_evt_handler:{} py_log_handler:{}", 
+    spdlog::info(
+        "sd_rpc_open;{};adapter:{};adapter_py:{};py_status_handler:{};py_evt_handler:{};py_log_handler:{}", 
+        "begin",
+        nullptr,
         fmt::ptr(adapter), 
         fmt::ptr(py_status_handler), 
         fmt::ptr(py_evt_handler),
@@ -382,7 +466,9 @@ PyObject* sd_rpc_open_py(PyObject *adapter, PyObject *py_status_handler, PyObjec
     
     result = sd_rpc_open(arg1, PythonStatusCallBack, PythonEvtCallBack, PythonLogCallBack);
 
-    spdlog::info("sd_rpc_open -- end -- adapter:{} ret: {}", 
+    spdlog::info("sd_rpc_open;{};adapter:{};adapter_py:{};ret:{}", 
+            "end",
+            fmt::ptr(arg1),
             fmt::ptr(adapter), 
             result
     );
@@ -402,7 +488,11 @@ PyObject* sd_rpc_close_py(PyObject *adapter)
     int res1 = 0 ;
     uint32_t result;
 
-    spdlog::info("sd_rpc_close -- before -- adapter:{}", fmt::ptr(adapter));
+    spdlog::info("sd_rpc_close;{};adapter:{};adapter_py:{}",
+        "before",
+        nullptr,
+        fmt::ptr(adapter)
+    );
 
     res1 = SWIG_ConvertPtr(adapter, &argp1,SWIGTYPE_p_adapter_t, 0 |  0 );
     if (!SWIG_IsOK(res1)) {
@@ -413,7 +503,13 @@ PyObject* sd_rpc_close_py(PyObject *adapter)
 
     result = sd_rpc_close(arg1);
 
-    spdlog::info("sd_rpc_close -- after -- adapter:{} ret:{}", fmt::ptr(adapter), result);
+    spdlog::info(
+        "sd_rpc_close;{};adapter:{};adapter_py:{};ret:{}",
+        "after",
+        fmt::ptr(arg1),
+        fmt::ptr(adapter),
+        result
+    );
 
     resultobj = SWIG_From_unsigned_SS_int((unsigned int) (result));
     return resultobj;
