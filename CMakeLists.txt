@@ -21,6 +21,8 @@ include(${SWIG_USE_FILE})
 
 # nrf-ble-driver
 find_package(nrf-ble-driver CONFIG REQUIRED)
+find_package(spdlog CONFIG REQUIRED)
+find_package(fmt CONFIG REQUIRED)
 
 message(STATUS "Found Python ${PYTHON_VERSION_STRING} in directory ${PYTHON_EXECUTABLE}")
 message(STATUS "Linking towards Python library ${PYTHON_LIBRARY}")
@@ -48,7 +50,7 @@ foreach(SD_API_VER ${SD_API_VERS})
     set_property(SOURCE ${SWIG_I_FILE_${SD_API_VER}} APPEND PROPERTY SWIG_FLAGS "-threads")
     set_property(SOURCE ${SWIG_I_FILE_${SD_API_VER}} APPEND PROPERTY SWIG_FLAGS "-Wall")
     # Builtin is not supported in the customized wrappers for callbacks yet
-    # set_property(SOURCE ${SWIG_I_FILE_${SD_API_VER}} APPEND PROPERTY SWIG_FLAGS "-builtin")
+    set_property(SOURCE ${SWIG_I_FILE_${SD_API_VER}} APPEND PROPERTY SWIG_FLAGS "-builtin")
 endforeach()
 
 set(MSFT_NON_STANDARD_COMPILER 0)
@@ -109,7 +111,7 @@ foreach(SD_API_VER ${SD_API_VERS})
         target_include_directories(${PYTHON_MODULE_${SD_API_VER}} PRIVATE ${PC_BLE_DRIVER_PY_OUTDIR})
     endif()
 
-    target_link_libraries(${PYTHON_MODULE_${SD_API_VER}} PRIVATE nrf::nrf_ble_driver_sd_api_v${SD_API_VER}_${NRF_BLE_DRIVER_LINKAGE_TYPE} ${PYTHON_LIBRARY})
+    target_link_libraries(${PYTHON_MODULE_${SD_API_VER}} PRIVATE nrf::nrf_ble_driver_sd_api_v${SD_API_VER}_${NRF_BLE_DRIVER_LINKAGE_TYPE} ${PYTHON_LIBRARY} spdlog::spdlog)
 
     get_target_property(CONNECTIVITY_SD_API_V${SD_API_VER}_PATH nrf::nrf_ble_driver_sd_api_v${SD_API_VER}_${NRF_BLE_DRIVER_LINKAGE_TYPE} INTERFACE_INCLUDE_DIRECTORIES)
     set(CONNECTIVITY_SD_API_V${SD_API_VER}_PATH ${CONNECTIVITY_SD_API_V${SD_API_VER}_PATH}/../../share/nrf-ble-driver/hex/sd_api_v${SD_API_VER})
@@ -131,6 +133,11 @@ foreach(SD_API_VER ${SD_API_VERS})
         LIBRARY DESTINATION ${BUILD_OUTPUT_LIB_DIR}
         ARCHIVE DESTINATION ${BUILD_OUTPUT_LIB_DIR}
         RESOURCE DESTINATION "${BUILD_OUTPUT_HEX_DIR}/sd_api_v${SD_API_VER}"
+    )
+
+    install(
+        FILES $<TARGET_FILE:fmt::fmt>
+        DESTINATION ${BUILD_OUTPUT_LIB_DIR}
     )
 
     install(

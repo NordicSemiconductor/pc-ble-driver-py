@@ -56,10 +56,16 @@
 #include <pthread.h>
 #endif // DEBUG
 
+#include "spdlog/spdlog.h"
+#include "spdlog/sinks/basic_file_sink.h"
+
+static bool isLoggingEnabled = false;
+
 %}
 
 // Requires special handling
 %ignore sd_rpc_open;
+%ignore sd_rpc_close;
 
 // Ignore L2CAP APIs that will be replaced by L2CAP CoCs
 %ignore sd_ble_l2cap_cid_register;
@@ -129,6 +135,9 @@
 %rename(sd_rpc_open) sd_rpc_open_py;
 extern PyObject* sd_rpc_open_py(PyObject *adapter, PyObject *py_status_handler, PyObject *py_evt_handler, PyObject *py_log_handler);
 
+%rename(sd_rpc_close) sd_rpc_close_py;
+extern PyObject* sd_rpc_close_py(PyObject *adapter);
+
 /* Event callback handling */
 %{
 static PyObject *my_pyevtcallback = NULL;
@@ -143,6 +152,8 @@ static void PythonEvtCallBack(adapter_t *adapter, ble_evt_t *ble_event)
     ble_evt_t* copied_ble_event;
     PyObject *result;
 
+    spdlog::info("ble_evt_callback --begin-- adapter:{}", fmt::ptr(adapter));
+
 #if DEBUG
     unsigned long int tr;
     tr = (unsigned long int)pthread_self();
@@ -155,6 +166,7 @@ static void PythonEvtCallBack(adapter_t *adapter, ble_evt_t *ble_event)
     }
 
     func = my_pyevtcallback;
+    Py_INCREF(func);
 
 #if DEBUG
     printf("sizeof(ble_evt_t): %ld\n", sizeof(ble_evt_t));
@@ -178,6 +190,9 @@ static void PythonEvtCallBack(adapter_t *adapter, ble_evt_t *ble_event)
     // Handling of Python Global Interpretor Lock (GIL)
     gstate = PyGILState_Ensure();
 
+    PyObject *self = Py_None;
+    Py_INCREF(self);
+
     adapter_obj = SWIG_NewPointerObj(SWIG_as_voidptr(adapter), SWIGTYPE_p_adapter_t, 0 |  0 );
     // Create a Python object that points to the copied event, let the interpreter take care of
     // memory management of the copied event by setting the SWIG_POINTER_OWN flag.
@@ -190,8 +205,12 @@ static void PythonEvtCallBack(adapter_t *adapter, ble_evt_t *ble_event)
     Py_XDECREF(adapter_obj);
     Py_XDECREF(ble_evt_obj);
     Py_DECREF(arglist);
+    Py_DECREF(self);
+    Py_DECREF(func);
 
     PyGILState_Release(gstate);
+
+    spdlog::info("ble_evt_callback -- end -- adapter:{}", fmt::ptr(adapter));
 }
 %}
 
@@ -209,7 +228,7 @@ static void PythonStatusCallBack(adapter_t *adapter, sd_rpc_app_status_t status_
     PyGILState_STATE gstate;
     PyObject *result;
 
-    func = my_pystatuscallback;
+    spdlog::info("status_callback --begin-- adapter:{} code:{} message:{}", fmt::ptr(adapter), status_code, status_message);
 
     if(my_pystatuscallback == NULL) {
         printf("Callback not set, returning\n");
@@ -227,6 +246,12 @@ static void PythonStatusCallBack(adapter_t *adapter, sd_rpc_app_status_t status_
 
     gstate = PyGILState_Ensure();
 
+    func = my_pystatuscallback;
+    Py_INCREF(func);
+
+    PyObject *self = Py_None;
+    Py_INCREF(self);
+
     adapter_obj = SWIG_NewPointerObj(SWIG_as_voidptr(adapter), SWIGTYPE_p_adapter_t, 0 |  0 );
     status_code_obj = SWIG_From_int((int)(status_code));
 
@@ -242,7 +267,12 @@ static void PythonStatusCallBack(adapter_t *adapter, sd_rpc_app_status_t status_
     Py_XDECREF(status_message_obj);
     Py_DECREF(arglist);
 
+    Py_DECREF(func);
+    Py_DECREF(self);
+
     PyGILState_Release(gstate);
+
+    spdlog::info("status_callback -- end -- adapter:{} code:{} message:{}", fmt::ptr(adapter), status_code, status_message);
 }
 %}
 
@@ -260,7 +290,7 @@ static void PythonLogCallBack(adapter_t *adapter, sd_rpc_log_severity_t severity
     PyGILState_STATE gstate;
     PyObject *result;
 
-    func = my_pylogcallback;
+    spdlog::info("log_callback --begin-- adapter:{} code:{} message:{}", fmt::ptr(adapter), severity, log_message);
 
     if(my_pylogcallback == NULL) {
         printf("Callback not set, returning\n");
@@ -278,6 +308,12 @@ static void PythonLogCallBack(adapter_t *adapter, sd_rpc_log_severity_t severity
 
     gstate = PyGILState_Ensure();
 
+    func = my_pylogcallback;
+    Py_INCREF(func);
+
+    PyObject *self = Py_None;
+    Py_INCREF(self);
+
     adapter_obj = SWIG_NewPointerObj(SWIG_as_voidptr(adapter), SWIGTYPE_p_adapter_t, 0 |  0 );
     severity_obj = SWIG_From_int((int)(severity));
 
@@ -292,8 +328,12 @@ static void PythonLogCallBack(adapter_t *adapter, sd_rpc_log_severity_t severity
     Py_XDECREF(message_obj);
     Py_XDECREF(severity_obj);
     Py_DECREF(arglist);
+    Py_DECREF(self);
+    Py_DECREF(func);
 
     PyGILState_Release(gstate);
+
+    spdlog::info("log_callback -- end -- adapter:{} code:{} message:{}", fmt::ptr(adapter), severity, log_message);
 }
 %}
 
@@ -307,6 +347,21 @@ PyObject* sd_rpc_open_py(PyObject *adapter, PyObject *py_status_handler, PyObjec
     void *argp1 = 0 ;
     int res1 = 0 ;
     uint32_t result;
+
+    if(!isLoggingEnabled)
+    {
+        auto file_logger = spdlog::basic_logger_mt("basic_logger", "internal-log.txt");
+        spdlog::set_default_logger(file_logger);
+        spdlog::set_pattern("[%H:%M:%S.%f] [t:%t] %v");
+        isLoggingEnabled = true;
+    }
+
+    spdlog::info("sd_rpc_open --begin-- adapter:{} py_status_handler:{} py_evt_handler:{} py_log_handler:{}", 
+        fmt::ptr(adapter), 
+        fmt::ptr(py_status_handler), 
+        fmt::ptr(py_evt_handler),
+        fmt::ptr(py_log_handler)
+    );
 
     res1 = SWIG_ConvertPtr(adapter, &argp1,SWIGTYPE_p_adapter_t, 0 |  0 );
     if (!SWIG_IsOK(res1)) {
@@ -326,6 +381,40 @@ PyObject* sd_rpc_open_py(PyObject *adapter, PyObject *py_status_handler, PyObjec
     my_pylogcallback = py_log_handler;
     
     result = sd_rpc_open(arg1, PythonStatusCallBack, PythonEvtCallBack, PythonLogCallBack);
+
+    spdlog::info("sd_rpc_open -- end -- adapter:{} ret: {}", 
+            fmt::ptr(adapter), 
+            result
+    );
+
+    resultobj = SWIG_From_unsigned_SS_int((unsigned int) (result));
+    return resultobj;
+
+fail:
+    return NULL;
+}
+
+PyObject* sd_rpc_close_py(PyObject *adapter)
+{
+    PyObject *resultobj = 0;
+    adapter_t *arg1 = (adapter_t *) 0;
+    void *argp1 = 0 ;
+    int res1 = 0 ;
+    uint32_t result;
+
+    spdlog::info("sd_rpc_close -- before -- adapter:{}", fmt::ptr(adapter));
+
+    res1 = SWIG_ConvertPtr(adapter, &argp1,SWIGTYPE_p_adapter_t, 0 |  0 );
+    if (!SWIG_IsOK(res1)) {
+      SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "sd_rpc_close" "', argument " "1"" of type '" "adapter_t *""'"); 
+    }
+
+    arg1 = (adapter_t * ) (argp1);
+
+    result = sd_rpc_close(arg1);
+
+    spdlog::info("sd_rpc_close -- after -- adapter:{} ret:{}", fmt::ptr(adapter), result);
+
     resultobj = SWIG_From_unsigned_SS_int((unsigned int) (result));
     return resultobj;
 
