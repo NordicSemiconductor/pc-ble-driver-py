@@ -441,7 +441,7 @@ PyObject* sd_rpc_open_py(PyObject *adapter, PyObject *py_status_handler, PyObjec
         "sd_rpc_open;{};adapter:{};adapter_py:{};py_status_handler:{};py_evt_handler:{};py_log_handler:{}", 
         "begin",
         nullptr,
-        fmt::ptr(adapter->internal), 
+        fmt::ptr(adapter), 
         fmt::ptr(py_status_handler), 
         fmt::ptr(py_evt_handler),
         fmt::ptr(py_log_handler)
@@ -491,7 +491,7 @@ PyObject* sd_rpc_close_py(PyObject *adapter)
     spdlog::info("sd_rpc_close;{};adapter:{};adapter_py:{}",
         "begin",
         nullptr,
-        fmt::ptr(adapter->internal)
+        fmt::ptr(adapter)
     );
 
     res1 = SWIG_ConvertPtr(adapter, &argp1,SWIGTYPE_p_adapter_t, 0 |  0 );
@@ -506,8 +506,8 @@ PyObject* sd_rpc_close_py(PyObject *adapter)
     spdlog::info(
         "sd_rpc_close;{};adapter:{};adapter_py:{};ret:{}",
         "end",
-        fmt::ptr(arg1),
-        fmt::ptr(adapter->internal),
+        fmt::ptr(arg1->internal),
+        fmt::ptr(adapter),
         result
     );
 
