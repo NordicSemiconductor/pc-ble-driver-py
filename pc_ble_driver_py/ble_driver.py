@@ -1245,6 +1245,9 @@ class BLEDriver(object):
         self.rpc_log_severity_filter(log_severity_level_enum)
         self._keyset = None
 
+    def __del__(self):
+        driver.sd_rpc_delete(self.rpc_adapter)
+
     @NordicSemiErrorCheck
     @wrapt.synchronized(api_lock)
     def rpc_log_severity_filter(self, severity):
