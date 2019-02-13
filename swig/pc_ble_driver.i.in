@@ -155,7 +155,7 @@ static void PythonEvtCallBack(adapter_t *adapter, ble_evt_t *ble_event)
     spdlog::info(
         "ble_evt_callback;{};adapter:{};adapter_py:{}",
         "begin",
-        fmt::ptr(adapter),
+        fmt::ptr(adapter->internal),
         nullptr
     );
 
@@ -197,8 +197,8 @@ static void PythonEvtCallBack(adapter_t *adapter, ble_evt_t *ble_event)
 
     spdlog::info(
         "ble_evt_callback;{};adapter:{};adapter_py:{}",
-        "begin",
-        fmt::ptr(adapter),
+        "PyGILState_Ensure",
+        fmt::ptr(adapter->internal),
         nullptr
     );
 
@@ -216,7 +216,7 @@ static void PythonEvtCallBack(adapter_t *adapter, ble_evt_t *ble_event)
     spdlog::info(
         "ble_evt_callback;{};adapter:{};adapter_py:{}",
         "end",
-        fmt::ptr(adapter),
+        fmt::ptr(adapter->internal),
         fmt::ptr(adapter_obj)
     );
 
@@ -233,7 +233,7 @@ static void PythonEvtCallBack(adapter_t *adapter, ble_evt_t *ble_event)
     spdlog::info(
         "ble_evt_callback;{};adapter:{};adapter_py:{}",
         "PyGILState_Release",
-        fmt::ptr(adapter),
+        fmt::ptr(adapter->internal),
         nullptr
     );
 }
@@ -256,7 +256,7 @@ static void PythonStatusCallBack(adapter_t *adapter, sd_rpc_app_status_t status_
     spdlog::info(
         "status_callback;{};adapter:{};adapter_py:{};code:{};message:{}",
         "begin",
-        fmt::ptr(adapter),
+        fmt::ptr(adapter->internal),
         nullptr,
         status_code,
         status_message
@@ -280,7 +280,7 @@ static void PythonStatusCallBack(adapter_t *adapter, sd_rpc_app_status_t status_
     spdlog::info(
         "status_callback;{};adapter:{};adapter_py:{};code:{};message:{}",
         "PyGILState_Ensure",
-        fmt::ptr(adapter), 
+        fmt::ptr(adapter->internal), 
         nullptr,
         status_code, 
         status_message
@@ -304,7 +304,7 @@ static void PythonStatusCallBack(adapter_t *adapter, sd_rpc_app_status_t status_
     spdlog::info(
         "status_callback;{};adapter:{};adapter_py:{};code:{};message:{}",
         "PyEval_CallObject",
-        fmt::ptr(adapter),
+        fmt::ptr(adapter->internal),
         fmt::ptr(adapter_obj),
         status_code,
         status_message
@@ -325,7 +325,7 @@ static void PythonStatusCallBack(adapter_t *adapter, sd_rpc_app_status_t status_
     spdlog::info(
         "status_callback;{};adapter:{};adapter_py:{};code:{};message:{}",
         "end",
-        fmt::ptr(adapter),
+        fmt::ptr(adapter->internal),
         nullptr,
         status_code,
         status_message
@@ -351,7 +351,7 @@ static void PythonLogCallBack(adapter_t *adapter, sd_rpc_log_severity_t severity
     spdlog::info(
         "log_callback;{};adapter:{};adapter_py:{};code:{};message:{}",
         "begin",
-        fmt::ptr(adapter),
+        fmt::ptr(adapter->internal),
         nullptr,
         severity,
         log_message
@@ -391,7 +391,7 @@ static void PythonLogCallBack(adapter_t *adapter, sd_rpc_log_severity_t severity
     spdlog::info(
         "log_callback;{};adapter:{};adapter_py:{};code:{};message:{}",
         "PyEval_CallObject",
-        fmt::ptr(adapter),
+        fmt::ptr(adapter->internal),
         fmt::ptr(adapter_obj),
         severity,
         log_message);
@@ -410,7 +410,7 @@ static void PythonLogCallBack(adapter_t *adapter, sd_rpc_log_severity_t severity
     spdlog::info(
         "log_callback;{};adapter:{};adapter_py:{};code:{};message:{}",
         "end",
-        fmt::ptr(adapter),
+        fmt::ptr(adapter->internal),
         nullptr,
         severity,
         log_message);
@@ -441,7 +441,7 @@ PyObject* sd_rpc_open_py(PyObject *adapter, PyObject *py_status_handler, PyObjec
         "sd_rpc_open;{};adapter:{};adapter_py:{};py_status_handler:{};py_evt_handler:{};py_log_handler:{}", 
         "begin",
         nullptr,
-        fmt::ptr(adapter), 
+        fmt::ptr(adapter->internal), 
         fmt::ptr(py_status_handler), 
         fmt::ptr(py_evt_handler),
         fmt::ptr(py_log_handler)
@@ -469,7 +469,7 @@ PyObject* sd_rpc_open_py(PyObject *adapter, PyObject *py_status_handler, PyObjec
     spdlog::info("sd_rpc_open;{};adapter:{};adapter_py:{};ret:{}", 
             "end",
             fmt::ptr(arg1),
-            fmt::ptr(adapter), 
+            fmt::ptr(adapter->internal), 
             result
     );
 
@@ -491,7 +491,7 @@ PyObject* sd_rpc_close_py(PyObject *adapter)
     spdlog::info("sd_rpc_close;{};adapter:{};adapter_py:{}",
         "begin",
         nullptr,
-        fmt::ptr(adapter)
+        fmt::ptr(adapter->internal)
     );
 
     res1 = SWIG_ConvertPtr(adapter, &argp1,SWIGTYPE_p_adapter_t, 0 |  0 );
@@ -507,7 +507,7 @@ PyObject* sd_rpc_close_py(PyObject *adapter)
         "sd_rpc_close;{};adapter:{};adapter_py:{};ret:{}",
         "end",
         fmt::ptr(arg1),
-        fmt::ptr(adapter),
+        fmt::ptr(adapter->internal),
         result
     );
 
