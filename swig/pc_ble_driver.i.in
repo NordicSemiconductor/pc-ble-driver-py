@@ -324,7 +324,7 @@ static void PythonStatusCallBack(adapter_t *adapter, sd_rpc_app_status_t status_
 
     spdlog::info(
         "status_callback;{};adapter:{};adapter_py:{};code:{};message:{}",
-        "PyGILState_Release",
+        "end",
         fmt::ptr(adapter),
         nullptr,
         status_code,
@@ -489,7 +489,7 @@ PyObject* sd_rpc_close_py(PyObject *adapter)
     uint32_t result;
 
     spdlog::info("sd_rpc_close;{};adapter:{};adapter_py:{}",
-        "before",
+        "begin",
         nullptr,
         fmt::ptr(adapter)
     );
@@ -505,7 +505,7 @@ PyObject* sd_rpc_close_py(PyObject *adapter)
 
     spdlog::info(
         "sd_rpc_close;{};adapter:{};adapter_py:{};ret:{}",
-        "after",
+        "end",
         fmt::ptr(arg1),
         fmt::ptr(adapter),
         result
