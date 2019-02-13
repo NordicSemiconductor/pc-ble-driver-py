@@ -66,6 +66,7 @@ static bool isLoggingEnabled = false;
 // Requires special handling
 %ignore sd_rpc_open;
 %ignore sd_rpc_close;
+%ignore sd_rpc_adapter_create;
 
 // Ignore L2CAP APIs that will be replaced by L2CAP CoCs
 %ignore sd_ble_l2cap_cid_register;
@@ -137,6 +138,9 @@ extern PyObject* sd_rpc_open_py(PyObject *adapter, PyObject *py_status_handler, 
 
 %rename(sd_rpc_close) sd_rpc_close_py;
 extern PyObject* sd_rpc_close_py(PyObject *adapter);
+
+%rename(sd_rpc_adapter_create) sd_rpc_adapter_create_py;
+extern PyObject* sd_rpc_adapter_create_py(PyObject *transport);
 
 /* Event callback handling */
 %{
@@ -428,15 +432,6 @@ PyObject* sd_rpc_open_py(PyObject *adapter, PyObject *py_status_handler, PyObjec
     int res1 = 0 ;
     uint32_t result;
 
-    if(!isLoggingEnabled)
-    {
-        auto file_logger = spdlog::basic_logger_mt("basic_logger", "internal-log.csv");
-        spdlog::set_default_logger(file_logger);
-        spdlog::set_pattern("%H:%M:%S.%f;t:%t;%v");
-        file_logger->flush_on(spdlog::level::info);
-        isLoggingEnabled = true;
-    }
-
     spdlog::info(
         "sd_rpc_open;{};adapter:{};adapter_py:{};py_status_handler:{};py_evt_handler:{};py_log_handler:{}", 
         "begin",
@@ -517,4 +512,57 @@ PyObject* sd_rpc_close_py(PyObject *adapter)
 fail:
     return NULL;
 }
+
+PyObject* sd_rpc_adapter_create_py(PyObject *transport)
+{
+    PyObject *resultobj = 0;
+    transport_layer_t *arg1 = (transport_layer_t *) 0;
+    void *argp1 = 0 ;
+    int res1 = 0 ;
+    adapter_t *result;
+
+    if(!isLoggingEnabled)
+    {
+        auto file_logger = spdlog::basic_logger_mt("basic_logger", "internal-log.csv");
+        spdlog::set_default_logger(file_logger);
+        spdlog::set_pattern("%H:%M:%S.%f;t:%t;%v");
+        file_logger->flush_on(spdlog::level::info);
+        isLoggingEnabled = true;
+    }
+
+    spdlog::info("sd_rpc_adapter_create;{};adapter:{};adapter_py:{};transport_py:{}",
+        "begin",
+        nullptr,
+        nullptr,
+        fmt::ptr(transport)
+    );
+
+    PyObject *self = Py_None;
+    Py_INCREF(self);
+
+    res1 = SWIG_ConvertPtr(transport, &argp1,SWIGTYPE_p_transport_layer_t, 0 |  0 );
+    if (!SWIG_IsOK(res1)) {
+      SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "sd_rpc_adapter_create" "', argument " "1"" of type '" "transport_layer_t *""'"); 
+    }
+
+    arg1 = (transport_layer_t *)(argp1);
+    result = (adapter_t *)sd_rpc_adapter_create(arg1);
+
+    resultobj = SWIG_NewPointerObj(SWIG_as_voidptr(result), SWIGTYPE_p_adapter_t, 0 |  0 );
+
+    spdlog::info(
+        "sd_rpc_adapter_create;{};adapter:{};adapter_py:{};transport_t:{}",
+        "end",
+        fmt::ptr(result->internal),
+        fmt::ptr(resultobj),
+        fmt::ptr(arg1)
+    );
+
+    Py_DECREF(self);
+
+    return resultobj;
+fail:
+  return NULL;
+}
+
 %}
