@@ -468,8 +468,8 @@ PyObject* sd_rpc_open_py(PyObject *adapter, PyObject *py_status_handler, PyObjec
 
     spdlog::info("sd_rpc_open;{};adapter:{};adapter_py:{};ret:{}", 
             "end",
-            fmt::ptr(arg1),
-            fmt::ptr(adapter->internal), 
+            fmt::ptr(arg1->internal),
+            fmt::ptr(adapter), 
             result
     );
 
