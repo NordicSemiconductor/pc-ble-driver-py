@@ -225,10 +225,7 @@ class BLEAdapter(BLEDriverObserver):
 
             # Create UUIDBase object and register it in softdevice
             base = BLEUUIDBase(response['data'][::-1], driver.BLE_UUID_TYPE_VENDOR_BEGIN)
-            response = self.driver.ble_vs_uuid_add(base)
-
-            if not response['status'] == BLEGattStatusCode.success:
-                return response.status
+            self.driver.ble_vs_uuid_add(base)
 
             # Rediscover this service.
             self.driver.ble_gattc_prim_srvc_disc(conn_handle,
