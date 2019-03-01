@@ -470,7 +470,7 @@ class BLEAdapter(BLEDriverObserver):
         return result['conn_sec']
 
     # ...............................................................................................
-    def on_evt_data_length_changed(self, _ble_driver, **kwargs):
+    def on_evt_data_length_changed(self, ble_driver, **kwargs):
         for i in self.evt_sync:
             self.evt_sync[i].notify(evt=BLEEvtID.evt_data_length_changed, data=kwargs)
 
@@ -514,7 +514,7 @@ class BLEAdapter(BLEDriverObserver):
     def on_evt_tx_complete(self, ble_driver, conn_handle, **kwargs):
         self.evt_sync[conn_handle].notify(evt=BLEEvtID.evt_tx_complete, data=kwargs)
 
-    def on_gattc_evt_write_cmd_tx_complete(self, _ble_driver, conn_handle, **kwargs):
+    def on_gattc_evt_write_cmd_tx_complete(self, ble_driver, conn_handle, **kwargs):
         self.evt_sync[conn_handle].notify(evt=BLEEvtID.gattc_evt_write_cmd_tx_complete, data=kwargs)
 
     def on_gattc_evt_write_rsp(self, ble_driver, conn_handle, **kwargs):
@@ -553,7 +553,7 @@ class BLEAdapter(BLEDriverObserver):
     def on_att_mtu_exchanged(self, ble_driver, conn_handle, att_mtu):
         self.db_conns[conn_handle].att_mtu = att_mtu
 
-    def on_gattc_evt_exchange_mtu_rsp(self, _ble_driver, conn_handle, **kwargs):
+    def on_gattc_evt_exchange_mtu_rsp(self, ble_driver, conn_handle, **kwargs):
         self.evt_sync[conn_handle].notify(evt=BLEEvtID.gattc_evt_exchange_mtu_rsp, data=kwargs)
 
     def on_rpc_log_entry(self, ble_driver, severity, message):
