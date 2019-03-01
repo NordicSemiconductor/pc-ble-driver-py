@@ -190,7 +190,7 @@ class BLEAdapterObserver(object):
     def on_notification(self, ble_adapter, conn_handle, uuid, data):
         pass
 
-    def on_conn_param_update_request(self, _ble_adapter, conn_handle, conn_params):
+    def on_conn_param_update_request(self, ble_adapter, conn_handle, conn_params):
         logger.debug('evt> conn_param_update_request conn({})\n conn_params({})'.format(conn_handle,
                                                                                         gen_conn_params_str(
                                                                                             conn_params)))
