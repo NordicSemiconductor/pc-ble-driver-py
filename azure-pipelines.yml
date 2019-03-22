@@ -40,13 +40,11 @@ jobs:
       displayName: 'Install Python $(python_version)'
     - bash: |
         sudo apt-get update
-        sudo apt-get install ninja-build gcc g++ swig
+        sudo apt-get install ninja-build
       condition: contains(variables['image_name'], 'ubuntu')
       displayName: 'Install toolchain on Linux'
     - bash: |
-        brew install ninja
         brew install gcc
-        brew install swig
       condition: contains(variables['image_name'], 'mac')
       displayName: 'Install toolchain on macOS'
     - bash: |
@@ -62,7 +60,7 @@ jobs:
         export PATH=$VCPKG_ROOT:$PATH
         echo $PATH
         echo $VCPKG_ROOT
-        $(Agent.HomeDirectory)/vcpkg/vcpkg install nrf-ble-driver:$(triplet) --head
+        $(Agent.HomeDirectory)/vcpkg/vcpkg install nrf-ble-driver:$(triplet)
       condition: not(contains(variables['image_name'], 'win'))
       env: {
         VCPKG_ROOT: '$(Agent.HomeDirectory)/vcpkg',
@@ -74,7 +72,7 @@ jobs:
         echo %VCPKG_ROOT%
         git clone https://github.com/NordicPlayground/vcpkg.git $(Agent.HomeDirectory)/vcpkg
         $(Agent.HomeDirectory)\vcpkg\bootstrap-vcpkg.bat
-        $(Agent.HomeDirectory)\vcpkg\vcpkg install nrf-ble-driver:$(triplet) --head
+        $(Agent.HomeDirectory)\vcpkg\vcpkg install nrf-ble-driver:$(triplet)
       condition: contains(variables['image_name'], 'win')
       env: {
         VCPKG_ROOT: '$(Agent.HomeDirectory)\vcpkg',
