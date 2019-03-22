@@ -90,6 +90,7 @@ jobs:
     - bash: |
         export PATH=$VCPKG_ROOT:$PATH
         echo $PATH
+        echo $VCPKG_ROOT
         python -V
         pip install -r requirements-dev.txt
         python setup.py bdist_wheel --build-type Debug
