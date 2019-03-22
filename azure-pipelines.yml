@@ -1,0 +1,97 @@
+trigger:
+- test-azure
+
+jobs:
+  - job: Build
+    variables:
+      npm_config_runtime: ''
+      npm_config_target: ''
+      npm_config_disturl: ''
+    strategy:
+      matrix:
+        linux_python_37:
+          image_name: 'ubuntu-16.04'
+          python_version: 3.7.2
+          python_arch: 'x64'
+        mac_python_37:
+          image_name: 'macos-10.13'
+          python_version: 3.7.2
+          python_arch: 'x64'
+        win64_python_37:
+          image_name: 'vs2017-win2016'
+          python_version: 3.7.2
+          python_arch: 'x64'
+        win32_python_37:
+          python_version: 3.7.2
+          python_arch: 'x86'
+    pool:
+      vmImage: $(image_name)
+    steps:
+    - task: UsePythonVersion@0
+      inputs:
+        versionSpec: $(python_version)
+        addToPath: true
+        architecture: $(python_arch)
+      displayName: 'Install Python $(python_version)'
+    - bash: |
+        sudo apt-get update
+        sudo apt-get install ninja-build
+      condition: contains(variables['image_name'], 'ubuntu')
+      displayName: 'Install ninja on Linux'
+    - bash: |
+        brew install ninja
+      condition: contains(variables['image_name'], 'mac')
+      displayName: 'Install ninja on macOS'
+    # - bash: |
+    #     node -v
+    #     npm i --build-from-source
+    #     npm run package-prebuilt
+    #   env: {
+    #     npm_config_runtime: $(npm_config_runtime),
+    #     npm_config_target: $(npm_config_target),
+    #     npm_config_disturl: $(npm_config_disturl),
+    #     NODE_VERSION: $(node_version),
+    #     NODE_ARCH: $(node_arch),
+    #     NODE_PRE_GYP_GITHUB_TOKEN: $(wayland_github_token)
+    #   }
+    #   displayName: 'Build'
+    # - bash: |
+    #     cp -R build/stage/**/*.tar.gz "$(Build.ArtifactStagingDirectory)"
+    #   displayName: 'Copy artifacts'
+    # - task: GitHubRelease@0
+    #   inputs:
+    #     gitHubConnection: 'waylandCI'
+    #     repositoryName: 'NordicSemiconductor/pc-nrfjprog-js'
+    #     action: 'edit'
+    #     tagSource: 'Git tag'
+    #     tag: '$(Build.SourceBranchName)'
+    #     assetUploadMode: 'replace'
+    #     isDraft: 'true'
+    #     addChangeLog: 'false'
+    #   condition: ne(variables['Build.Reason'], 'PullRequest')
+
+  # - job: Test
+  #   dependsOn: [
+  #     Build,
+  #   ]
+  #   strategy:
+  #     matrix:
+  #       linux:
+  #         osType: 'linux'
+  #       mac:
+  #         osType: 'mac'
+  #       win64:
+  #         osType: 'win64'
+  #       win32:
+  #         osType: 'win32'
+  #   pool: server
+  #   steps:
+  #   - task: InvokeRESTAPI@1
+  #     displayName: Test
+  #     inputs:
+  #       connectionType: 'connectedServiceName'
+  #       serviceConnection: 'waylandJenkins'
+  #       method: 'POST'
+  #       urlSuffix: 'view/pc-nrfjprog-js/job/pc-nrfjprog-js-$(osType)/buildWithParameters?BRANCH=$(Build.SourceBranch)&VSTS_URL=$(system.CollectionUri)&TOKEN=$(system.AccessToken)&PROJECT_ID=$(system.teamProjectId)&HUB_NAME=$(system.hostType)&PLAN_ID=$(system.planId)&TASK_ID=$(system.taskInstanceId)&JOB_ID=$(system.jobId)'
+  #       waitForCompletion: 'true'
+  #     condition: ne(variables['Build.Reason'], 'PullRequest')
