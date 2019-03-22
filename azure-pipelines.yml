@@ -13,18 +13,22 @@ jobs:
           image_name: 'ubuntu-16.04'
           python_version: 3.7
           python_arch: 'x64'
+          triplet: 'x64-linux'
         mac_python_37:
           image_name: 'macos-10.13'
           python_version: 3.7
           python_arch: 'x64'
+          triplet: 'x64-osx'
         win64_python_37:
           image_name: 'vs2017-win2016'
           python_version: 3.7
           python_arch: 'x64'
+          triplet: 'x64-windows'
         win32_python_37:
           image_name: 'vs2017-win2016'
           python_version: 3.7
           python_arch: 'x86'
+          triplet: 'x86-windows'
     pool:
       vmImage: $(image_name)
     steps:
@@ -44,9 +48,15 @@ jobs:
       condition: contains(variables['image_name'], 'mac')
       displayName: 'Install ninja on macOS'
     - bash: |
-        git clone https://github.com/NordicPlayground/vcpkg.git $HOME
+        git clone https://github.com/NordicPlayground/vcpkg.git $HOME/vcpkg
         sh $HOME/vcpkg/bootstrap-vcpkg.sh
       displayName: 'Install vcpkg'
+    - bash: |
+        vcpkg install nrf-ble-driver:$(triplet) --head
+      env: {
+        VCPKG_ROOT: $HOME/vcpkg
+      }
+      displayName: 'Install nrf-ble-driver'
     # - bash: |
     #     node -v
     #     npm i --build-from-source
