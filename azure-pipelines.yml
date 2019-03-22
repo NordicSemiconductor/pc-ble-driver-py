@@ -50,18 +50,16 @@ jobs:
       displayName: 'Install toolchain on macOS'
     - bash: |
         git clone https://github.com/NordicPlayground/vcpkg.git $(Agent.HomeDirectory)/vcpkg
-        $(Agent.HomeDirectory)/vcpkg/bootstrap-vcpkg.bat
+        sh $(Agent.HomeDirectory)/vcpkg/bootstrap-vcpkg.sh
+        $(Agent.HomeDirectory)/vcpkg/vcpkg install nrf-ble-driver:$(triplet) --head
       condition: not(contains(variables['image_name'], 'win'))
-      displayName: 'Install vcpkg for Linux or macOS'
+      displayName: 'Install nrf-ble-driver for Linux or macOS'
     - script: |
         git clone https://github.com/NordicPlayground/vcpkg.git $(Agent.HomeDirectory)/vcpkg
         $(Agent.HomeDirectory)/vcpkg/bootstrap-vcpkg.bat
-      condition: contains(variables['image_name'], 'win')
-      displayName: 'Install vcpkg for Windows'
-    - bash: |
-        echo $HOME
         $(Agent.HomeDirectory)/vcpkg/vcpkg install nrf-ble-driver:$(triplet) --head
-      displayName: 'Install nrf-ble-driver'
+      condition: contains(variables['image_name'], 'win')
+      displayName: 'Install nrf-ble-driver for Windows'
     # - bash: |
     #     node -v
     #     npm i --build-from-source
