@@ -59,6 +59,7 @@ jobs:
       condition: not(contains(variables['image_name'], 'win'))
       displayName: 'Install nrf-ble-driver for Linux or macOS'
     - bash: |
+        export PATH=$VCPKG_ROOT:$PATH
         echo $PATH
         echo $VCPKG_ROOT
         echo $(Agent.HomeDirectory)
@@ -66,10 +67,10 @@ jobs:
       condition: not(contains(variables['image_name'], 'win'))
       env: {
         VCPKG_ROOT: '$(Agent.HomeDirectory)/vcpkg',
-        PATH: '$(Agent.HomeDirectory)/vcpkg:$PATH'
       }
       displayName: 'Install nrf-ble-driver for Linux or macOS'
     - script: |
+        set PATH=%VCPKG_ROOT%;%PATH%
         echo %PATH%
         echo %VCPKG_ROOT%
         echo $(Agent.HomeDirectory)
@@ -79,16 +80,15 @@ jobs:
       condition: contains(variables['image_name'], 'win')
       env: {
         VCPKG_ROOT: '$(Agent.HomeDirectory)\vcpkg',
-        PATH: '$(Agent.HomeDirectory)/vcpkg;%PATH%'
       }
       displayName: 'Install nrf-ble-driver for Windows'
     - bash: |
+        export PATH=$VCPKG_ROOT:$PATH
         echo $PATH
         pip install -r requirements-dev.txt
         python setup.py bdist_wheel --build-type Release
       env: {
         VCPKG_ROOT: '$(Agent.HomeDirectory)/vcpkg',
-        PATH: '$(Agent.HomeDirectory)/vcpkg:$PATH'
       }
       displayName: 'Build'
     # - bash: |
