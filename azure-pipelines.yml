@@ -52,10 +52,8 @@ jobs:
         sh $HOME/vcpkg/bootstrap-vcpkg.sh
       displayName: 'Install vcpkg'
     - bash: |
-        vcpkg install nrf-ble-driver:$(triplet) --head
-      env: {
-        VCPKG_ROOT: $HOME/vcpkg
-      }
+        echo $HOME
+        $HOME/vcpkg install nrf-ble-driver:$(triplet) --head
       displayName: 'Install nrf-ble-driver'
     # - bash: |
     #     node -v
