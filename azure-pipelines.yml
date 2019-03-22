@@ -65,7 +65,7 @@ jobs:
         $(Agent.HomeDirectory)/vcpkg/vcpkg install nrf-ble-driver:$(triplet) --head
       condition: not(contains(variables['image_name'], 'win'))
       env: {
-        VCPKG_ROOT: $(Agent.HomeDirectory)/vcpkg
+        VCPKG_ROOT: $(Agent.HomeDirectory)/vcpkg,
         PATH: $(Agent.HomeDirectory)/vcpkg:$PATH
       }
       displayName: 'Install nrf-ble-driver for Linux or macOS'
@@ -78,7 +78,7 @@ jobs:
         $(Agent.HomeDirectory)\vcpkg\vcpkg install nrf-ble-driver:$(triplet) --head
       condition: contains(variables['image_name'], 'win')
       env: {
-        VCPKG_ROOT: $(Agent.HomeDirectory)\vcpkg
+        VCPKG_ROOT: $(Agent.HomeDirectory)\vcpkg,
         PATH: $(Agent.HomeDirectory)/vcpkg;%PATH%
       }
       displayName: 'Install nrf-ble-driver for Windows'
@@ -87,7 +87,7 @@ jobs:
         pip install -r requirements-dev.txt
         python setup.py bdist_wheel --build-type Release
       env: {
-        VCPKG_ROOT: $(Agent.HomeDirectory)/vcpkg
+        VCPKG_ROOT: $(Agent.HomeDirectory)/vcpkg,
         PATH: $(Agent.HomeDirectory)/vcpkg:$PATH
       }
       displayName: 'Build'
