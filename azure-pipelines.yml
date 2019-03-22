@@ -40,7 +40,7 @@ jobs:
       displayName: 'Install Python $(python_version)'
     - bash: |
         sudo apt-get update
-        sudo apt-get install ninja-build swig
+        sudo apt-get install ninja-build libudev-dev swig
       condition: contains(variables['image_name'], 'ubuntu')
       displayName: 'Install toolchain on Linux'
     - bash: |
