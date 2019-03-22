@@ -11,19 +11,19 @@ jobs:
       matrix:
         linux_python_37:
           image_name: 'ubuntu-16.04'
-          python_version: 3.7.2
+          python_version: 3.7
           python_arch: 'x64'
         mac_python_37:
           image_name: 'macos-10.13'
-          python_version: 3.7.2
+          python_version: 3.7
           python_arch: 'x64'
         win64_python_37:
           image_name: 'vs2017-win2016'
-          python_version: 3.7.2
+          python_version: 3.7
           python_arch: 'x64'
         win32_python_37:
           image_name: 'vs2017-win2016'
-          python_version: 3.7.2
+          python_version: 3.7
           python_arch: 'x86'
     pool:
       vmImage: $(image_name)
