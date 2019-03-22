@@ -42,15 +42,22 @@ jobs:
         sudo apt-get update
         sudo apt-get install ninja-build
       condition: contains(variables['image_name'], 'ubuntu')
-      displayName: 'Install ninja on Linux'
+      displayName: 'Install toolchain on Linux'
     - bash: |
         brew install ninja
+        brew install gcc6
       condition: contains(variables['image_name'], 'mac')
-      displayName: 'Install ninja on macOS'
+      displayName: 'Install toolchain on macOS'
     - bash: |
         git clone https://github.com/NordicPlayground/vcpkg.git $HOME/vcpkg
-        sh $HOME/vcpkg/bootstrap-vcpkg.sh
-      displayName: 'Install vcpkg'
+        $HOME/vcpkg/bootstrap-vcpkg.bat
+      condition: not(contains(variables['image_name'], 'win'))
+      displayName: 'Install vcpkg for Windows'
+    - script: |
+        git clone https://github.com/NordicPlayground/vcpkg.git %HOME%/vcpkg
+        %HOME%/vcpkg/bootstrap-vcpkg.bat
+      condition: contains(variables['image_name'], 'win')
+      displayName: 'Install vcpkg for Windows'
     - bash: |
         echo $HOME
         $HOME/vcpkg install nrf-ble-driver:$(triplet) --head
