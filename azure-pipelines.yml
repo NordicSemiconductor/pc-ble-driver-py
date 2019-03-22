@@ -67,10 +67,6 @@ jobs:
         VCPKG_ROOT: '$(Agent.HomeDirectory)/vcpkg',
       }
       displayName: 'Install nrf-ble-driver for Linux or macOS'
-    - bash: |
-        cat $(Agent.HomeDirectory)/vcpkg/buildtrees/nrf-ble-driver/install-x64-linux-dbg-out.log
-      condition: not(contains(variables['image_name'], 'win'))
-      displayName: 'Install nrf-ble-driver for Linux or macOS'
     - script: |
         set PATH=%VCPKG_ROOT%;%PATH%
         echo %PATH%
@@ -86,8 +82,9 @@ jobs:
     - bash: |
         export PATH=$VCPKG_ROOT:$PATH
         echo $PATH
+        python -V
         pip install -r requirements-dev.txt
-        python setup.py bdist_wheel --build-type Release
+        python setup.py bdist_wheel --build-type Debug
       env: {
         VCPKG_ROOT: '$(Agent.HomeDirectory)/vcpkg',
       }
