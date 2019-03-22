@@ -40,12 +40,13 @@ jobs:
       displayName: 'Install Python $(python_version)'
     - bash: |
         sudo apt-get update
-        sudo apt-get install ninja-build
+        sudo apt-get install ninja-build gcc-6 swig
       condition: contains(variables['image_name'], 'ubuntu')
       displayName: 'Install toolchain on Linux'
     - bash: |
         brew install ninja
         brew install gcc6
+        brew install swig
       condition: contains(variables['image_name'], 'mac')
       displayName: 'Install toolchain on macOS'
     - bash: |
