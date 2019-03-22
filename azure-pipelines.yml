@@ -43,6 +43,10 @@ jobs:
         brew install ninja
       condition: contains(variables['image_name'], 'mac')
       displayName: 'Install ninja on macOS'
+    - bash: |
+        git clone https://github.com/NordicPlayground/vcpkg.git $HOME
+        sh $HOME/vcpkg/bootstrap-vcpkg.sh
+      displayName: 'Install vcpkg'
     # - bash: |
     #     node -v
     #     npm i --build-from-source
