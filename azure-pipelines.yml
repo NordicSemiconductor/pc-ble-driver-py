@@ -22,6 +22,7 @@ jobs:
           python_version: 3.7.2
           python_arch: 'x64'
         win32_python_37:
+          image_name: 'vs2017-win2016'
           python_version: 3.7.2
           python_arch: 'x86'
     pool:
