@@ -53,7 +53,7 @@ jobs:
       condition: contains(variables['image_name'], 'mac')
       displayName: 'Install toolchain on macOS'
     - bash: |
-        choco install -y swig
+        choco install -y --x86 swig
       condition: contains(variables['image_name'], 'win')
       displayName: 'Install toolchain on Windows'
 
