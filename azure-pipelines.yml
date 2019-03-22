@@ -54,8 +54,10 @@ jobs:
       condition: contains(variables['image_name'], 'win')
       displayName: 'Install toolchain on Windows'
     - bash: |
-        git clone https://github.com/NordicPlayground/vcpkg.git $(Agent.HomeDirectory)/vcpkg
-        sh $(Agent.HomeDirectory)/vcpkg/bootstrap-vcpkg.sh
+        cd $(Agent.HomeDirectory)
+        git clone https://github.com/NordicPlayground/vcpkg.git
+        cd vcpkg
+        ./bootstrap-vcpkg.sh
       condition: not(contains(variables['image_name'], 'win'))
       displayName: 'Install nrf-ble-driver for Linux or macOS'
     - bash: |
