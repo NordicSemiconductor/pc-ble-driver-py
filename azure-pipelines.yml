@@ -66,6 +66,10 @@ jobs:
         VCPKG_ROOT: '$(Agent.HomeDirectory)/vcpkg',
       }
       displayName: 'Install nrf-ble-driver for Linux or macOS'
+    - bash: |
+        cat $(Agent.HomeDirectory)/vcpkg/buildtrees/nrf-ble-driver/install-x64-linux-dbg-out.log
+      condition: not(contains(variables['image_name'], 'win'))
+      displayName: 'Install nrf-ble-driver for Linux or macOS'
     - script: |
         set PATH=%VCPKG_ROOT%;%PATH%
         echo %PATH%
