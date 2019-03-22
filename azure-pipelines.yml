@@ -54,6 +54,8 @@ jobs:
       condition: not(contains(variables['image_name'], 'win'))
       displayName: 'Install nrf-ble-driver for Linux or macOS'
     - bash: |
+        echo %VCPKG_ROOT%
+        echo $(Agent.HomeDirectory)
         $(Agent.HomeDirectory)/vcpkg/vcpkg install nrf-ble-driver:$(triplet) --head
       condition: not(contains(variables['image_name'], 'win'))
       env: {
@@ -61,6 +63,8 @@ jobs:
       }
       displayName: 'Install nrf-ble-driver for Linux or macOS'
     - script: |
+        echo %VCPKG_ROOT%
+        echo $(Agent.HomeDirectory)
         git clone https://github.com/NordicPlayground/vcpkg.git $(Agent.HomeDirectory)/vcpkg
         $(Agent.HomeDirectory)\vcpkg\bootstrap-vcpkg.bat
         $(Agent.HomeDirectory)\vcpkg\vcpkg install nrf-ble-driver:$(triplet) --head
