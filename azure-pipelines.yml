@@ -38,20 +38,22 @@ jobs:
         addToPath: true
         architecture: $(python_arch)
       displayName: 'Install Python $(python_version)'
-    - bash: |
+
+    - displayName: 'Install toolchain on Linux'
+      condition: contains(variables['image_name'], 'ubuntu')
+      bash: |
         sudo apt-get update
         sudo apt-get install ninja-build libudev-dev swig python-dev python3-dev
-      condition: contains(variables['image_name'], 'ubuntu')
-      displayName: 'Install toolchain on Linux'
-    - bash: |
+    - displayName: 'Install toolchain on macOS'
+      condition: contains(variables['image_name'], 'mac')
+      bash: |
         brew install gcc
         brew install swig
-      condition: contains(variables['image_name'], 'mac')
-      displayName: 'Install toolchain on macOS'
-    - bash: |
-        choco install -y swig
+    - displayName: 'Install toolchain on Windows'
       condition: contains(variables['image_name'], 'win')
-      displayName: 'Install toolchain on Windows'
+      bash: |
+        choco install -y swig
+
     - bash: |
         git clone https://github.com/NordicPlayground/vcpkg.git $(Agent.HomeDirectory)/vcpkg
         $(Agent.HomeDirectory)/vcpkg/bootstrap-vcpkg.sh
