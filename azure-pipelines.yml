@@ -56,23 +56,16 @@ jobs:
       displayName: 'Install nrf-ble-driver for Linux or macOS'
     - script: |
         git clone https://github.com/NordicPlayground/vcpkg.git $(Agent.HomeDirectory)/vcpkg
-        $(Agent.HomeDirectory)/vcpkg/bootstrap-vcpkg.bat
-        $(Agent.HomeDirectory)/vcpkg/vcpkg install nrf-ble-driver:$(triplet) --head
+        $(Agent.HomeDirectory)\vcpkg\bootstrap-vcpkg.bat
+        $(Agent.HomeDirectory)\vcpkg\vcpkg install nrf-ble-driver:$(triplet) --head
       condition: contains(variables['image_name'], 'win')
       displayName: 'Install nrf-ble-driver for Windows'
-    # - bash: |
-    #     node -v
-    #     npm i --build-from-source
-    #     npm run package-prebuilt
-    #   env: {
-    #     npm_config_runtime: $(npm_config_runtime),
-    #     npm_config_target: $(npm_config_target),
-    #     npm_config_disturl: $(npm_config_disturl),
-    #     NODE_VERSION: $(node_version),
-    #     NODE_ARCH: $(node_arch),
-    #     NODE_PRE_GYP_GITHUB_TOKEN: $(wayland_github_token)
-    #   }
-    #   displayName: 'Build'
+    - bash: |
+        python setup.py bdist_wheel --build-type Release
+      env: {
+        VCPKG_ROOT: $(Agent.HomeDirectory)/vcpkg
+      }
+      displayName: 'Build'
     # - bash: |
     #     cp -R build/stage/**/*.tar.gz "$(Build.ArtifactStagingDirectory)"
     #   displayName: 'Copy artifacts'
