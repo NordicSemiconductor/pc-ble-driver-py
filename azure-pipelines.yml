@@ -42,7 +42,13 @@ jobs:
     # Install toolchain
     - bash: |
         sudo apt-get update
-        sudo apt-get install ninja-build libudev-dev swig libpython-dev libpython3-dev
+        sudo apt-get install ninja-build
+        sudo apt-get install swig
+        sudo apt-get install libudev-dev
+        sudo apt-get install python-dev
+        sudo apt-get install python3-dev
+        sudo apt-get install libpython3-dev
+        sudo apt-get install libpython3.7-dev
       condition: contains(variables['image_name'], 'ubuntu')
       displayName: 'Install toolchain on Linux'
     - bash: |
