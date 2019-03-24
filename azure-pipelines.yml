@@ -50,6 +50,7 @@ jobs:
         sudo apt-get install python-dev
         sudo apt-get install python3-dev
         sudo apt-get install libpython3-dev
+        sudo apt-get install libpython3.7-dev
       condition: contains(variables['image_name'], 'ubuntu')
       displayName: 'Install toolchain on Linux'
     - bash: |
