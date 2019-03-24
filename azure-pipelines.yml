@@ -42,6 +42,8 @@ jobs:
     # Install toolchain
     - bash: |
         sudo apt-get update
+        sudo apt-get install gcc-7
+        sudo apt-get install g++-7
         sudo apt-get install ninja-build
         sudo apt-get install swig
         sudo apt-get install libudev-dev
