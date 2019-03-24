@@ -96,6 +96,8 @@ jobs:
     # Build
     - bash: |
         export PATH=$VCPKG_ROOT:$PATH
+        export CC=gcc-7
+        export CXX=g++-7
         echo $PATH
         echo $VCPKG_ROOT
         python -V
@@ -104,6 +106,19 @@ jobs:
       env: {
         VCPKG_ROOT: '$(Agent.HomeDirectory)/vcpkg',
       }
+      condition: contains(variables['image_name'], 'ubuntu')
+      displayName: 'Build'
+    - bash: |
+        export PATH=$VCPKG_ROOT:$PATH
+        echo $PATH
+        echo $VCPKG_ROOT
+        python -V
+        pip install -r requirements-dev.txt
+        python setup.py bdist_wheel --build-type Debug
+      env: {
+        VCPKG_ROOT: '$(Agent.HomeDirectory)/vcpkg',
+      }
+      condition: contains(variables['image_name'], 'mac')
       displayName: 'Build'
     # - bash: |
     #     cp -R build/stage/**/*.tar.gz "$(Build.ArtifactStagingDirectory)"
