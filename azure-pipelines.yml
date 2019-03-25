@@ -71,9 +71,6 @@ jobs:
         echo $PATH
         echo $VCPKG_ROOT
         $(Agent.HomeDirectory)/vcpkg/vcpkg install nrf-ble-driver:$(triplet)
-        python -V
-        pip install -r requirements-dev.txt
-        python setup.py bdist_wheel --build-type Debug
       condition: not(contains(variables['image_name'], 'win'))
       env: {
         VCPKG_ROOT: '$(Agent.HomeDirectory)/vcpkg',
@@ -86,9 +83,6 @@ jobs:
         git clone https://github.com/NordicPlayground/vcpkg.git $(Agent.HomeDirectory)/vcpkg
         $(Agent.HomeDirectory)\vcpkg\bootstrap-vcpkg.bat
         $(Agent.HomeDirectory)\vcpkg\vcpkg install nrf-ble-driver:$(triplet)
-        python -V
-        pip install -r requirements-dev.txt
-        python setup.py bdist_wheel --build-type Debug
       condition: contains(variables['image_name'], 'win')
       env: {
         VCPKG_ROOT: '$(Agent.HomeDirectory)\vcpkg',
@@ -118,6 +112,9 @@ jobs:
     - script: |
         echo %PATH%
         echo %VCPKG_ROOT%
+        python -V
+        pip install -r requirements-dev.txt
+        python setup.py bdist_wheel --build-type Debug
       env: {
         VCPKG_ROOT: '$(Agent.HomeDirectory)\vcpkg',
       }
