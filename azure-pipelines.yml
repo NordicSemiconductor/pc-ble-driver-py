@@ -70,19 +70,25 @@ jobs:
         export PATH=$VCPKG_ROOT:$PATH
         echo $PATH
         echo $VCPKG_ROOT
-        $(Agent.HomeDirectory)/vcpkg/vcpkg install nrf-ble-driver:$(triplet)
+        vcpkg install nrf-ble-driver:$(triplet)
       condition: not(contains(variables['image_name'], 'win'))
       env: {
         VCPKG_ROOT: '$(Agent.HomeDirectory)/vcpkg',
       }
       displayName: 'Install nrf-ble-driver for Linux or macOS'
     - script: |
+        git clone https://github.com/NordicPlayground/vcpkg.git $(Agent.HomeDirectory)/vcpkg
+        $(Agent.HomeDirectory)\vcpkg\bootstrap-vcpkg.bat
+      condition: contains(variables['image_name'], 'win')
+      env: {
+        VCPKG_ROOT: '$(Agent.HomeDirectory)\vcpkg',
+      }
+      displayName: 'Install nrf-ble-driver for Windows'
+    - script: |
         set PATH=%VCPKG_ROOT%;%PATH%
         echo %PATH%
         echo %VCPKG_ROOT%
-        git clone https://github.com/NordicPlayground/vcpkg.git $(Agent.HomeDirectory)/vcpkg
-        $(Agent.HomeDirectory)\vcpkg\bootstrap-vcpkg.bat
-        $(Agent.HomeDirectory)\vcpkg\vcpkg install nrf-ble-driver:$(triplet)
+        vcpkg install nrf-ble-driver:$(triplet)
       condition: contains(variables['image_name'], 'win')
       env: {
         VCPKG_ROOT: '$(Agent.HomeDirectory)\vcpkg',
