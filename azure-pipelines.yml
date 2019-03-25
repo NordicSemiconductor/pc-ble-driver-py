@@ -41,7 +41,7 @@ jobs:
       displayName: 'Install Python $(python_version)'
 
     # Install toolchain
-    - bash: |
+    - script: |
         sudo apt-get update
         sudo apt-get install ninja-build
         sudo apt-get install swig
@@ -50,23 +50,23 @@ jobs:
         sudo apt-get install python3-dev
       condition: contains(variables['image_name'], 'ubuntu')
       displayName: 'Install toolchain on Linux'
-    - bash: |
+    - script: |
         brew install gcc
         brew install swig
       condition: contains(variables['image_name'], 'mac')
       displayName: 'Install toolchain on macOS'
-    - bash: |
+    - script: |
         choco install -y --x86 swig
       condition: contains(variables['image_name'], 'win')
       displayName: 'Install toolchain on Windows'
 
     # Install nrf-ble-driver
-    - bash: |
+    - script: |
         git clone https://github.com/NordicPlayground/vcpkg.git $(Agent.HomeDirectory)/vcpkg
         $(Agent.HomeDirectory)/vcpkg/bootstrap-vcpkg.sh
       condition: not(contains(variables['image_name'], 'win'))
       displayName: 'Install nrf-ble-driver for Linux or macOS'
-    - bash: |
+    - script: |
         export PATH=$VCPKG_ROOT:$PATH
         echo $PATH
         echo $VCPKG_ROOT
@@ -90,10 +90,7 @@ jobs:
       displayName: 'Install nrf-ble-driver for Windows'
 
     # Build
-    - bash: |
-        export PATH=$VCPKG_ROOT:$PATH
-        export CC=gcc-7
-        export CXX=g++-7
+    - script: |
         echo $PATH
         echo $VCPKG_ROOT
         python -V
@@ -104,8 +101,7 @@ jobs:
       }
       condition: contains(variables['image_name'], 'ubuntu')
       displayName: 'Build'
-    - bash: |
-        export PATH=$VCPKG_ROOT:$PATH
+    - script: |
         echo $PATH
         echo $VCPKG_ROOT
         python -V
@@ -116,7 +112,7 @@ jobs:
       }
       condition: contains(variables['image_name'], 'mac')
       displayName: 'Build'
-    - bash: |
+    - script: |
         echo %PATH%
         echo %VCPKG_ROOT%
         python -V
