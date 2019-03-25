@@ -1,13 +1,14 @@
 cmake_minimum_required(VERSION 3.13)
 
-# Name of the project
-project (pc-ble-driver-py)
-
 # if(DEFINED ENV{VCPKG_ROOT} AND NOT DEFINED CMAKE_TOOLCHAIN_FILE)
 #   set(CMAKE_TOOLCHAIN_FILE "$ENV{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake"
 #       CACHE STRING "")
 # endif()
-set(CMAKE_TOOLCHAIN_FILE "$ENV{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake")
+
+set(CMAKE_TOOLCHAIN_FILE "$ENV{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake" CACHE STRING "")
+
+# Name of the project
+project (pc-ble-driver-py)
 
 # find_program(PYTHON_CONFIG NAMES python3.7-config)
 # exec_program(${PYTHON_CONFIG}
