@@ -21,7 +21,7 @@ endif()
 # set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${PYTHON_LDFLAGS} -stdlib=libc++ -lc++abi")
 
 # find_package(PythonLibs 3.7 REQUIRED)
-find_package(PythonLibs)
+find_package(PythonLibs REQUIRED)
 
 set(PC_BLE_DRIVER_PY_OUTDIR ${CMAKE_BINARY_DIR}/outdir)
 
