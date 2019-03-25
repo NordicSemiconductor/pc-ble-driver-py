@@ -32,12 +32,13 @@ jobs:
     pool:
       vmImage: $(image_name)
     steps:
-    # - task: UsePythonVersion@0
-    #   inputs:
-    #     versionSpec: $(python_version)
-    #     addToPath: true
-    #     architecture: $(python_arch)
-    #   displayName: 'Install Python $(python_version)'
+    # Install python
+    - task: UsePythonVersion@0
+      inputs:
+        versionSpec: $(python_version)
+        addToPath: true
+        architecture: $(python_arch)
+      displayName: 'Install Python $(python_version)'
 
     # Install toolchain
     - bash: |
