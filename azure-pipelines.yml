@@ -54,7 +54,6 @@ jobs:
         brew install gcc
         brew install swig
         brew install python-dev
-        brew install python3-dev
       condition: contains(variables['image_name'], 'mac')
       displayName: 'Install toolchain on macOS'
     - bash: |
