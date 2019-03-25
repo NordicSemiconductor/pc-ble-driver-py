@@ -11,22 +11,22 @@ jobs:
       matrix:
         linux_python_37:
           image_name: 'ubuntu-16.04'
-          python_version: 3.7
+          python_version: 3.6
           python_arch: 'x64'
           triplet: 'x64-linux'
         mac_python_37:
           image_name: 'macos-10.13'
-          python_version: 3.7
+          python_version: 3.6
           python_arch: 'x64'
           triplet: 'x64-osx'
         win64_python_37:
           image_name: 'vs2017-win2016'
-          python_version: 3.7
+          python_version: 3.6
           python_arch: 'x64'
           triplet: 'x64-windows'
         win32_python_37:
           image_name: 'vs2017-win2016'
-          python_version: 3.7
+          python_version: 3.6
           python_arch: 'x86'
           triplet: 'x86-windows'
     pool:
@@ -47,8 +47,7 @@ jobs:
         sudo apt-get install ninja-build
         sudo apt-get install swig
         sudo apt-get install libudev-dev
-        sudo apt-get install python-dev
-        sudo apt-get install python3.7-dev
+        sudo apt-get install python$(python_versioin)-dev
       condition: contains(variables['image_name'], 'ubuntu')
       displayName: 'Install toolchain on Linux'
     - script: |
