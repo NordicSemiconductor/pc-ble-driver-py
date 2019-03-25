@@ -46,11 +46,15 @@ jobs:
         sudo apt-get install ninja-build
         sudo apt-get install swig
         sudo apt-get install libudev-dev
+        sudo apt-get install python-dev
+        sudo apt-get install python3-dev
       condition: contains(variables['image_name'], 'ubuntu')
       displayName: 'Install toolchain on Linux'
     - bash: |
         brew install gcc
         brew install swig
+        brew install python-dev
+        brew install python3-dev
       condition: contains(variables['image_name'], 'mac')
       displayName: 'Install toolchain on macOS'
     - bash: |
