@@ -8,6 +8,21 @@ endif()
 # Name of the project
 project (pc-ble-driver-py)
 
+# find_program(PYTHON_CONFIG NAMES python3.7-config)
+# exec_program(${PYTHON_CONFIG}
+#     ARGS "--includes"
+#     OUTPUT_VARIABLE PYTHON_CFLAGS)
+# exec_program(${PYTHON_CONFIG}
+#     ARGS "--ldflags"
+#     OUTPUT_VARIABLE PYTHON_LDFLAGS)
+
+
+# set(CMAKE_CXX_FLAGS "${PYTHON_CFLAGS}")
+# set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${PYTHON_LDFLAGS} -stdlib=libc++ -lc++abi")
+
+# find_package(PythonLibs 3.7 REQUIRED)
+find_package(PythonLibs)
+
 set(PC_BLE_DRIVER_PY_OUTDIR ${CMAKE_BINARY_DIR}/outdir)
 
 # There is no reason to compile more than two SoftDevice API versions
