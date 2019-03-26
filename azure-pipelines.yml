@@ -124,6 +124,18 @@ jobs:
       env: {
         VCPKG_ROOT: '$(Agent.HomeDirectory)/vcpkg',
       }
+      condition: not(contains(variables['image_name'], 'win'))
+      displayName: 'Build for Linux'
+    - bash: |
+        ls $(conda_root_win)/envs/python$(python_version)
+        export PATH=$(conda_root_win)/envs/python$(python_version):$PATH
+        export PYTHON_VERSION=$(python_version)
+        pip install -r requirements-dev.txt
+        python$(python_version) setup.py bdist_wheel --build-type Debug
+      env: {
+        VCPKG_ROOT: '$(Agent.HomeDirectory)/vcpkg',
+      }
+      condition: contains(variables['image_name'], 'win')
       displayName: 'Build for Linux'
 
 
