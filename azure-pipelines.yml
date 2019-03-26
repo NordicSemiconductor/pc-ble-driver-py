@@ -74,6 +74,9 @@ jobs:
     - script: |
         export PATH=$(Agent.HomeDirectory)/vcpkg:$PATH
         vcpkg install nrf-ble-driver:$(triplet)
+      env: {
+        VCPKG_ROOT: '$(Agent.HomeDirectory)/vcpkg',
+      }
       condition: contains(variables['image_name'], 'ubuntu')
       displayName: 'Install nrf-ble-driver for Linux'
     # Build
