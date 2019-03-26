@@ -9,37 +9,37 @@ jobs:
       npm_config_disturl: ''
     strategy:
       matrix:
-        linux_python_27:
-          image_name: 'ubuntu-16.04'
-          python_version: 2.7
-          python_arch: 'x64'
-          triplet: 'x64-linux'
-        linux_python_35:
-          image_name: 'ubuntu-16.04'
-          python_version: 3.5
-          python_arch: 'x64'
-          triplet: 'x64-linux'
-        linux_python_36:
-          image_name: 'ubuntu-16.04'
-          python_version: 3.6
-          python_arch: 'x64'
-          triplet: 'x64-linux'
-        linux_python_37:
-          image_name: 'ubuntu-16.04'
-          python_version: 3.7
-          python_arch: 'x64'
-          triplet: 'x64-linux'
-        mac_python_37:
+        # linux_python_27:
+        #   image_name: 'ubuntu-16.04'
+        #   python_version: 2.7
+        #   python_arch: 'x64'
+        #   triplet: 'x64-linux'
+        # linux_python_35:
+        #   image_name: 'ubuntu-16.04'
+        #   python_version: 3.5
+        #   python_arch: 'x64'
+        #   triplet: 'x64-linux'
+        # linux_python_36:
+        #   image_name: 'ubuntu-16.04'
+        #   python_version: 3.6
+        #   python_arch: 'x64'
+        #   triplet: 'x64-linux'
+        # linux_python_37:
+        #   image_name: 'ubuntu-16.04'
+        #   python_version: 3.7
+        #   python_arch: 'x64'
+        #   triplet: 'x64-linux'
+        mac_python_36:
           image_name: 'macos-10.13'
           python_version: 3.6
           python_arch: 'x64'
           triplet: 'x64-osx'
-        win64_python_37:
+        win64_python_36:
           image_name: 'vs2017-win2016'
           python_version: 3.6
           python_arch: 'x64'
           triplet: 'x64-windows'
-        win32_python_37:
+        win32_python_36:
           image_name: 'vs2017-win2016'
           python_version: 3.6
           python_arch: 'x86'
@@ -49,20 +49,27 @@ jobs:
     steps:
     # Install toolchain
     - script: |
-        # sudo add-apt-repository ppa:deadsnakes/ppa
         sudo apt-get update
         sudo apt-get install ninja-build
         sudo apt-get install swig
         sudo apt-get install libudev-dev
-        # sudo apt-get install python$(python_version)-dev
       condition: contains(variables['image_name'], 'ubuntu')
       displayName: 'Install toolchain on Linux'
+    - script: |
+        brew install gcc
+        brew install swig
+      condition: contains(variables['image_name'], 'mac')
+      displayName: 'Install toolchain on macOS'
+    - script: |
+        choco install -y --x86 swig
+      condition: contains(variables['image_name'], 'win')
+      displayName: 'Install toolchain on Windows'
     # Install python
     - bash: |
         wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -O $(Agent.HomeDirectory)/miniconda.sh
         bash $(Agent.HomeDirectory)/miniconda.sh -b -p $(Agent.HomeDirectory)/miniconda
         $(Agent.HomeDirectory)/miniconda/bin/conda create -yq -n python$(python_version) python=$(python_version)
-      condition: contains(variables['image_name'], 'ubuntu')
+      # condition: contains(variables['image_name'], 'ubuntu')
       displayName: 'Install Python $(python_version)'
     # Install vcpkg
     - script: |
@@ -89,16 +96,8 @@ jobs:
         VCPKG_ROOT: '$(Agent.HomeDirectory)/vcpkg',
       }
       condition: contains(variables['image_name'], 'ubuntu')
+      displayName: 'Build for Linux'
 
-    # - script: |
-    #     brew install gcc
-    #     brew install swig
-    #   condition: contains(variables['image_name'], 'mac')
-    #   displayName: 'Install toolchain on macOS'
-    # - script: |
-    #     choco install -y --x86 swig
-    #   condition: contains(variables['image_name'], 'win')
-    #   displayName: 'Install toolchain on Windows'
 
     # # Install nrf-ble-driver
     # - script: |
