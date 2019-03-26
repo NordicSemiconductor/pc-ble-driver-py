@@ -95,30 +95,30 @@ jobs:
         $(Agent.HomeDirectory)/vcpkg/bootstrap-vcpkg.sh
       condition: not(contains(variables['image_name'], 'win'))
       displayName: 'Install vcpkg for Linux'
-    - script: |
-        git clone https://github.com/NordicPlayground/vcpkg.git $(Agent.HomeDirectory)/vcpkg
-        $(Agent.HomeDirectory)\vcpkg\bootstrap-vcpkg.bat
-      condition: contains(variables['image_name'], 'win')
-      env: {
-        VCPKG_ROOT: '$(Agent.HomeDirectory)\vcpkg',
-      }
-      displayName: 'Install vcpkg for Windows'
+    # - script: |
+    #     git clone https://github.com/NordicPlayground/vcpkg.git $(Agent.HomeDirectory)/vcpkg
+    #     $(Agent.HomeDirectory)\vcpkg\bootstrap-vcpkg.bat
+    #   condition: contains(variables['image_name'], 'win')
+    #   env: {
+    #     VCPKG_ROOT: '$(Agent.HomeDirectory)\vcpkg',
+    #   }
+    #   displayName: 'Install vcpkg for Windows'
 
     # Install nrf-ble-driver
-    - bash: |
-        export PATH=$(Agent.HomeDirectory)/vcpkg:$PATH
-        export CC=clang
-        export CXX=clang++
-        vcpkg install nrf-ble-driver:$(triplet)
-      env: {
-        VCPKG_ROOT: '$(Agent.HomeDirectory)/vcpkg',
-      }
-      displayName: 'Install nrf-ble-driver'
+    # - bash: |
+    #     export PATH=$(Agent.HomeDirectory)/vcpkg:$PATH
+    #     vcpkg install nrf-ble-driver:$(triplet)
+    #   env: {
+    #     VCPKG_ROOT: '$(Agent.HomeDirectory)/vcpkg',
+    #   }
+    #   displayName: 'Install nrf-ble-driver'
 
     # Build
-    - bash: |
+    - script: |
         export PATH=$(Agent.HomeDirectory)/miniconda/envs/python$(python_version)/bin:$PATH
         export PYTHON_VERSION=$(python_version)
+        export CC=clang
+        export CXX=clang++
         pip install -r requirements-dev.txt
         python$(python_version) setup.py bdist_wheel --build-type Debug
       env: {
@@ -126,10 +126,14 @@ jobs:
       }
       condition: not(contains(variables['image_name'], 'win'))
       displayName: 'Build for Linux'
-    - bash: |
-        ls $(conda_root_win)/envs/python$(python_version)
-        export PATH=$(conda_root_win)/envs/python$(python_version):$PATH
-        export PYTHON_VERSION=$(python_version)
+    - script: |
+        echo "python dir"
+        dir $(conda_root_win)\envs\python$(python_version)
+        echo "python script"
+        dir $(conda_root_win)\envs\python$(python_version)\Scripts
+        echo "python end"
+        set PATH=$(conda_root_win)/envs/python$(python_version);%PATH%
+        set PYTHON_VERSION=$(python_version)
         pip install -r requirements-dev.txt
         python$(python_version) setup.py bdist_wheel --build-type Debug
       env: {
