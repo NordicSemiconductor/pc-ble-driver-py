@@ -40,10 +40,11 @@ jobs:
     #     architecture: $(python_arch)
     #   displayName: 'Install Python $(python_version)'
 
+    # Install python
     - bash: |
         wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -O $(Agent.HomeDirectory)/miniconda.sh
         bash $(Agent.HomeDirectory)/miniconda.sh -b -p $(Agent.HomeDirectory)/miniconda
-        $(Agent.HomeDirectory)/miniconda/bin/conda create -y -n python$(python_version) python=$(python_version)
+        $(Agent.HomeDirectory)/miniconda/bin/conda create -yq -n python$(python_version) python=$(python_version)
       condition: contains(variables['image_name'], 'ubuntu')
       displayName: 'Install Python $(python_version)'
     # Install toolchain
@@ -56,98 +57,124 @@ jobs:
         # sudo apt-get install python$(python_version)-dev
       condition: contains(variables['image_name'], 'ubuntu')
       displayName: 'Install toolchain on Linux'
-    - script: |
-        brew install gcc
-        brew install swig
-      condition: contains(variables['image_name'], 'mac')
-      displayName: 'Install toolchain on macOS'
-    - script: |
-        choco install -y --x86 swig
-      condition: contains(variables['image_name'], 'win')
-      displayName: 'Install toolchain on Windows'
-
-    # Install nrf-ble-driver
+    # Install vcpkg
     - script: |
         git clone https://github.com/NordicPlayground/vcpkg.git $(Agent.HomeDirectory)/vcpkg
         $(Agent.HomeDirectory)/vcpkg/bootstrap-vcpkg.sh
-      condition: not(contains(variables['image_name'], 'win'))
-      displayName: 'Install nrf-ble-driver for Linux or macOS'
+      condition: contains(variables['image_name'], 'ubuntu')
+      displayName: 'Install vcpkg for Linux'
+    # Install nrf-ble-driver
     - script: |
-        export PATH=$VCPKG_ROOT:$PATH
-        echo $PATH
-        echo $VCPKG_ROOT
         vcpkg install nrf-ble-driver:$(triplet)
-      condition: not(contains(variables['image_name'], 'win'))
+      condition: contains(variables['image_name'], 'ubuntu')
       env: {
         VCPKG_ROOT: '$(Agent.HomeDirectory)/vcpkg',
       }
-      displayName: 'Install nrf-ble-driver for Linux or macOS'
+      displayName: 'Install nrf-ble-driver for Linux'
     - script: |
-        git clone https://github.com/NordicPlayground/vcpkg.git $(Agent.HomeDirectory)/vcpkg
-        $(Agent.HomeDirectory)\vcpkg\bootstrap-vcpkg.bat
-      condition: contains(variables['image_name'], 'win')
-      env: {
-        VCPKG_ROOT: '$(Agent.HomeDirectory)\vcpkg',
-      }
-      displayName: 'Install nrf-ble-driver for Windows'
-    - script: |
-        set PATH=%VCPKG_ROOT%;%PATH%
-        echo %PATH%
-        echo %VCPKG_ROOT%
-        vcpkg install nrf-ble-driver:$(triplet)
-      condition: contains(variables['image_name'], 'win')
-      env: {
-        VCPKG_ROOT: '$(Agent.HomeDirectory)\vcpkg',
-      }
-      displayName: 'Install nrf-ble-driver for Windows'
-
-    # Build
-    - script: |
-        export PATH=$VCPKG_ROOT:$PATH
+        export PATH=$(Agent.HomeDirectory)/miniconda/envs/python$(python_version)/bin:$PATH
         echo $PATH
         echo $VCPKG_ROOT
-        vcpkg list
-        python -V
-        p_v=`which python`
-        p_d=`dirname $p_v`
-        echo ls p_d
-        ls $p_d
-        echo ls p_d/bin
-        ls $p_d/bin
-        python-config --includes
-        pip install -r requirements-dev.txt
-        python setup.py bdist_wheel --build-type Debug
+        python$(python_version)-config --includes
+        pip$(python_version) install -r requirements-dev.txt
+        python$(python_version) setup.py bdist_wheel --build-type Debug
       env: {
         VCPKG_ROOT: '$(Agent.HomeDirectory)/vcpkg',
       }
       condition: contains(variables['image_name'], 'ubuntu')
-      displayName: 'Build'
-    - script: |
-        export PATH=$VCPKG_ROOT:$PATH
-        echo $PATH
-        echo $VCPKG_ROOT
-        vcpkg list
-        python -V
-        pip install -r requirements-dev.txt
-        python setup.py bdist_wheel --build-type Debug
-      env: {
-        VCPKG_ROOT: '$(Agent.HomeDirectory)/vcpkg',
-      }
-      condition: contains(variables['image_name'], 'mac')
-      displayName: 'Build'
-    - script: |
-        set PATH=%VCPKG_ROOT%;%PATH%
-        echo %PATH%
-        echo %VCPKG_ROOT%
-        vcpkg list
-        python -V
-        pip install -r requirements-dev.txt
-        python setup.py bdist_wheel --build-type Debug
-      env: {
-        VCPKG_ROOT: '$(Agent.HomeDirectory)\vcpkg',
-      }
-      condition: contains(variables['image_name'], 'win')
-      displayName: 'Build'
+
+    # - script: |
+    #     brew install gcc
+    #     brew install swig
+    #   condition: contains(variables['image_name'], 'mac')
+    #   displayName: 'Install toolchain on macOS'
+    # - script: |
+    #     choco install -y --x86 swig
+    #   condition: contains(variables['image_name'], 'win')
+    #   displayName: 'Install toolchain on Windows'
+
+    # # Install nrf-ble-driver
+    # - script: |
+    #     git clone https://github.com/NordicPlayground/vcpkg.git $(Agent.HomeDirectory)/vcpkg
+    #     $(Agent.HomeDirectory)/vcpkg/bootstrap-vcpkg.sh
+    #   condition: not(contains(variables['image_name'], 'win'))
+    #   displayName: 'Install nrf-ble-driver for Linux or macOS'
+    # - script: |
+    #     export PATH=$VCPKG_ROOT:$PATH
+    #     echo $PATH
+    #     echo $VCPKG_ROOT
+    #     vcpkg install nrf-ble-driver:$(triplet)
+    #   condition: not(contains(variables['image_name'], 'win'))
+    #   env: {
+    #     VCPKG_ROOT: '$(Agent.HomeDirectory)/vcpkg',
+    #   }
+    #   displayName: 'Install nrf-ble-driver for Linux or macOS'
+    # - script: |
+    #     git clone https://github.com/NordicPlayground/vcpkg.git $(Agent.HomeDirectory)/vcpkg
+    #     $(Agent.HomeDirectory)\vcpkg\bootstrap-vcpkg.bat
+    #   condition: contains(variables['image_name'], 'win')
+    #   env: {
+    #     VCPKG_ROOT: '$(Agent.HomeDirectory)\vcpkg',
+    #   }
+    #   displayName: 'Install nrf-ble-driver for Windows'
+    # - script: |
+    #     set PATH=%VCPKG_ROOT%;%PATH%
+    #     echo %PATH%
+    #     echo %VCPKG_ROOT%
+    #     vcpkg install nrf-ble-driver:$(triplet)
+    #   condition: contains(variables['image_name'], 'win')
+    #   env: {
+    #     VCPKG_ROOT: '$(Agent.HomeDirectory)\vcpkg',
+    #   }
+    #   displayName: 'Install nrf-ble-driver for Windows'
+
+    # Build
+    # - script: |
+    #     export PATH=$VCPKG_ROOT:$PATH
+    #     echo $PATH
+    #     echo $VCPKG_ROOT
+    #     vcpkg list
+    #     python -V
+    #     p_v=`which python`
+    #     p_d=`dirname $p_v`
+    #     echo ls p_d
+    #     ls $p_d
+    #     echo ls p_d/bin
+    #     ls $p_d/bin
+    #     python-config --includes
+    #     pip install -r requirements-dev.txt
+    #     python setup.py bdist_wheel --build-type Debug
+    #   env: {
+    #     VCPKG_ROOT: '$(Agent.HomeDirectory)/vcpkg',
+    #   }
+    #   condition: contains(variables['image_name'], 'ubuntu')
+    #   displayName: 'Build'
+    # - script: |
+    #     export PATH=$VCPKG_ROOT:$PATH
+    #     echo $PATH
+    #     echo $VCPKG_ROOT
+    #     vcpkg list
+    #     python -V
+    #     pip install -r requirements-dev.txt
+    #     python setup.py bdist_wheel --build-type Debug
+    #   env: {
+    #     VCPKG_ROOT: '$(Agent.HomeDirectory)/vcpkg',
+    #   }
+    #   condition: contains(variables['image_name'], 'mac')
+    #   displayName: 'Build'
+    # - script: |
+    #     set PATH=%VCPKG_ROOT%;%PATH%
+    #     echo %PATH%
+    #     echo %VCPKG_ROOT%
+    #     vcpkg list
+    #     python -V
+    #     pip install -r requirements-dev.txt
+    #     python setup.py bdist_wheel --build-type Debug
+    #   env: {
+    #     VCPKG_ROOT: '$(Agent.HomeDirectory)\vcpkg',
+    #   }
+    #   condition: contains(variables['image_name'], 'win')
+    #   displayName: 'Build'
     # - bash: |
     #     cp -R build/stage/**/*.tar.gz "$(Build.ArtifactStagingDirectory)"
     #   displayName: 'Copy artifacts'
