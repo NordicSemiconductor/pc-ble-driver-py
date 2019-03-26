@@ -4,7 +4,7 @@ trigger:
 jobs:
   - job: Build
     variables:
-      conda_root_win: 'C:\tools\miniconda3'
+      conda_root_win: '/C/tools/miniconda3'
       conda_root_unix: '$(Agent.HomeDirectory)/miniconda'
     strategy:
       matrix:
@@ -77,15 +77,8 @@ jobs:
         $(conda_root_unix)/bin/conda create -yq -n python$(python_version) python=$(python_version)
       condition: not(contains(variables['image_name'], 'win'))
       displayName: 'Install Python $(python_version)'
-    - script: |
-        echo "conda root path"
-        dir $(conda_root_win)
-        echo "conda bin path"
-        dir $(conda_root_win)\bin
-        echo "conda script path"
-        dir $(conda_root_win)\Scripts
-        echo "conda dir end"
-        $(conda_root_win)\Scripts\conda.exe create -yq -n python$(python_version) python=$(python_version)
+    - bash: |
+        $(conda_root_win)/Scripts/conda create -yq -n python$(python_version) python=$(python_version)
       condition: contains(variables['image_name'], 'win')
       displayName: 'Install Python $(python_version)'
 
@@ -120,27 +113,22 @@ jobs:
         export CC=clang
         export CXX=clang++
         pip install -r requirements-dev.txt
-        python setup.py bdist_wheel --build-type Debug
+        python$ setup.py bdist_wheel --build-type Debug
       env: {
         VCPKG_ROOT: '$(Agent.HomeDirectory)/vcpkg',
       }
       condition: not(contains(variables['image_name'], 'win'))
       displayName: 'Build for Linux'
-    - script: |
-        echo "python dir"
-        dir $(conda_root_win)\envs\python$(python_version)
-        echo "python script"
-        dir $(conda_root_win)\envs\python$(python_version)\Scripts
-        echo "python end"
-        set PATH=$(conda_root_win)\envs\python$(python_version);$(conda_root_win)\envs\python$(python_version)\Scripts;%PATH%
-        set PYTHON_VERSION=$(python_version)
+    - bash: |
+        export PATH=$(conda_root_win)/envs/python$(python_version):$(conda_root_win)/envs/python$(python_version)/Scripts:$PATH
+        export PYTHON_VERSION=$(python_version)
         pip install -r requirements-dev.txt
         python setup.py bdist_wheel --build-type Debug
       env: {
         VCPKG_ROOT: '$(Agent.HomeDirectory)/vcpkg',
       }
       condition: contains(variables['image_name'], 'win')
-      displayName: 'Build for Linux'
+      displayName: 'Build for Windows'
 
 
     # # Install nrf-ble-driver
