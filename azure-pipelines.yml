@@ -102,6 +102,9 @@ jobs:
         echo $VCPKG_ROOT
         vcpkg list
         python -V
+        p_v=`which python`
+        p_d=`dirname $p_v`
+        ls $p_d
         python-config --includes
         pip install -r requirements-dev.txt
         python setup.py bdist_wheel --build-type Debug
