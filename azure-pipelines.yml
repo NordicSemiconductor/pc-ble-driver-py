@@ -6,6 +6,7 @@ jobs:
     variables:
       conda_root_win: '/C/tools/miniconda3'
       conda_root_unix: '$(Agent.HomeDirectory)/miniconda'
+      ninja_root_win: '/C/ProgramData/chocolatey/lib/ninja/tools'
     strategy:
       matrix:
         # linux_python_27:
@@ -121,7 +122,8 @@ jobs:
       condition: not(contains(variables['image_name'], 'win'))
       displayName: 'Build for Linux'
     - bash: |
-        export PATH=$(conda_root_win)/envs/python$(python_version):$(conda_root_win)/envs/python$(python_version)/Scripts:$PATH
+        find $(ninja_root_win)
+        export PATH=$(conda_root_win)/envs/python$(python_version):$(conda_root_win)/envs/python$(python_version)/Scripts:$(ninja_root_win):$PATH
         export PYTHON_VERSION=$(python_version)
         pip install -r requirements-dev.txt
         python setup.py bdist_wheel --build-type Debug
