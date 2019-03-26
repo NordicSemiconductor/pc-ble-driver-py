@@ -72,7 +72,7 @@ jobs:
       displayName: 'Install vcpkg for Linux'
     # Install nrf-ble-driver
     - script: |
-        $(Agent.HomeDirectory)/vcpkg install nrf-ble-driver:$(triplet)
+        $(Agent.HomeDirectory)/vcpkg/vcpkg install nrf-ble-driver:$(triplet)
       condition: contains(variables['image_name'], 'ubuntu')
       displayName: 'Install nrf-ble-driver for Linux'
     # Build
