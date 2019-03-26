@@ -69,6 +69,7 @@ jobs:
     - script: |
         choco install -y --x86 swig
         choco install -y miniconda3
+        choco install -y ninja
       condition: contains(variables['image_name'], 'win')
       displayName: 'Install toolchain on Windows'
 
