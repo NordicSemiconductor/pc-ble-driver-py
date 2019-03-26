@@ -33,12 +33,12 @@ jobs:
       vmImage: $(image_name)
     steps:
     # Install python
-    - task: UsePythonVersion@0
-      inputs:
-        versionSpec: $(python_version)
-        addToPath: true
-        architecture: $(python_arch)
-      displayName: 'Install Python $(python_version)'
+    # - task: UsePythonVersion@0
+    #   inputs:
+    #     versionSpec: $(python_version)
+    #     addToPath: true
+    #     architecture: $(python_arch)
+    #   displayName: 'Install Python $(python_version)'
 
     # Install toolchain
     - script: |
