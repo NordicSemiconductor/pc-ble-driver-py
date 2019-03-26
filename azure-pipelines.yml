@@ -43,7 +43,7 @@ jobs:
     - bash: |
         wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -O $(Agent.HomeDirectory)/miniconda.sh
         bash $(Agent.HomeDirectory)/miniconda.sh -b -p $(Agent.HomeDirectory)/miniconda
-        $(Agent.HomeDirectory)/miniconda/conda create -y -n python$(python_version) python=$(python_version)
+        $(Agent.HomeDirectory)/miniconda/bin/conda create -y -n python$(python_version) python=$(python_version)
       condition: contains(variables['image_name'], 'ubuntu')
       displayName: 'Install Python $(python_version)'
     # Install toolchain
