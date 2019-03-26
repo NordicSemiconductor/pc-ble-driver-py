@@ -85,7 +85,7 @@ jobs:
         echo "conda script path"
         dir $(conda_root_win)\Scripts
         echo "conda dir end"
-        $(conda_root_win)\bin\conda.exe create -yq -n python$(python_version) python=$(python_version)
+        $(conda_root_win)\Scripts\conda.exe create -yq -n python$(python_version) python=$(python_version)
       condition: contains(variables['image_name'], 'win')
       displayName: 'Install Python $(python_version)'
 
