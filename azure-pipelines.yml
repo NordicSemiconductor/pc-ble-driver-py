@@ -95,14 +95,12 @@ jobs:
       }
       displayName: 'Install nrf-ble-driver for Windows'
 
-    - bash: |
-        cd $(Agent.HomeDirectory)/vcpkg/packages/
-        find .
-
     # Build
     - script: |
+        export PATH=$VCPKG_ROOT:$PATH
         echo $PATH
         echo $VCPKG_ROOT
+        vcpkg list
         python -V
         pip install -r requirements-dev.txt
         python setup.py bdist_wheel --build-type Debug
@@ -112,8 +110,10 @@ jobs:
       condition: contains(variables['image_name'], 'ubuntu')
       displayName: 'Build'
     - script: |
+        export PATH=$VCPKG_ROOT:$PATH
         echo $PATH
         echo $VCPKG_ROOT
+        vcpkg list
         python -V
         pip install -r requirements-dev.txt
         python setup.py bdist_wheel --build-type Debug
@@ -123,8 +123,10 @@ jobs:
       condition: contains(variables['image_name'], 'mac')
       displayName: 'Build'
     - script: |
+        set PATH=%VCPKG_ROOT%;%PATH%
         echo %PATH%
         echo %VCPKG_ROOT%
+        vcpkg list
         python -V
         pip install -r requirements-dev.txt
         python setup.py bdist_wheel --build-type Debug
