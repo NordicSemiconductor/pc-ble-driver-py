@@ -9,8 +9,7 @@ endif()
 project (pc-ble-driver-py)
 
 if(DEFINED ENV{PYTHON_VERSION})
-    # find_program(PYTHON_CONFIG NAMES python${PYTHON_VERSION}-config)
-    find_program(PYTHON_CONFIG NAMES python3.6-config)
+    find_program(PYTHON_CONFIG NAMES "python$ENV{PYTHON_VERSION}-config")
     exec_program(${PYTHON_CONFIG}
         ARGS "--includes"
         OUTPUT_VARIABLE PYTHON_CFLAGS)
@@ -20,10 +19,10 @@ if(DEFINED ENV{PYTHON_VERSION})
 
     set(CMAKE_CXX_FLAGS "${PYTHON_CFLAGS}")
     set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${PYTHON_LDFLAGS} -stdlib=libc++ -lc++abi")
-endif()
 
-# find_package(PythonLibs 3.7 REQUIRED)
-# find_package(PythonLibs REQUIRED)
+else()
+    find_package(PythonLibs REQUIRED)
+endif()
 
 set(PC_BLE_DRIVER_PY_OUTDIR ${CMAKE_BINARY_DIR}/outdir)
 

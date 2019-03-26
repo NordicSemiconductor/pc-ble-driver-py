@@ -9,9 +9,24 @@ jobs:
       npm_config_disturl: ''
     strategy:
       matrix:
-        linux_python_37:
+        linux_python_27:
+          image_name: 'ubuntu-16.04'
+          python_version: 2.7
+          python_arch: 'x64'
+          triplet: 'x64-linux'
+        linux_python_35:
+          image_name: 'ubuntu-16.04'
+          python_version: 3.5
+          python_arch: 'x64'
+          triplet: 'x64-linux'
+        linux_python_36:
           image_name: 'ubuntu-16.04'
           python_version: 3.6
+          python_arch: 'x64'
+          triplet: 'x64-linux'
+        linux_python_37:
+          image_name: 'ubuntu-16.04'
+          python_version: 3.7
           python_arch: 'x64'
           triplet: 'x64-linux'
         mac_python_37:
@@ -32,14 +47,6 @@ jobs:
     pool:
       vmImage: $(image_name)
     steps:
-    # Install python
-    # - task: UsePythonVersion@0
-    #   inputs:
-    #     versionSpec: $(python_version)
-    #     addToPath: true
-    #     architecture: $(python_arch)
-    #   displayName: 'Install Python $(python_version)'
-
     # Install toolchain
     - script: |
         # sudo add-apt-repository ppa:deadsnakes/ppa
@@ -65,17 +72,13 @@ jobs:
       displayName: 'Install vcpkg for Linux'
     # Install nrf-ble-driver
     - script: |
-        vcpkg install nrf-ble-driver:$(triplet)
+        $(Agent.HomeDirectory)/vcpkg install nrf-ble-driver:$(triplet)
       condition: contains(variables['image_name'], 'ubuntu')
-      env: {
-        VCPKG_ROOT: '$(Agent.HomeDirectory)/vcpkg',
-      }
       displayName: 'Install nrf-ble-driver for Linux'
+    # Build
     - script: |
         export PATH=$(Agent.HomeDirectory)/miniconda/envs/python$(python_version)/bin:$PATH
-        echo $PATH
-        echo $VCPKG_ROOT
-        python$(python_version)-config --includes
+        export PYTHON_VERSION=$(python_version)
         pip install -r requirements-dev.txt
         python$(python_version) setup.py bdist_wheel --build-type Debug
       env: {
