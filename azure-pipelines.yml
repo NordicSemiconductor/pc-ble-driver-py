@@ -101,9 +101,9 @@ jobs:
         echo $PATH
         echo $VCPKG_ROOT
         vcpkg list
-        python -V
+        python3 -V
         pip install -r requirements-dev.txt
-        python setup.py bdist_wheel --build-type Debug
+        python3 setup.py bdist_wheel --build-type Debug
       env: {
         VCPKG_ROOT: '$(Agent.HomeDirectory)/vcpkg',
       }
