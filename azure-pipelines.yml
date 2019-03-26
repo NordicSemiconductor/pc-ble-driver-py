@@ -113,7 +113,7 @@ jobs:
         export CC=clang
         export CXX=clang++
         pip install -r requirements-dev.txt
-        python$ setup.py bdist_wheel --build-type Debug
+        python setup.py bdist_wheel --build-type Debug
       env: {
         VCPKG_ROOT: '$(Agent.HomeDirectory)/vcpkg',
       }
@@ -125,7 +125,7 @@ jobs:
         pip install -r requirements-dev.txt
         python setup.py bdist_wheel --build-type Debug
       env: {
-        VCPKG_ROOT: '$(Agent.HomeDirectory)/vcpkg',
+        VCPKG_ROOT: '/C/agents/2.148.2/vcpkg',
       }
       condition: contains(variables['image_name'], 'win')
       displayName: 'Build for Windows'
