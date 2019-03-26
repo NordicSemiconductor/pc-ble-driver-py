@@ -32,22 +32,22 @@ jobs:
     pool:
       vmImage: $(image_name)
     steps:
-    # Install python
-    # - task: UsePythonVersion@0
-    #   inputs:
-    #     versionSpec: $(python_version)
-    #     addToPath: true
-    #     architecture: $(python_arch)
-    #   displayName: 'Install Python $(python_version)'
+    Install python
+    - task: UsePythonVersion@0
+      inputs:
+        versionSpec: $(python_version)
+        addToPath: true
+        architecture: $(python_arch)
+      displayName: 'Install Python $(python_version)'
 
     # Install toolchain
     - script: |
-        sudo add-apt-repository ppa:deadsnakes/ppa
+        # sudo add-apt-repository ppa:deadsnakes/ppa
         sudo apt-get update
         sudo apt-get install ninja-build
         sudo apt-get install swig
         sudo apt-get install libudev-dev
-        sudo apt-get install python$(python_version)-dev
+        # sudo apt-get install python$(python_version)-dev
       condition: contains(variables['image_name'], 'ubuntu')
       displayName: 'Install toolchain on Linux'
     - script: |
@@ -101,9 +101,10 @@ jobs:
         echo $PATH
         echo $VCPKG_ROOT
         vcpkg list
-        python3 -V
+        python -V
+        python-config --includes
         pip install -r requirements-dev.txt
-        python3 setup.py bdist_wheel --build-type Debug
+        python setup.py bdist_wheel --build-type Debug
       env: {
         VCPKG_ROOT: '$(Agent.HomeDirectory)/vcpkg',
       }
