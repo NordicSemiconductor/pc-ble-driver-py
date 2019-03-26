@@ -120,7 +120,7 @@ jobs:
         export CC=clang
         export CXX=clang++
         pip install -r requirements-dev.txt
-        python$(python_version) setup.py bdist_wheel --build-type Debug
+        python setup.py bdist_wheel --build-type Debug
       env: {
         VCPKG_ROOT: '$(Agent.HomeDirectory)/vcpkg',
       }
@@ -132,10 +132,10 @@ jobs:
         echo "python script"
         dir $(conda_root_win)\envs\python$(python_version)\Scripts
         echo "python end"
-        set PATH=$(conda_root_win)/envs/python$(python_version);%PATH%
+        set PATH=$(conda_root_win)\envs\python$(python_version);$(conda_root_win)\envs\python$(python_version)\Scripts;%PATH%
         set PYTHON_VERSION=$(python_version)
         pip install -r requirements-dev.txt
-        python$(python_version) setup.py bdist_wheel --build-type Debug
+        python setup.py bdist_wheel --build-type Debug
       env: {
         VCPKG_ROOT: '$(Agent.HomeDirectory)/vcpkg',
       }
