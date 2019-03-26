@@ -20,12 +20,12 @@ jobs:
         #   python_arch: 'x64'
         #   conda_version: 'Linux-x86_64'
         #   triplet: 'x64-linux'
-        # linux_python_36:
-        #   image_name: 'ubuntu-16.04'
-        #   python_version: 3.6
-        #   python_arch: 'x64'
-        #   conda_version: 'Linux-x86_64'
-        #   triplet: 'x64-linux'
+        linux_python_36:
+          image_name: 'ubuntu-16.04'
+          python_version: 3.6
+          python_arch: 'x64'
+          conda_version: 'Linux-x86_64'
+          triplet: 'x64-linux'
         # linux_python_37:
         #   image_name: 'ubuntu-16.04'
         #   python_version: 3.7
@@ -78,7 +78,7 @@ jobs:
       condition: not(contains(variables['image_name'], 'win'))
       displayName: 'Install Python $(python_version)'
     - script: |
-        $(conda_root_win)\bin\conda create -yq -n python$(python_version) python=$(python_version)
+        $(conda_root_win)\bin\conda.exe create -yq -n python$(python_version) python=$(python_version)
       condition: contains(variables['image_name'], 'win')
       displayName: 'Install Python $(python_version)'
 
