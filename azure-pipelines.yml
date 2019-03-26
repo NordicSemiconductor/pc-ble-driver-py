@@ -95,6 +95,10 @@ jobs:
       }
       displayName: 'Install nrf-ble-driver for Windows'
 
+    - bash: |
+        cd $(Agent.HomeDirectory)/vcpkg/packages/
+        find .
+
     # Build
     - script: |
         echo $PATH
