@@ -104,7 +104,10 @@ jobs:
         python -V
         p_v=`which python`
         p_d=`dirname $p_v`
+        echo ls p_d
         ls $p_d
+        echo ls p_d/bin
+        ls $p_d/bin
         python-config --includes
         pip install -r requirements-dev.txt
         python setup.py bdist_wheel --build-type Debug
