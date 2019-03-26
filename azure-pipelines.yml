@@ -78,6 +78,8 @@ jobs:
       condition: not(contains(variables['image_name'], 'win'))
       displayName: 'Install Python $(python_version)'
     - script: |
+        dir $(conda_root_win)
+        dir $(conda_root_win)\bin
         $(conda_root_win)\bin\conda.exe create -yq -n python$(python_version) python=$(python_version)
       condition: contains(variables['image_name'], 'win')
       displayName: 'Install Python $(python_version)'
