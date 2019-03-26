@@ -40,13 +40,6 @@ jobs:
     #     architecture: $(python_arch)
     #   displayName: 'Install Python $(python_version)'
 
-    # Install python
-    - bash: |
-        wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -O $(Agent.HomeDirectory)/miniconda.sh
-        bash $(Agent.HomeDirectory)/miniconda.sh -b -p $(Agent.HomeDirectory)/miniconda
-        $(Agent.HomeDirectory)/miniconda/bin/conda create -yq -n python$(python_version) python=$(python_version)
-      condition: contains(variables['image_name'], 'ubuntu')
-      displayName: 'Install Python $(python_version)'
     # Install toolchain
     - script: |
         # sudo add-apt-repository ppa:deadsnakes/ppa
@@ -57,6 +50,13 @@ jobs:
         # sudo apt-get install python$(python_version)-dev
       condition: contains(variables['image_name'], 'ubuntu')
       displayName: 'Install toolchain on Linux'
+    # Install python
+    - bash: |
+        wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -O $(Agent.HomeDirectory)/miniconda.sh
+        bash $(Agent.HomeDirectory)/miniconda.sh -b -p $(Agent.HomeDirectory)/miniconda
+        $(Agent.HomeDirectory)/miniconda/bin/conda create -yq -n python$(python_version) python=$(python_version)
+      condition: contains(variables['image_name'], 'ubuntu')
+      displayName: 'Install Python $(python_version)'
     # Install vcpkg
     - script: |
         git clone https://github.com/NordicPlayground/vcpkg.git $(Agent.HomeDirectory)/vcpkg
@@ -76,7 +76,7 @@ jobs:
         echo $PATH
         echo $VCPKG_ROOT
         python$(python_version)-config --includes
-        pip$(python_version) install -r requirements-dev.txt
+        pip install -r requirements-dev.txt
         python$(python_version) setup.py bdist_wheel --build-type Debug
       env: {
         VCPKG_ROOT: '$(Agent.HomeDirectory)/vcpkg',
