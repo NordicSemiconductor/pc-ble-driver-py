@@ -33,13 +33,19 @@ jobs:
       vmImage: $(image_name)
     steps:
     # Install python
-    - task: UsePythonVersion@0
-      inputs:
-        versionSpec: $(python_version)
-        addToPath: true
-        architecture: $(python_arch)
-      displayName: 'Install Python $(python_version)'
+    # - task: UsePythonVersion@0
+    #   inputs:
+    #     versionSpec: $(python_version)
+    #     addToPath: true
+    #     architecture: $(python_arch)
+    #   displayName: 'Install Python $(python_version)'
 
+    - bash: |
+        wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -O /miniconda.sh
+        bash /miniconda.sh -b -p $(Agent.HomeDirectory)/miniconda
+        $(Agent.HomeDirectory)/miniconda/conda create -y -n python$(python_version) python=$(python_version)
+      condition: contains(variables['image_name'], 'ubuntu')
+      displayName: 'Install python on Linux'
     # Install toolchain
     - script: |
         # sudo add-apt-repository ppa:deadsnakes/ppa
