@@ -13,26 +13,31 @@ jobs:
         #   image_name: 'ubuntu-16.04'
         #   python_version: 2.7
         #   python_arch: 'x64'
+        #   conda_version: 'Linux-x86_64'
         #   triplet: 'x64-linux'
         # linux_python_35:
         #   image_name: 'ubuntu-16.04'
         #   python_version: 3.5
         #   python_arch: 'x64'
+        #   conda_version: 'Linux-x86_64'
         #   triplet: 'x64-linux'
         # linux_python_36:
         #   image_name: 'ubuntu-16.04'
         #   python_version: 3.6
         #   python_arch: 'x64'
+        #   conda_version: 'Linux-x86_64'
         #   triplet: 'x64-linux'
         # linux_python_37:
         #   image_name: 'ubuntu-16.04'
         #   python_version: 3.7
         #   python_arch: 'x64'
+        #   conda_version: 'Linux-x86_64'
         #   triplet: 'x64-linux'
         mac_python_36:
           image_name: 'macos-10.13'
           python_version: 3.6
           python_arch: 'x64'
+          conda_version: 'MacOSX-x86_64'
           triplet: 'x64-osx'
         win64_python_36:
           image_name: 'vs2017-win2016'
@@ -60,16 +65,20 @@ jobs:
         brew install swig
       condition: contains(variables['image_name'], 'mac')
       displayName: 'Install toolchain on macOS'
+    - bash: |
+        wget https://repo.anaconda.com/miniconda/Miniconda3-latest-$(conda_version).sh -O $(Agent.HomeDirectory)/miniconda.sh
+        bash $(Agent.HomeDirectory)/miniconda.sh -b -p $(Agent.HomeDirectory)/miniconda
+      condition: not(contains(variables['image_name'], 'win'))
+      displayName: 'Install conda'
     - script: |
         choco install -y --x86 swig
+        choco install -y miniconda3
       condition: contains(variables['image_name'], 'win')
       displayName: 'Install toolchain on Windows'
     # Install python
     - bash: |
-        wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -O $(Agent.HomeDirectory)/miniconda.sh
-        bash $(Agent.HomeDirectory)/miniconda.sh -b -p $(Agent.HomeDirectory)/miniconda
         $(Agent.HomeDirectory)/miniconda/bin/conda create -yq -n python$(python_version) python=$(python_version)
-      # condition: contains(variables['image_name'], 'ubuntu')
+      condition: not(contains(variables['image_name'], 'win'))
       displayName: 'Install Python $(python_version)'
     # Install vcpkg
     - script: |
