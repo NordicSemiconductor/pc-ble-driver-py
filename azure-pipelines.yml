@@ -32,7 +32,7 @@ jobs:
     pool:
       vmImage: $(image_name)
     steps:
-    Install python
+    # Install python
     - task: UsePythonVersion@0
       inputs:
         versionSpec: $(python_version)
