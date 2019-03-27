@@ -116,9 +116,6 @@ jobs:
         $(conda_root)\Scripts\conda create -yq -n python$(python_version) python=$(python_version)
       displayName: 'Install Python $(python_version)'
     - script: |
-        $(conda_root)\Scripts\activate python$(python_version)
-      displayName: 'Activate Python $(python_version)'
-    - script: |
         git clone https://github.com/NordicPlayground/vcpkg.git $(vcpkg_root)
         $(vcpkg_root)\bootstrap-vcpkg.bat
       env: {
@@ -132,16 +129,13 @@ jobs:
         VCPKG_ROOT: '$(vcpkg_root)',
       }
       displayName: 'Install nrf-ble-driver'
-    - bash: |
-        find $(ninja_root_win)
-        export PATH=$(conda_root_win)/envs/python$(python_version):$(conda_root_win)/envs/python$(python_version)/Scripts:$(ninja_root_win):$PATH
-        export PYTHON_VERSION=$(python_version)
+    - script: |
+        $(conda_root)\Scripts\activate python$(python_version)
         pip install -r requirements-dev.txt
         python setup.py bdist_wheel --build-type Debug
       env: {
-        VCPKG_ROOT: '/C/agents/2.148.2/vcpkg',
+        VCPKG_ROOT: '$(vcpkg_root)',
       }
-      condition: contains(variables['image_name'], 'win')
       displayName: 'Build for Windows'
 
 
