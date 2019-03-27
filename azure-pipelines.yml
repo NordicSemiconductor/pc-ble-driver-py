@@ -110,7 +110,7 @@ jobs:
     - script: |
         choco install -y --x86 swig
         choco install -y ninja
-        choco install -y miniconda3 --params="'/AddToPath:1''/D:$(conda_root)'"
+        choco install -y miniconda3 --params="'/D:$(conda_root)'"
       displayName: 'Install toolchain on Windows'
     - script: |
         $(conda_root)\Scripts\conda create -yq -n python$(python_version) python=$(python_version)
