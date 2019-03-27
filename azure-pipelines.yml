@@ -128,12 +128,13 @@ jobs:
         $(conda_root)\Scripts\activate python$(python_version)
       displayName: 'Build for Windows'
     - script: |
+        echo %VCPKG_ROOT%
         pip install -r requirements-dev.txt
         python setup.py bdist_wheel --build-type Debug
       env: {
         VCPKG_ROOT: '$(vcpkg_root)',
       }
-      displayName: 'Build for Windows'
+      displayName: 'Build'
 
 
 
