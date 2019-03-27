@@ -131,6 +131,8 @@ jobs:
       displayName: 'Install nrf-ble-driver'
     - script: |
         $(conda_root)\Scripts\activate python$(python_version)
+      displayName: 'Build for Windows'
+    - script: |
         pip install -r requirements-dev.txt
         python setup.py bdist_wheel --build-type Debug
       env: {
