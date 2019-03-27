@@ -92,6 +92,7 @@ jobs:
   - job: Windows_Build
     variables:
       conda_root: '$(Agent.HomeDirectory)\miniconda3'
+      vcpkg_root: '$(Agent.HomeDirectory)\vcpkg'
     strategy:
       matrix:
         win64_python_36:
@@ -112,28 +113,25 @@ jobs:
         choco install -y miniconda3 --params="'/AddToPath:1''/D:$(conda_root)'"
       displayName: 'Install toolchain on Windows'
     - script: |
-        $(conda_root_win)\Scripts\conda create -yq -n python$(python_version) python=$(python_version)
+        $(conda_root)\Scripts\conda create -yq -n python$(python_version) python=$(python_version)
       displayName: 'Install Python $(python_version)'
     - script: |
-        $(conda_root_win)\Scripts\activate python$(python_version)
-      displayName: 'Install Python $(python_version)'
-    # - script: |
-    #     git clone https://github.com/NordicPlayground/vcpkg.git $(Agent.HomeDirectory)/vcpkg
-    #     $(Agent.HomeDirectory)\vcpkg\bootstrap-vcpkg.bat
-    #   condition: contains(variables['image_name'], 'win')
-    #   env: {
-    #     VCPKG_ROOT: '$(Agent.HomeDirectory)\vcpkg',
-    #   }
-    #   displayName: 'Install vcpkg for Windows'
-
-    # Install nrf-ble-driver
-    # - bash: |
-    #     export PATH=$(Agent.HomeDirectory)/vcpkg:$PATH
-    #     vcpkg install nrf-ble-driver:$(triplet)
-    #   env: {
-    #     VCPKG_ROOT: '$(Agent.HomeDirectory)/vcpkg',
-    #   }
-    #   displayName: 'Install nrf-ble-driver'
+        $(conda_root)\Scripts\activate python$(python_version)
+      displayName: 'Activate Python $(python_version)'
+    - script: |
+        git clone https://github.com/NordicPlayground/vcpkg.git $(vcpkg_root)
+        $(vcpkg_root)\bootstrap-vcpkg.bat
+      env: {
+        VCPKG_ROOT: '$(vcpkg_root)',
+      }
+      displayName: 'Install vcpkg'
+    - script: |
+        set PATH=$(vcpkg_root);%PATH%
+        vcpkg install nrf-ble-driver:$(triplet)
+      env: {
+        VCPKG_ROOT: '$(vcpkg_root)',
+      }
+      displayName: 'Install nrf-ble-driver'
     - bash: |
         find $(ninja_root_win)
         export PATH=$(conda_root_win)/envs/python$(python_version):$(conda_root_win)/envs/python$(python_version)/Scripts:$(ninja_root_win):$PATH
