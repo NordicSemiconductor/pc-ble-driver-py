@@ -157,6 +157,7 @@ jobs:
       displayName: 'Install nrf-ble-driver'
     - script: |
         set PYTHON_VERSION=
+        call "C:\Program Files (x86)\Microsoft Visual Studio\2017\Enterprise\Common7\tools\vsdevcmd.bat" -vcvars_ver=14.0  -arch=$(python_arch)
         call $(conda_root)\Scripts\activate python$(python_version)
         pip install -r requirements-dev.txt
         python setup.py bdist_wheel --build-type Debug
