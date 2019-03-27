@@ -61,7 +61,7 @@ jobs:
       displayName: 'Build'
 
   # macOS
-  - job: Windows_Build
+  - job: macOS_Build
     variables:
       conda_version: 'MacOSX-x86_64'
       conda_root: '$(Agent.HomeDirectory)\miniconda3'
