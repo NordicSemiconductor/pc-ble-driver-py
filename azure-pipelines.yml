@@ -4,9 +4,11 @@ trigger:
 jobs:
   - job: Linux_Build
     variables:
-      conda_root_win: '$(Agent.HomeDirectory)\miniconda'
-      conda_root_unix: '$(Agent.HomeDirectory)/miniconda'
-      ninja_root_win: '/C/ProgramData/chocolatey/lib/ninja/tools'
+      conda_version: 'MacOSX-x86_64'
+      conda_root: '$(Agent.HomeDirectory)/miniconda3'
+      vcpkg_root: '$(Agent.HomeDirectory)/vcpkg'
+      python_arch: 'x64'
+      triplet: 'x64-linux'
     strategy:
       matrix:
         # linux_python_27:
@@ -22,73 +24,67 @@ jobs:
         #   conda_version: 'Linux-x86_64'
         #   triplet: 'x64-linux'
         linux_python_36:
-          image_name: 'ubuntu-16.04'
           python_version: 3.6
-          python_arch: 'x64'
           conda_version: 'Linux-x86_64'
-          triplet: 'x64-linux'
         # linux_python_37:
         #   image_name: 'ubuntu-16.04'
         #   python_version: 3.7
         #   python_arch: 'x64'
         #   conda_version: 'Linux-x86_64'
         #   triplet: 'x64-linux'
-        mac_python_36:
-          image_name: 'macos-10.13'
-          python_version: 3.6
-          python_arch: 'x64'
-          conda_version: 'MacOSX-x86_64'
-          triplet: 'x64-osx'
-        win64_python_36:
-          image_name: 'vs2017-win2016'
-          python_version: 3.6
-          python_arch: 'x64'
-          triplet: 'x64-windows'
-        win32_python_36:
-          image_name: 'vs2017-win2016'
-          python_version: 3.6
-          python_arch: 'x86'
-          triplet: 'x86-windows'
     pool:
-      vmImage: $(image_name)
+      vmImage: 'ubuntu-16.04'
     steps:
-    # Linux
     - script: |
         sudo apt-get update
         sudo apt-get install ninja-build swig libudev-dev
-      condition: contains(variables['image_name'], 'ubuntu')
-      displayName: 'Install toolchain on Linux'
-    - script: |
-        brew install gcc swig
-      condition: contains(variables['image_name'], 'mac')
-      displayName: 'Install toolchain on macOS'
+      displayName: 'Install toolchain'
     - script: |
         wget https://repo.anaconda.com/miniconda/Miniconda3-latest-$(conda_version).sh -O $(Agent.HomeDirectory)/miniconda.sh
-        bash $(Agent.HomeDirectory)/miniconda.sh -b -p $(conda_root_unix)
-      condition: not(contains(variables['image_name'], 'win'))
+        bash $(Agent.HomeDirectory)/miniconda.sh -b -p $(conda_root)
       displayName: 'Install conda'
     - script: |
-        $(conda_root_unix)/bin/conda create -yq -n python$(python_version) python=$(python_version)
-      condition: not(contains(variables['image_name'], 'win'))
+        $(conda_root)/bin/conda create -yq -n python$(python_version) python=$(python_version)
       displayName: 'Install Python $(python_version)'
     - script: |
-        git clone https://github.com/NordicPlayground/vcpkg.git $(Agent.HomeDirectory)/vcpkg
-        $(Agent.HomeDirectory)/vcpkg/bootstrap-vcpkg.sh
-      condition: not(contains(variables['image_name'], 'win'))
-      displayName: 'Install vcpkg for Linux'
+        git clone https://github.com/NordicPlayground/vcpkg.git $(vcpkg_root)
+        $(vcpkg_root)/bootstrap-vcpkg.sh
+      displayName: 'Install vcpkg'
     - script: |
-        export PATH=$(Agent.HomeDirectory)/miniconda/envs/python$(python_version)/bin:$PATH
+        export PATH=$(conda_root)/envs/python$(python_version)/bin:$PATH
         export PYTHON_VERSION=$(python_version)
-        export CC=clang
-        export CXX=clang++
         pip install -r requirements-dev.txt
         python setup.py bdist_wheel --build-type Debug
       env: {
         VCPKG_ROOT: '$(Agent.HomeDirectory)/vcpkg',
       }
-      condition: not(contains(variables['image_name'], 'win'))
-      displayName: 'Build for Linux'
+      displayName: 'Build'
 
+  # macOS
+  - job: Windows_Build
+    variables:
+      conda_version: 'MacOSX-x86_64'
+      conda_root: '$(Agent.HomeDirectory)\miniconda3'
+      vcpkg_root: '$(Agent.HomeDirectory)\vcpkg'
+    strategy:
+      matrix:
+        mac_python_36:
+          python_version: 3.6
+          python_arch: 'x64'
+          triplet: 'x64-osx'
+    pool:
+      vmImage: 'macos-10.13'
+    steps:
+    - script: |
+        sudo apt-get update
+        sudo apt-get install ninja-build swig libudev-dev
+      displayName: 'Install toolchain on Linux'
+    - script: |
+        brew install gcc swig
+      condition: contains(variables['image_name'], 'mac')
+      displayName: 'Install toolchain on macOS'
+
+  # Windows
   - job: Windows_Build
     variables:
       conda_root: '$(Agent.HomeDirectory)\miniconda3'
@@ -106,7 +102,6 @@ jobs:
     pool:
       vmImage: 'vs2017-win2016'
     steps:
-      # Windows
     - script: |
         choco install -y --x86 swig
         choco install -y ninja
