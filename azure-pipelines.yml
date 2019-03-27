@@ -2,9 +2,9 @@ trigger:
 - test-azure
 
 jobs:
-  - job: Build
+  - job: Linux_Build
     variables:
-      conda_root_win: '/C/tools/miniconda3'
+      conda_root_win: '$(Agent.HomeDirectory)\miniconda'
       conda_root_unix: '$(Agent.HomeDirectory)/miniconda'
       ninja_root_win: '/C/ProgramData/chocolatey/lib/ninja/tools'
     strategy:
@@ -52,7 +52,7 @@ jobs:
     pool:
       vmImage: $(image_name)
     steps:
-    # Install toolchain
+    # Linux
     - script: |
         sudo apt-get update
         sudo apt-get install ninja-build swig libudev-dev
@@ -68,28 +68,55 @@ jobs:
       condition: not(contains(variables['image_name'], 'win'))
       displayName: 'Install conda'
     - script: |
-        choco install -y --x86 swig
-        choco install -y miniconda3
-        choco install -y ninja
-      condition: contains(variables['image_name'], 'win')
-      displayName: 'Install toolchain on Windows'
-
-    # Install python
-    - script: |
         $(conda_root_unix)/bin/conda create -yq -n python$(python_version) python=$(python_version)
       condition: not(contains(variables['image_name'], 'win'))
       displayName: 'Install Python $(python_version)'
-    - bash: |
-        $(conda_root_win)/Scripts/conda create -yq -n python$(python_version) python=$(python_version)
-      condition: contains(variables['image_name'], 'win')
-      displayName: 'Install Python $(python_version)'
-
-    # Install vcpkg
     - script: |
         git clone https://github.com/NordicPlayground/vcpkg.git $(Agent.HomeDirectory)/vcpkg
         $(Agent.HomeDirectory)/vcpkg/bootstrap-vcpkg.sh
       condition: not(contains(variables['image_name'], 'win'))
       displayName: 'Install vcpkg for Linux'
+    - script: |
+        export PATH=$(Agent.HomeDirectory)/miniconda/envs/python$(python_version)/bin:$PATH
+        export PYTHON_VERSION=$(python_version)
+        export CC=clang
+        export CXX=clang++
+        pip install -r requirements-dev.txt
+        python setup.py bdist_wheel --build-type Debug
+      env: {
+        VCPKG_ROOT: '$(Agent.HomeDirectory)/vcpkg',
+      }
+      condition: not(contains(variables['image_name'], 'win'))
+      displayName: 'Build for Linux'
+
+  - job: Windows_Build
+    variables:
+      conda_root: '$(Agent.HomeDirectory)\miniconda3'
+    strategy:
+      matrix:
+        win64_python_36:
+          python_version: 3.6
+          python_arch: 'x64'
+          triplet: 'x64-windows'
+        win32_python_36:
+          python_version: 3.6
+          python_arch: 'x86'
+          triplet: 'x86-windows'
+    pool:
+      vmImage: 'vs2017-win2016'
+    steps:
+      # Windows
+    - script: |
+        choco install -y --x86 swig
+        choco install -y ninja
+        choco install -y miniconda3 --params="'/AddToPath:1''/D:$(conda_root)'"
+      displayName: 'Install toolchain on Windows'
+    - script: |
+        $(conda_root_win)\Scripts\conda create -yq -n python$(python_version) python=$(python_version)
+      displayName: 'Install Python $(python_version)'
+    - script: |
+        $(conda_root_win)\Scripts\activate python$(python_version)
+      displayName: 'Install Python $(python_version)'
     # - script: |
     #     git clone https://github.com/NordicPlayground/vcpkg.git $(Agent.HomeDirectory)/vcpkg
     #     $(Agent.HomeDirectory)\vcpkg\bootstrap-vcpkg.bat
@@ -107,20 +134,6 @@ jobs:
     #     VCPKG_ROOT: '$(Agent.HomeDirectory)/vcpkg',
     #   }
     #   displayName: 'Install nrf-ble-driver'
-
-    # Build
-    - script: |
-        export PATH=$(Agent.HomeDirectory)/miniconda/envs/python$(python_version)/bin:$PATH
-        export PYTHON_VERSION=$(python_version)
-        export CC=clang
-        export CXX=clang++
-        pip install -r requirements-dev.txt
-        python setup.py bdist_wheel --build-type Debug
-      env: {
-        VCPKG_ROOT: '$(Agent.HomeDirectory)/vcpkg',
-      }
-      condition: not(contains(variables['image_name'], 'win'))
-      displayName: 'Build for Linux'
     - bash: |
         find $(ninja_root_win)
         export PATH=$(conda_root_win)/envs/python$(python_version):$(conda_root_win)/envs/python$(python_version)/Scripts:$(ninja_root_win):$PATH
@@ -132,6 +145,7 @@ jobs:
       }
       condition: contains(variables['image_name'], 'win')
       displayName: 'Build for Windows'
+
 
 
     # # Install nrf-ble-driver
