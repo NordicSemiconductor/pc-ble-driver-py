@@ -59,7 +59,6 @@ jobs:
       displayName: 'Install nrf-ble-driver'
     - script: |
         export PATH=$(conda_root)/envs/python$(python_version)/bin:$PATH
-        export PYTHON_VERSION=$(python_version)
         pip install -r requirements-dev.txt
         python setup.py bdist_wheel --build-type Debug
       env: {
@@ -138,6 +137,12 @@ jobs:
       displayName: 'Install toolchain on Windows'
     - script: |
         $(conda_root)\Scripts\conda create -yq -n python$(python_version) python=$(python_version)
+      condition: eq(variables['python_arch'], 'x64')
+      displayName: 'Install Python $(python_version)'
+    - script: |
+        set CONDA_FORCE_32BIT=1
+        $(conda_root)\Scripts\conda create -yq -n python$(python_version) python=$(python_version)
+      condition: eq(variables['python_arch'], 'x86')
       displayName: 'Install Python $(python_version)'
     - script: |
         git clone https://github.com/NordicPlayground/vcpkg.git $(vcpkg_root)
@@ -151,11 +156,9 @@ jobs:
       }
       displayName: 'Install nrf-ble-driver'
     - script: |
-        $(conda_root)\Scripts\activate python$(python_version)
-      displayName: 'Build for Windows'
-    - script: |
-        echo %VCPKG_ROOT%
         set PYTHON_VERSION=
+        # call "C:\Program Files (x86)\Microsoft Visual Studio\2017\Enterprise\Common7\tools\vsdevcmd.bat" -vcvars_ver=14.0  -arch=x
+        call $(conda_root)\Scripts\activate python$(python_version)
         pip install -r requirements-dev.txt
         python setup.py bdist_wheel --build-type Debug
       env: {
