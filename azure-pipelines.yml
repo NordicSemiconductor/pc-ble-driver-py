@@ -51,12 +51,19 @@ jobs:
         $(vcpkg_root)/bootstrap-vcpkg.sh
       displayName: 'Install vcpkg'
     - script: |
+        export PATH=$VCPKG_ROOT:$PATH
+        vcpkg install nrf-ble-driver:$(triplet)
+      env: {
+        VCPKG_ROOT: '$(vcpkg_root)',
+      }
+      displayName: 'Install nrf-ble-driver'
+    - script: |
         export PATH=$(conda_root)/envs/python$(python_version)/bin:$PATH
         export PYTHON_VERSION=$(python_version)
         pip install -r requirements-dev.txt
         python setup.py bdist_wheel --build-type Debug
       env: {
-        VCPKG_ROOT: '$(Agent.HomeDirectory)/vcpkg',
+        VCPKG_ROOT: '$(vcpkg_root)',
       }
       displayName: 'Build'
 
@@ -64,8 +71,8 @@ jobs:
   - job: macOS_Build
     variables:
       conda_version: 'MacOSX-x86_64'
-      conda_root: '$(Agent.HomeDirectory)\miniconda3'
-      vcpkg_root: '$(Agent.HomeDirectory)\vcpkg'
+      conda_root: '$(Agent.HomeDirectory)/miniconda3'
+      vcpkg_root: '$(Agent.HomeDirectory)/vcpkg'
     strategy:
       matrix:
         mac_python_36:
@@ -76,13 +83,35 @@ jobs:
       vmImage: 'macos-10.13'
     steps:
     - script: |
-        sudo apt-get update
-        sudo apt-get install ninja-build swig libudev-dev
-      displayName: 'Install toolchain on Linux'
-    - script: |
         brew install gcc swig
-      condition: contains(variables['image_name'], 'mac')
-      displayName: 'Install toolchain on macOS'
+      displayName: 'Install toolchain'
+    - script: |
+        wget https://repo.anaconda.com/miniconda/Miniconda3-latest-$(conda_version).sh -O $(Agent.HomeDirectory)/miniconda.sh
+        bash $(Agent.HomeDirectory)/miniconda.sh -b -p $(conda_root)
+      displayName: 'Install conda'
+    - script: |
+        $(conda_root)/bin/conda create -yq -n python$(python_version) python=$(python_version)
+      displayName: 'Install Python $(python_version)'
+    - script: |
+        git clone https://github.com/NordicPlayground/vcpkg.git $(vcpkg_root)
+        $(vcpkg_root)/bootstrap-vcpkg.sh
+      displayName: 'Install vcpkg'
+    - script: |
+        export PATH=$VCPKG_ROOT:$PATH
+        vcpkg install nrf-ble-driver:$(triplet)
+      env: {
+        VCPKG_ROOT: '$(Agent.HomeDirectory)/vcpkg',
+      }
+      displayName: 'Install nrf-ble-driver'
+    - script: |
+        export PATH=$(conda_root)/envs/python$(python_version)/bin:$PATH
+        export PYTHON_VERSION=$(python_version)
+        pip install -r requirements-dev.txt
+        python setup.py bdist_wheel --build-type Debug
+      env: {
+        VCPKG_ROOT: '$(Agent.HomeDirectory)/vcpkg',
+      }
+      displayName: 'Build'
 
   # Windows
   - job: Windows_Build
@@ -113,9 +142,6 @@ jobs:
     - script: |
         git clone https://github.com/NordicPlayground/vcpkg.git $(vcpkg_root)
         $(vcpkg_root)\bootstrap-vcpkg.bat
-      env: {
-        VCPKG_ROOT: '$(vcpkg_root)',
-      }
       displayName: 'Install vcpkg'
     - script: |
         set PATH=$(vcpkg_root);%PATH%
@@ -129,6 +155,7 @@ jobs:
       displayName: 'Build for Windows'
     - script: |
         echo %VCPKG_ROOT%
+        set PYTHON_VERSION=
         pip install -r requirements-dev.txt
         python setup.py bdist_wheel --build-type Debug
       env: {
