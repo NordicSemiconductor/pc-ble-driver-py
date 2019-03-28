@@ -177,10 +177,11 @@ jobs:
       condition: eq(variables['python_arch'], 'x64')
       displayName: 'Build'
     - script: |
+        set CONDA_FORCE_32BIT=1
         call $(conda_root)\Scripts\activate python$(python_version)
         set
         pip install -r requirements-dev.txt
-        python setup.py bdist_wheel --build-type Debug -- -DCMAKE_CXX_FLAGS=-m32
+        python setup.py bdist_wheel --build-type Debug
       env: {
         VCPKG_ROOT: '$(vcpkg_root)',
       }
