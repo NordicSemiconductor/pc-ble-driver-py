@@ -180,7 +180,7 @@ jobs:
         call $(conda_root)\Scripts\activate python$(python_version)
         set
         pip install -r requirements-dev.txt
-        python setup.py bdist_wheel --build-type Debug
+        python setup.py bdist_wheel --build-type Debug -- -DCMAKE_GENERATOR_PLATFORM=x86
       env: {
         VCPKG_ROOT: '$(vcpkg_root)',
       }
