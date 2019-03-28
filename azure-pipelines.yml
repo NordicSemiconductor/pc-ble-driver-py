@@ -83,7 +83,6 @@ jobs:
     steps:
     - script: |
         brew install gcc swig
-        xcode-select --install
       displayName: 'Install toolchain'
     - script: |
         wget https://repo.anaconda.com/miniconda/Miniconda3-latest-$(conda_version).sh -O $(Agent.HomeDirectory)/miniconda.sh
@@ -104,6 +103,7 @@ jobs:
       }
       displayName: 'Install nrf-ble-driver'
     - script: |
+        export MACOSX_DEPLOYMENT_TARGET=10.10
         export PATH=$(conda_root)/envs/python$(python_version)/bin:$PATH
         export PYTHON_VERSION=$(python_version)
         pip install -r requirements-dev.txt
