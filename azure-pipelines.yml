@@ -82,6 +82,7 @@ jobs:
       vmImage: 'macos-10.13'
     steps:
     - script: |
+        xcode-select --install
         brew install gcc swig
       displayName: 'Install toolchain'
     - script: |
