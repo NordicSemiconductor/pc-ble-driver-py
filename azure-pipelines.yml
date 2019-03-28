@@ -83,7 +83,7 @@ jobs:
     steps:
     - script: |
         ls /Applications
-        sudo xcode-select -s /Applications/Xcode_9.4.1.app
+        sudo xcode-select -s /Applications/Xcode_10.1.app
       displayName: 'Install toolchain'
     - script: |
         brew install gcc swig
@@ -111,7 +111,7 @@ jobs:
         export PATH=$(conda_root)/envs/python$(python_version)/bin:$PATH
         export PYTHON_VERSION=$(python_version)
         pip install -r requirements-dev.txt
-        python setup.py bdist_wheel --build-type Debug
+        python setup.py bdist_wheel --build-type Debug -- -DCMAKE_OSX_DEPLOYMENT_TARGET=10.14
       env: {
         VCPKG_ROOT: '$(Agent.HomeDirectory)/vcpkg',
       }
