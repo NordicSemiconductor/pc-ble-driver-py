@@ -81,11 +81,9 @@ jobs:
     pool:
       vmImage: 'macos-10.13'
     steps:
-    - task: Xcode@5
-      inputs:
-        actions: 'build'
-        xcodeVersion: '10'
-        xcWorkspacePath: ''
+    - script: |
+        xcode-select /Applications/Xcode_10.1.app
+      displayName: 'Install toolchain'
     - script: |
         brew install gcc swig
       displayName: 'Install toolchain'
