@@ -182,6 +182,7 @@ jobs:
         call $(conda_root)\Scripts\activate python$(python_version)
         call set
         python --version
+        python version.py
         pip install -r requirements-dev.txt
         python setup.py bdist_wheel --build-type Debug
       env: {
