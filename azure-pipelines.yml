@@ -157,6 +157,7 @@ jobs:
         $(vcpkg_root)\bootstrap-vcpkg.bat
       displayName: 'Install vcpkg'
     - script: |
+        call "C:\Program Files (x86)\Microsoft Visual Studio\2017\Enterprise\Common7\tools\vsdevcmd.bat" -vcvars_ver=14.0  -arch=$(python_arch)
         set PATH=$(vcpkg_root);%PATH%
         vcpkg install nrf-ble-driver:$(triplet)
       env: {
