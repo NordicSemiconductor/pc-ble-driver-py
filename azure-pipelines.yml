@@ -81,6 +81,9 @@ jobs:
     pool:
       vmImage: 'macos-10.13'
     steps:
+    - task: Xcode@5
+      inputs:
+        xcodeVersion: 10
     - script: |
         brew install gcc swig
       displayName: 'Install toolchain'
