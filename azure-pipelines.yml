@@ -132,8 +132,15 @@ jobs:
     steps:
     - script: |
         choco install -y --x86 swig
+        choco install -y --x86 ninja
+        choco install -y miniconda3 --params="'/D:$(conda_root)'"
+        condition: eq(variables['python_arch'], 'x86')
+      displayName: 'Install toolchain on Windows'
+    - script: |
+        choco install -y --x86 swig
         choco install -y ninja
         choco install -y miniconda3 --params="'/D:$(conda_root)'"
+        condition: eq(variables['python_arch'], 'x64')
       displayName: 'Install toolchain on Windows'
     - script: |
         $(conda_root)\Scripts\conda create -yq -n python$(python_version) python=$(python_version)
@@ -157,8 +164,8 @@ jobs:
       displayName: 'Install nrf-ble-driver'
     - script: |
         set PYTHON_VERSION=
-        call "C:\Program Files (x86)\Microsoft Visual Studio\2017\Enterprise\Common7\tools\vsdevcmd.bat" -vcvars_ver=14.0  -arch=$(python_arch)
         call $(conda_root)\Scripts\activate python$(python_version)
+        call "C:\Program Files (x86)\Microsoft Visual Studio\2017\Enterprise\Common7\tools\vsdevcmd.bat" -vcvars_ver=14.0  -arch=$(python_arch)
         pip install -r requirements-dev.txt
         python setup.py bdist_wheel --build-type Debug
       env: {
