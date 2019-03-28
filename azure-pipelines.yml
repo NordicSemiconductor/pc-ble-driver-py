@@ -135,17 +135,17 @@ jobs:
     pool:
       vmImage: 'vs2017-win2016'
     steps:
-    - script: |
-        choco install -y --x86 swig
-        choco install -y --x86 ninja
-        choco install -y miniconda3 --params="'/D:$(conda_root)'"
-      condition: eq(variables['python_arch'], 'x86')
-      displayName: 'Install toolchain on Windows'
+    # - script: |
+    #     choco install -y --x86 swig
+    #     choco install -y --x86 ninja
+    #     choco install -y miniconda3 --params="'/D:$(conda_root)'"
+    #   condition: eq(variables['python_arch'], 'x86')
+    #   displayName: 'Install toolchain on Windows'
     - script: |
         choco install -y --x86 swig
         choco install -y ninja
         choco install -y miniconda3 --params="'/D:$(conda_root)'"
-      condition: eq(variables['python_arch'], 'x64')
+      # condition: eq(variables['python_arch'], 'x64')
       displayName: 'Install toolchain on Windows'
     - script: |
         $(conda_root)\Scripts\conda create -yq -n python$(python_version) python=$(python_version)
@@ -161,7 +161,6 @@ jobs:
         $(vcpkg_root)\bootstrap-vcpkg.bat
       displayName: 'Install vcpkg'
     - script: |
-        call "C:\Program Files (x86)\Microsoft Visual Studio\2017\Enterprise\Common7\tools\vsdevcmd.bat" -vcvars_ver=14.0  -arch=$(python_arch)
         set PATH=$(vcpkg_root);%PATH%
         vcpkg install nrf-ble-driver:$(triplet)
       env: {
@@ -169,8 +168,6 @@ jobs:
       }
       displayName: 'Install nrf-ble-driver'
     - script: |
-        set PYTHON_VERSION=
-        call "C:\Program Files (x86)\Microsoft Visual Studio\2017\Enterprise\Common7\tools\vsdevcmd.bat" -vcvars_ver=14.0  -arch=$(python_arch)
         call $(conda_root)\Scripts\activate python$(python_version)
         pip install -r requirements-dev.txt
         python setup.py bdist_wheel --build-type Debug
@@ -180,12 +177,7 @@ jobs:
       condition: eq(variables['python_arch'], 'x64')
       displayName: 'Build'
     - script: |
-        call "C:\Program Files (x86)\Microsoft Visual Studio\2017\Enterprise\Common7\tools\vsdevcmd.bat" -vcvars_ver=14.0  -arch=$(python_arch)
         call $(conda_root)\Scripts\activate python$(python_version)
-        set
-        set PYTHON_VERSION=
-        set CMAKE_GENERATOR_PLATFORM=x86
-        set CONDA_FORCE_32BIT=1
         set
         pip install -r requirements-dev.txt
         python setup.py bdist_wheel --build-type Debug
