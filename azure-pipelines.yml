@@ -176,13 +176,13 @@ jobs:
       condition: eq(variables['python_arch'], 'x64')
       displayName: 'Build'
     - script: |
+        call "C:\Program Files (x86)\Microsoft Visual Studio\2017\Enterprise\Common7\tools\vsdevcmd.bat" -vcvars_ver=14.0  -arch=$(python_arch)
+        call $(conda_root)\Scripts\activate python$(python_version)
         set
         set PYTHON_VERSION=
         set CMAKE_GENERATOR_PLATFORM=x86
         set CONDA_FORCE_32BIT=1
         set
-        call "C:\Program Files (x86)\Microsoft Visual Studio\2017\Enterprise\Common7\tools\vsdevcmd.bat" -vcvars_ver=14.0  -arch=$(python_arch)
-        call $(conda_root)\Scripts\activate python$(python_version)
         pip install -r requirements-dev.txt
         python setup.py bdist_wheel --build-type Debug
       env: {
