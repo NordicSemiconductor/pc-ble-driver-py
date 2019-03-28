@@ -82,7 +82,8 @@ jobs:
       vmImage: 'macos-10.13'
     steps:
     - script: |
-        sudo xcode-select -s /Applications/Xcode_10..app
+        ls /Applications
+        sudo xcode-select -s /Applications/Xcode_9.4.1.app
       displayName: 'Install toolchain'
     - script: |
         brew install gcc swig
