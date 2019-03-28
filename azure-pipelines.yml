@@ -111,7 +111,7 @@ jobs:
         export PATH=$(conda_root)/envs/python$(python_version)/bin:$PATH
         export PYTHON_VERSION=$(python_version)
         pip install -r requirements-dev.txt
-        python setup.py bdist_wheel --build-type Debug -- -DCMAKE_OSX_DEPLOYMENT_TARGET=10.14
+        python setup.py bdist_wheel --build-type Debug -- -DCMAKE_OSX_DEPLOYMENT_TARGET=10.12
       env: {
         VCPKG_ROOT: '$(Agent.HomeDirectory)/vcpkg',
       }
