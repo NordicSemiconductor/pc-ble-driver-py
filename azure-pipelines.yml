@@ -83,7 +83,7 @@ jobs:
     steps:
     - task: Xcode@5
       inputs:
-        xcodeVersion: 10
+        xcodeVersion: '10'
     - script: |
         brew install gcc swig
       displayName: 'Install toolchain'
