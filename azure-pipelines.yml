@@ -177,6 +177,7 @@ jobs:
       condition: eq(variables['python_arch'], 'x64')
       displayName: 'Build'
     - script: |
+        call "C:\Program Files (x86)\Microsoft Visual Studio\2017\Enterprise\Common7\tools\vsdevcmd.bat" x86
         call set CONDA_FORCE_32BIT=1
         call $(conda_root)\Scripts\activate python$(python_version)
         call set
