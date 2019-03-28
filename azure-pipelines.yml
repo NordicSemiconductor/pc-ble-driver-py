@@ -181,6 +181,7 @@ jobs:
         call set CONDA_FORCE_32BIT=1
         call $(conda_root)\Scripts\activate python$(python_version)
         call set
+        python --version
         pip install -r requirements-dev.txt
         python setup.py bdist_wheel --build-type Debug
       env: {
