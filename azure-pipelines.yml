@@ -178,6 +178,7 @@ jobs:
       displayName: 'Build'
     - script: |
         call $(conda_root)\Scripts\activate python$(python_version)
+        set CXXFLAGS="-m32"
         set
         pip install -r requirements-dev.txt
         python setup.py bdist_wheel --build-type Debug -- -DCMAKE_GENERATOR_PLATFORM=x86
