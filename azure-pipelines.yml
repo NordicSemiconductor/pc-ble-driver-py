@@ -152,7 +152,7 @@ jobs:
       condition: eq(variables['python_arch'], 'x64')
       displayName: 'Install Python $(python_version)'
     - script: |
-        set CONDA_FORCE_32BIT=1
+        call set CONDA_FORCE_32BIT=1
         $(conda_root)\Scripts\conda create -yq -n python$(python_version) python=$(python_version)
       condition: eq(variables['python_arch'], 'x86')
       displayName: 'Install Python $(python_version)'
@@ -177,9 +177,9 @@ jobs:
       condition: eq(variables['python_arch'], 'x64')
       displayName: 'Build'
     - script: |
-        set CONDA_FORCE_32BIT=1
+        call set CONDA_FORCE_32BIT=1
         call $(conda_root)\Scripts\activate python$(python_version)
-        set
+        call set
         pip install -r requirements-dev.txt
         python setup.py bdist_wheel --build-type Debug
       env: {
