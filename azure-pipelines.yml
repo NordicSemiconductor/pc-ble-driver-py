@@ -83,6 +83,7 @@ jobs:
     steps:
     - task: Xcode@5
       inputs:
+        actions: 'build'
         xcodeVersion: '10'
         xcWorkspacePath: ''
     - script: |
