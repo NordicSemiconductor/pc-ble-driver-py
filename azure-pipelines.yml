@@ -164,21 +164,20 @@ jobs:
     - script: |
         call $(conda_root)\Scripts\activate python$(python_version)
         pip install -r requirements-dev.txt
-        python setup.py bdist_wheel --build-type Debug
+        python setup.py bdist_wheel --build-type Debug -- -G "Visual Studio 15 2017 Win64"
       env: {
         VCPKG_ROOT: '$(vcpkg_root)',
       }
       condition: eq(variables['python_arch'], 'x64')
       displayName: 'Build'
     - script: |
-        call "C:\Program Files (x86)\Microsoft Visual Studio\2017\Enterprise\Common7\tools\vsdevcmd.bat" -vcvars_ver=14.0  -arch=x86
         call set CONDA_FORCE_32BIT=1
         call $(conda_root)\Scripts\activate python$(python_version)
         call set
         python --version
         python version.py
         pip install -r requirements-dev.txt
-        python setup.py bdist_wheel --build-type Debug
+        python setup.py bdist_wheel --build-type Debug -- -G "Visual Studio 15 2017"
       env: {
         VCPKG_ROOT: '$(vcpkg_root)',
       }
