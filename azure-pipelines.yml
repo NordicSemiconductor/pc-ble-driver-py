@@ -53,6 +53,21 @@ jobs:
         VCPKG_ROOT: '$(vcpkg_root)',
       }
       displayName: 'Build'
+    - bash: |
+        cp -R dist/**/*.whl "$(Build.ArtifactStagingDirectory)"
+      displayName: 'Copy artifacts'
+    - task: GitHubRelease@0
+      inputs:
+        gitHubConnection: 'waylandCI'
+        repositoryName: 'NordicSemiconductor/pc-ble-driver-py'
+        action: 'edit'
+        tagSource: 'Git tag'
+        tag: '$(Build.SourceBranchName)'
+        assetUploadMode: 'replace'
+        isDraft: 'true'
+        addChangeLog: 'false'
+      condition: ne(variables['Build.Reason'], 'PullRequest')
+
 
   # macOS
   - job: macOS_Build
@@ -110,6 +125,20 @@ jobs:
         VCPKG_ROOT: '$(Agent.HomeDirectory)/vcpkg',
       }
       displayName: 'Build'
+    - bash: |
+        cp -R dist/**/*.whl "$(Build.ArtifactStagingDirectory)"
+      displayName: 'Copy artifacts'
+    - task: GitHubRelease@0
+      inputs:
+        gitHubConnection: 'waylandCI'
+        repositoryName: 'NordicSemiconductor/pc-ble-driver-py'
+        action: 'edit'
+        tagSource: 'Git tag'
+        tag: '$(Build.SourceBranchName)'
+        assetUploadMode: 'replace'
+        isDraft: 'true'
+        addChangeLog: 'false'
+      condition: ne(variables['Build.Reason'], 'PullRequest')
 
   # Windows
   - job: Windows_Build
@@ -195,68 +224,20 @@ jobs:
       }
       condition: eq(variables['python_arch'], 'x86')
       displayName: 'Build'
-
-    # Build
-    # - script: |
-    #     export PATH=$VCPKG_ROOT:$PATH
-    #     echo $PATH
-    #     echo $VCPKG_ROOT
-    #     vcpkg list
-    #     python -V
-    #     p_v=`which python`
-    #     p_d=`dirname $p_v`
-    #     echo ls p_d
-    #     ls $p_d
-    #     echo ls p_d/bin
-    #     ls $p_d/bin
-    #     python-config --includes
-    #     pip install -r requirements-dev.txt
-    #     python setup.py bdist_wheel --build-type Debug
-    #   env: {
-    #     VCPKG_ROOT: '$(Agent.HomeDirectory)/vcpkg',
-    #   }
-    #   condition: contains(variables['image_name'], 'ubuntu')
-    #   displayName: 'Build'
-    # - script: |
-    #     export PATH=$VCPKG_ROOT:$PATH
-    #     echo $PATH
-    #     echo $VCPKG_ROOT
-    #     vcpkg list
-    #     python -V
-    #     pip install -r requirements-dev.txt
-    #     python setup.py bdist_wheel --build-type Debug
-    #   env: {
-    #     VCPKG_ROOT: '$(Agent.HomeDirectory)/vcpkg',
-    #   }
-    #   condition: contains(variables['image_name'], 'mac')
-    #   displayName: 'Build'
-    # - script: |
-    #     set PATH=%VCPKG_ROOT%;%PATH%
-    #     echo %PATH%
-    #     echo %VCPKG_ROOT%
-    #     vcpkg list
-    #     python -V
-    #     pip install -r requirements-dev.txt
-    #     python setup.py bdist_wheel --build-type Debug
-    #   env: {
-    #     VCPKG_ROOT: '$(Agent.HomeDirectory)\vcpkg',
-    #   }
-    #   condition: contains(variables['image_name'], 'win')
-    #   displayName: 'Build'
-    # - bash: |
-    #     cp -R build/stage/**/*.tar.gz "$(Build.ArtifactStagingDirectory)"
-    #   displayName: 'Copy artifacts'
-    # - task: GitHubRelease@0
-    #   inputs:
-    #     gitHubConnection: 'waylandCI'
-    #     repositoryName: 'NordicSemiconductor/pc-nrfjprog-js'
-    #     action: 'edit'
-    #     tagSource: 'Git tag'
-    #     tag: '$(Build.SourceBranchName)'
-    #     assetUploadMode: 'replace'
-    #     isDraft: 'true'
-    #     addChangeLog: 'false'
-    #   condition: ne(variables['Build.Reason'], 'PullRequest')
+    - bash: |
+        cp -R dist/**/*.whl "$(Build.ArtifactStagingDirectory)"
+      displayName: 'Copy artifacts'
+    - task: GitHubRelease@0
+      inputs:
+        gitHubConnection: 'waylandCI'
+        repositoryName: 'NordicSemiconductor/pc-ble-driver-py'
+        action: 'edit'
+        tagSource: 'Git tag'
+        tag: '$(Build.SourceBranchName)'
+        assetUploadMode: 'replace'
+        isDraft: 'true'
+        addChangeLog: 'false'
+      condition: ne(variables['Build.Reason'], 'PullRequest')
 
   # - job: Test
   #   dependsOn: [
