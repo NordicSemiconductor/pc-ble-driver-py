@@ -54,6 +54,8 @@ jobs:
       }
       displayName: 'Build'
     - bash: |
+        ls
+        ls dist
         cp -R dist/**/*.whl "$(Build.ArtifactStagingDirectory)"
       displayName: 'Copy artifacts'
     - task: GitHubRelease@0
@@ -126,6 +128,8 @@ jobs:
       }
       displayName: 'Build'
     - bash: |
+        ls
+        ls dist
         cp -R dist/**/*.whl "$(Build.ArtifactStagingDirectory)"
       displayName: 'Copy artifacts'
     - task: GitHubRelease@0
@@ -225,6 +229,8 @@ jobs:
       condition: eq(variables['python_arch'], 'x86')
       displayName: 'Build'
     - bash: |
+        ls
+        ls dist
         cp -R dist/**/*.whl "$(Build.ArtifactStagingDirectory)"
       displayName: 'Copy artifacts'
     - task: GitHubRelease@0
