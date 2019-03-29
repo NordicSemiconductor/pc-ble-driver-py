@@ -54,9 +54,7 @@ jobs:
       }
       displayName: 'Build'
     - bash: |
-        ls
-        ls dist
-        cp -R dist/**/*.whl "$(Build.ArtifactStagingDirectory)"
+        cp -R dist/*.whl "$(Build.ArtifactStagingDirectory)"
       displayName: 'Copy artifacts'
     - task: GitHubRelease@0
       inputs:
@@ -130,7 +128,7 @@ jobs:
     - bash: |
         ls
         ls dist
-        cp -R dist/**/*.whl "$(Build.ArtifactStagingDirectory)"
+        cp -R dist/*.whl "$(Build.ArtifactStagingDirectory)"
       displayName: 'Copy artifacts'
     - task: GitHubRelease@0
       inputs:
@@ -231,7 +229,7 @@ jobs:
     - bash: |
         ls
         ls dist
-        cp -R dist/**/*.whl "$(Build.ArtifactStagingDirectory)"
+        cp -R dist/*.whl "$(Build.ArtifactStagingDirectory)"
       displayName: 'Copy artifacts'
     - task: GitHubRelease@0
       inputs:
