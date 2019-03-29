@@ -184,9 +184,12 @@ jobs:
     - script: |
         choco install -y --x86 swig
         choco install -y miniconda3 --params="'/D:$(conda_root)'"
+      condition: neq(variables['python_version'], '2.7')
       displayName: 'Install toolchain on Windows'
     - script: |
-        choco install vcpython27
+        choco install -y --x86 swig
+        choco install -y miniconda3 --params="'/D:$(conda_root)'"
+        choco install -y vcpython27
       condition: eq(variables['python_version'], '2.7')
       displayName: 'Install toolchain on Windows for Python 2.7'
     - script: |
