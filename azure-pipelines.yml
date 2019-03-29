@@ -184,7 +184,7 @@ jobs:
     - script: |
         choco install -y --x86 swig
         choco install -y miniconda3 --params="'/D:$(conda_root)'"
-      condition: neq(variables['python_version'], '2.7')
+      condition: ne(variables['python_version'], '2.7')
       displayName: 'Install toolchain on Windows'
     - script: |
         choco install -y --x86 swig
