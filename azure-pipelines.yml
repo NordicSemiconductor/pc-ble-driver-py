@@ -116,7 +116,6 @@ jobs:
       }
       displayName: 'Install nrf-ble-driver'
     - script: |
-        export MACOSX_DEPLOYMENT_TARGET=10.10
         export PATH=$(conda_root)/envs/python$(python_version)/bin:$PATH
         export PYTHON_VERSION=$(python_version)
         pip install -r requirements-dev.txt
@@ -126,8 +125,6 @@ jobs:
       }
       displayName: 'Build'
     - bash: |
-        ls
-        ls dist
         cp -R dist/*.whl "$(Build.ArtifactStagingDirectory)"
       displayName: 'Copy artifacts'
     - task: GitHubRelease@0
@@ -189,6 +186,10 @@ jobs:
         choco install -y miniconda3 --params="'/D:$(conda_root)'"
       displayName: 'Install toolchain on Windows'
     - script: |
+        choco install vcpython27
+      condition: eq(variables['python_version'], '2.7')
+      displayName: 'Install toolchain on Windows for Python 2.7'
+    - script: |
         $(conda_root)\Scripts\conda create -yq -n python$(python_version) python=$(python_version)
       condition: eq(variables['python_arch'], 'x64')
       displayName: 'Install Python $(python_version)'
@@ -210,7 +211,6 @@ jobs:
       displayName: 'Install nrf-ble-driver'
     - script: |
         call $(conda_root)\Scripts\activate python$(python_version)
-        pip install --upgrade pip
         pip install -r requirements-dev.txt
         python setup.py bdist_wheel --build-type Debug -- -G "Visual Studio 15 2017 Win64"
       env: {
@@ -220,7 +220,6 @@ jobs:
       displayName: 'Build'
     - script: |
         call $(conda_root)\Scripts\activate python$(python_version)
-        pip install --upgrade pip
         pip install -r requirements-dev.txt
         python setup.py bdist_wheel --build-type Debug -- -G "Visual Studio 15 2017"
       env: {
@@ -229,8 +228,6 @@ jobs:
       condition: eq(variables['python_arch'], 'x86')
       displayName: 'Build'
     - bash: |
-        ls
-        ls dist
         cp -R dist/*.whl "$(Build.ArtifactStagingDirectory)"
       displayName: 'Copy artifacts'
     - task: GitHubRelease@0
