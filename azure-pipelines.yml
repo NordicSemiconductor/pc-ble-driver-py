@@ -210,6 +210,7 @@ jobs:
       displayName: 'Install nrf-ble-driver'
     - script: |
         call $(conda_root)\Scripts\activate python$(python_version)
+        pip install --upgrade pip
         pip install -r requirements-dev.txt
         python setup.py bdist_wheel --build-type Debug -- -G "Visual Studio 15 2017 Win64"
       env: {
@@ -219,6 +220,7 @@ jobs:
       displayName: 'Build'
     - script: |
         call $(conda_root)\Scripts\activate python$(python_version)
+        pip install --upgrade pip
         pip install -r requirements-dev.txt
         python setup.py bdist_wheel --build-type Debug -- -G "Visual Studio 15 2017"
       env: {
