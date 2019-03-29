@@ -118,28 +118,44 @@ jobs:
       vcpkg_root: '$(Agent.HomeDirectory)\vcpkg'
     strategy:
       matrix:
+        win64_python_27:
+          python_version: 2.7
+          python_arch: 'x64'
+          triplet: 'x64-windows'
+        win64_python_35:
+          python_version: 3.5
+          python_arch: 'x64'
+          triplet: 'x64-windows'
         win64_python_36:
           python_version: 3.6
           python_arch: 'x64'
           triplet: 'x64-windows'
+        win64_python_37:
+          python_version: 3.7
+          python_arch: 'x64'
+          triplet: 'x64-windows'
+        win32_python_27:
+          python_version: 2.7
+          python_arch: 'x86'
+          triplet: 'x86-windows'
+        win32_python_35:
+          python_version: 3.5
+          python_arch: 'x86'
+          triplet: 'x86-windows'
         win32_python_36:
           python_version: 3.6
+          python_arch: 'x86'
+          triplet: 'x86-windows'
+        win32_python_37:
+          python_version: 3.7
           python_arch: 'x86'
           triplet: 'x86-windows'
     pool:
       vmImage: 'vs2017-win2016'
     steps:
-    # - script: |
-    #     choco install -y --x86 swig
-    #     choco install -y --x86 ninja
-    #     choco install -y miniconda3 --params="'/D:$(conda_root)'"
-    #   condition: eq(variables['python_arch'], 'x86')
-    #   displayName: 'Install toolchain on Windows'
     - script: |
         choco install -y --x86 swig
-        choco install -y ninja
         choco install -y miniconda3 --params="'/D:$(conda_root)'"
-      # condition: eq(variables['python_arch'], 'x64')
       displayName: 'Install toolchain on Windows'
     - script: |
         $(conda_root)\Scripts\conda create -yq -n python$(python_version) python=$(python_version)
@@ -171,11 +187,7 @@ jobs:
       condition: eq(variables['python_arch'], 'x64')
       displayName: 'Build'
     - script: |
-        call set CONDA_FORCE_32BIT=1
         call $(conda_root)\Scripts\activate python$(python_version)
-        call set
-        python --version
-        python version.py
         pip install -r requirements-dev.txt
         python setup.py bdist_wheel --build-type Debug -- -G "Visual Studio 15 2017"
       env: {
@@ -183,43 +195,6 @@ jobs:
       }
       condition: eq(variables['python_arch'], 'x86')
       displayName: 'Build'
-
-
-
-    # # Install nrf-ble-driver
-    # - script: |
-    #     git clone https://github.com/NordicPlayground/vcpkg.git $(Agent.HomeDirectory)/vcpkg
-    #     $(Agent.HomeDirectory)/vcpkg/bootstrap-vcpkg.sh
-    #   condition: not(contains(variables['image_name'], 'win'))
-    #   displayName: 'Install nrf-ble-driver for Linux or macOS'
-    # - script: |
-    #     export PATH=$VCPKG_ROOT:$PATH
-    #     echo $PATH
-    #     echo $VCPKG_ROOT
-    #     vcpkg install nrf-ble-driver:$(triplet)
-    #   condition: not(contains(variables['image_name'], 'win'))
-    #   env: {
-    #     VCPKG_ROOT: '$(Agent.HomeDirectory)/vcpkg',
-    #   }
-    #   displayName: 'Install nrf-ble-driver for Linux or macOS'
-    # - script: |
-    #     git clone https://github.com/NordicPlayground/vcpkg.git $(Agent.HomeDirectory)/vcpkg
-    #     $(Agent.HomeDirectory)\vcpkg\bootstrap-vcpkg.bat
-    #   condition: contains(variables['image_name'], 'win')
-    #   env: {
-    #     VCPKG_ROOT: '$(Agent.HomeDirectory)\vcpkg',
-    #   }
-    #   displayName: 'Install nrf-ble-driver for Windows'
-    # - script: |
-    #     set PATH=%VCPKG_ROOT%;%PATH%
-    #     echo %PATH%
-    #     echo %VCPKG_ROOT%
-    #     vcpkg install nrf-ble-driver:$(triplet)
-    #   condition: contains(variables['image_name'], 'win')
-    #   env: {
-    #     VCPKG_ROOT: '$(Agent.HomeDirectory)\vcpkg',
-    #   }
-    #   displayName: 'Install nrf-ble-driver for Windows'
 
     # Build
     # - script: |
