@@ -2,36 +2,24 @@ trigger:
 - test-azure
 
 jobs:
+  # Linux
   - job: Linux_Build
     variables:
-      conda_version: 'MacOSX-x86_64'
+      conda_version: 'Linux-x86_64'
       conda_root: '$(Agent.HomeDirectory)/miniconda3'
       vcpkg_root: '$(Agent.HomeDirectory)/vcpkg'
       python_arch: 'x64'
       triplet: 'x64-linux'
     strategy:
       matrix:
-        # linux_python_27:
-        #   image_name: 'ubuntu-16.04'
-        #   python_version: 2.7
-        #   python_arch: 'x64'
-        #   conda_version: 'Linux-x86_64'
-        #   triplet: 'x64-linux'
-        # linux_python_35:
-        #   image_name: 'ubuntu-16.04'
-        #   python_version: 3.5
-        #   python_arch: 'x64'
-        #   conda_version: 'Linux-x86_64'
-        #   triplet: 'x64-linux'
+        linux_python_27:
+          python_version: 2.7
+        linux_python_35:
+          python_version: 3.5
         linux_python_36:
           python_version: 3.6
-          conda_version: 'Linux-x86_64'
-        # linux_python_37:
-        #   image_name: 'ubuntu-16.04'
-        #   python_version: 3.7
-        #   python_arch: 'x64'
-        #   conda_version: 'Linux-x86_64'
-        #   triplet: 'x64-linux'
+        linux_python_37:
+          python_version: 3.7
     pool:
       vmImage: 'ubuntu-16.04'
     steps:
@@ -72,12 +60,18 @@ jobs:
       conda_version: 'MacOSX-x86_64'
       conda_root: '$(Agent.HomeDirectory)/miniconda3'
       vcpkg_root: '$(Agent.HomeDirectory)/vcpkg'
+      python_arch: 'x64'
+      triplet: 'x64-osx'
     strategy:
       matrix:
+        mac_python_27:
+          python_version: 2.7
+        mac_python_35:
+          python_version: 3.5
         mac_python_36:
           python_version: 3.6
-          python_arch: 'x64'
-          triplet: 'x64-osx'
+        mac_python_37:
+          python_version: 3.7
     pool:
       vmImage: 'macos-10.13'
     steps:
