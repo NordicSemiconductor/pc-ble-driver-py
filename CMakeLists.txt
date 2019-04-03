@@ -13,7 +13,7 @@ endif()
 # Name of the project
 project (pc-ble-driver-py)
 
-if(DEFINED ENV{PYTHON_VERSION} AND NOT WIN32)
+if(DEFINED ENV{PYTHON_VERSION} AND NOT WIN32 AND NOT APPLE)
     find_program(PYTHON_CONFIG NAMES "python$ENV{PYTHON_VERSION}-config")
     message(STATUS "Python config command: ${PYTHON_CONFIG}")
     exec_program(${PYTHON_CONFIG}
