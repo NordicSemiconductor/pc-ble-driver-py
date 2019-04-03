@@ -99,7 +99,7 @@ jobs:
         sudo xcode-select -s /Applications/Xcode_10.1.app
       displayName: 'Install toolchain'
     - script: |
-        brew install swig
+        brew install gcc swig
       displayName: 'Install toolchain'
     # - script: |
     #     wget https://repo.anaconda.com/miniconda/Miniconda3-latest-$(conda_version).sh -O $(Agent.HomeDirectory)/miniconda.sh
