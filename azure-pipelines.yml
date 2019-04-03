@@ -90,20 +90,24 @@ jobs:
     pool:
       vmImage: 'macos-10.13'
     steps:
+    - task: UsePythonVersion@0
+      inputs:
+        versionSpec: '$(python_version)'
+        architecture: 'x64'
     - script: |
         ls /Applications
         sudo xcode-select -s /Applications/Xcode_10.1.app
       displayName: 'Install toolchain'
     - script: |
-        brew install gcc swig
+        brew install swig
       displayName: 'Install toolchain'
-    - script: |
-        wget https://repo.anaconda.com/miniconda/Miniconda3-latest-$(conda_version).sh -O $(Agent.HomeDirectory)/miniconda.sh
-        bash $(Agent.HomeDirectory)/miniconda.sh -b -p $(conda_root)
-      displayName: 'Install conda'
-    - script: |
-        $(conda_root)/bin/conda create -yq -n python$(python_version) python=$(python_version)
-      displayName: 'Install Python $(python_version)'
+    # - script: |
+    #     wget https://repo.anaconda.com/miniconda/Miniconda3-latest-$(conda_version).sh -O $(Agent.HomeDirectory)/miniconda.sh
+    #     bash $(Agent.HomeDirectory)/miniconda.sh -b -p $(conda_root)
+    #   displayName: 'Install conda'
+    # - script: |
+    #     $(conda_root)/bin/conda create -yq -n python$(python_version) python=$(python_version)
+    #   displayName: 'Install Python $(python_version)'
     - script: |
         git clone https://github.com/NordicPlayground/vcpkg.git $(vcpkg_root)
         $(vcpkg_root)/bootstrap-vcpkg.sh
@@ -116,8 +120,8 @@ jobs:
       }
       displayName: 'Install nrf-ble-driver'
     - script: |
-        export PATH=$(conda_root)/envs/python$(python_version)/bin:$PATH
-        export PYTHON_VERSION=$(python_version)
+        # export PATH=$(conda_root)/envs/python$(python_version)/bin:$PATH
+        # export PYTHON_VERSION=$(python_version)
         pip install -r requirements-dev.txt
         python setup.py bdist_wheel --build-type Release -- -DCMAKE_OSX_DEPLOYMENT_TARGET=10.12
       env: {
