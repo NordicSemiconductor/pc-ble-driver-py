@@ -48,7 +48,7 @@ jobs:
     - script: |
         export PATH=$(conda_root)/envs/python$(python_version)/bin:$PATH
         pip install -r requirements-dev.txt
-        python setup.py bdist_wheel --build-type Debug
+        python setup.py bdist_wheel --build-type Release
       env: {
         VCPKG_ROOT: '$(vcpkg_root)',
       }
@@ -119,7 +119,7 @@ jobs:
         export PATH=$(conda_root)/envs/python$(python_version)/bin:$PATH
         export PYTHON_VERSION=$(python_version)
         pip install -r requirements-dev.txt
-        python setup.py bdist_wheel --build-type Debug -- -DCMAKE_OSX_DEPLOYMENT_TARGET=10.12
+        python setup.py bdist_wheel --build-type Release -- -DCMAKE_OSX_DEPLOYMENT_TARGET=10.12
       env: {
         VCPKG_ROOT: '$(Agent.HomeDirectory)/vcpkg',
       }
@@ -215,7 +215,7 @@ jobs:
     - script: |
         call $(conda_root)\Scripts\activate python$(python_version)
         pip install -r requirements-dev.txt
-        python setup.py bdist_wheel --build-type Debug -- -G "Visual Studio 15 2017 Win64"
+        python setup.py bdist_wheel --build-type Release -- -G "Visual Studio 15 2017 Win64"
       env: {
         VCPKG_ROOT: '$(vcpkg_root)',
       }
@@ -224,7 +224,7 @@ jobs:
     - script: |
         call $(conda_root)\Scripts\activate python$(python_version)
         pip install -r requirements-dev.txt
-        python setup.py bdist_wheel --build-type Debug -- -G "Visual Studio 15 2017"
+        python setup.py bdist_wheel --build-type Release -- -G "Visual Studio 15 2017"
       env: {
         VCPKG_ROOT: '$(vcpkg_root)',
       }
