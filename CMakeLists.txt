@@ -13,11 +13,7 @@ endif()
 # Name of the project
 project (pc-ble-driver-py)
 
-if(DEFINED ENV{PYTHON_VERSION})
-    find_package(PythonLibs "$ENV{PYTHON_VERSION}" REQUIRED)
-else()
-    find_package(PythonLibs REQUIRED)
-endif()
+find_package(PythonExtensions)
 
 if(WIN32)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -D_hypot=hypot")
@@ -148,6 +144,10 @@ foreach(SD_API_VER ${SD_API_VERS})
     if(APPLE)
         set_property(TARGET ${PYTHON_MODULE_${SD_API_VER}} PROPERTY SUFFIX ".so")
     endif()
+
+    python_extension_module(TARGET ${PYTHON_MODULE_${SD_API_VER}}
+                            LINKED_MODULES_VAR linked_module_list
+                            FORWARD_DECL_MODULES_VAR fdecl_module_list)
 endforeach()
 
 set(BUILD_OUTPUT_LIB_DIR "pc_ble_driver_py/lib")
