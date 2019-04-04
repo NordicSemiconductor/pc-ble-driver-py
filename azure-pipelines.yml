@@ -27,13 +27,23 @@ jobs:
         sudo apt-get update
         sudo apt-get install ninja-build swig libudev-dev
       displayName: 'Install toolchain'
+    - task: UsePythonVersion@0
+      inputs:
+        versionSpec: '$(python_version)'
+        architecture: 'x64'
     - script: |
-        wget https://repo.anaconda.com/miniconda/Miniconda3-latest-$(conda_version).sh -O $(Agent.HomeDirectory)/miniconda.sh
-        bash $(Agent.HomeDirectory)/miniconda.sh -b -p $(conda_root)
-      displayName: 'Install conda'
-    - script: |
-        $(conda_root)/bin/conda create -yq -n python$(python_version) python=$(python_version)
-      displayName: 'Install Python $(python_version)'
+        which python
+        which pip
+        python --version
+        pip --version
+      displayName: 'Dig python'
+    # - script: |
+    #     wget https://repo.anaconda.com/miniconda/Miniconda3-latest-$(conda_version).sh -O $(Agent.HomeDirectory)/miniconda.sh
+    #     bash $(Agent.HomeDirectory)/miniconda.sh -b -p $(conda_root)
+    #   displayName: 'Install conda'
+    # - script: |
+    #     $(conda_root)/bin/conda create -yq -n python$(python_version) python=$(python_version)
+    #   displayName: 'Install Python $(python_version)'
     - script: |
         git clone https://github.com/NordicPlayground/vcpkg.git $(vcpkg_root)
         $(vcpkg_root)/bootstrap-vcpkg.sh
@@ -46,7 +56,7 @@ jobs:
       }
       displayName: 'Install nrf-ble-driver'
     - script: |
-        export PATH=$(conda_root)/envs/python$(python_version)/bin:$PATH
+        # export PATH=$(conda_root)/envs/python$(python_version)/bin:$PATH
         pip install -r requirements-dev.txt
         python setup.py bdist_wheel --build-type Release
       env: {
@@ -94,6 +104,12 @@ jobs:
       inputs:
         versionSpec: '$(python_version)'
         architecture: 'x64'
+    - script: |
+        which python
+        which pip
+        DYLD_PRINT_LIBRARIES=1 python --version
+        pip --version
+      displayName: 'Dig python'
     - script: |
         ls /Applications
         sudo xcode-select -s /Applications/Xcode_10.1.app
