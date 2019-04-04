@@ -13,7 +13,7 @@ endif()
 # Name of the project
 project (pc-ble-driver-py)
 
-find_package(PythonExtensions)
+find_package(PythonExtensions REQUIRED)
 
 if(WIN32)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -D_hypot=hypot")
@@ -42,13 +42,10 @@ include(${SWIG_USE_FILE})
 # nrf-ble-driver
 find_package(nrf-ble-driver CONFIG REQUIRED)
 
-message(STATUS "Found Python ${PYTHON_VERSION_STRING} in directory ${PYTHON_EXECUTABLE}")
-message(STATUS "Linking towards Python library ${PYTHON_LIBRARY}")
 message(STATUS "IncludeDir ${PYTHON_INCLUDE_DIR}")
-message(STATUS "IncludeDirs ${PYTHON_INCLUDE_DIRS}")
 
 # PYTHON_INCLUDE_DIR provided by scikit-build
-include_directories(${PYTHON_INCLUDE_DIRS})
+include_directories(${PYTHON_INCLUDE_DIR})
 
 set(SWIG_I_FILE ${CMAKE_CURRENT_LIST_DIR}/swig/pc_ble_driver.i.in)
 
@@ -145,7 +142,7 @@ foreach(SD_API_VER ${SD_API_VERS})
         set_property(TARGET ${PYTHON_MODULE_${SD_API_VER}} PROPERTY SUFFIX ".so")
     endif()
 
-    python_extension_module(TARGET ${PYTHON_MODULE_${SD_API_VER}}
+    python_extension_module(${PYTHON_MODULE_${SD_API_VER}}
                             LINKED_MODULES_VAR linked_module_list
                             FORWARD_DECL_MODULES_VAR fdecl_module_list)
 endforeach()
