@@ -48,9 +48,11 @@ find_package(nrf-ble-driver CONFIG REQUIRED)
 
 message(STATUS "Found Python ${PYTHON_VERSION_STRING} in directory ${PYTHON_EXECUTABLE}")
 message(STATUS "Linking towards Python library ${PYTHON_LIBRARY}")
+message(STATUS "IncludeDir ${PYTHON_INCLUDE_DIR}")
+message(STATUS "IncludeDirs ${PYTHON_INCLUDE_DIRS}")
 
 # PYTHON_INCLUDE_DIR provided by scikit-build
-include_directories(${PYTHON_INCLUDE_DIR})
+include_directories(${PYTHON_INCLUDE_DIRS})
 
 set(SWIG_I_FILE ${CMAKE_CURRENT_LIST_DIR}/swig/pc_ble_driver.i.in)
 
