@@ -51,5 +51,5 @@ def test_suite():
     return unittest.TestLoader().loadTestsFromName(__name__)
 
 if __name__ == '__main__':
-    logging.basicConfig(level=Settings.current().log_level)
+    logging.basicConfig(level=Settings.current().log_level, format='%(asctime)s [%(thread)d/%(threadName)s] %(message)s')
     unittest.main(argv=Settings.clean_args())

@@ -1,6 +1,7 @@
 import unittest
 from driver_setup import *
 import logging
+import time
 
 logger = logging.getLogger(__name__)
 
@@ -26,9 +27,7 @@ class DriverOpenClose(unittest.TestCase):
         logger.info('Number of iterations: %s', settings.number_of_iterations)
 
         for _ in range(0, settings.number_of_iterations):
-            logger.debug('Starting open')
             adapter.open()
-            logger.debug('Open complete')
 
             if settings.nrf_family == 'NRF51':
                 adapter.driver.ble_enable(BLEEnableParams(vs_uuid_count=1,
@@ -43,7 +42,10 @@ class DriverOpenClose(unittest.TestCase):
                 adapter.driver.ble_cfg_set(BLEConfig.conn_gatt, gatt_cfg)
                 adapter.driver.ble_enable()
 
+            adapter.driver.ble_gap_scan_start()
+            time.sleep(1)
             adapter.close()
+
 
     def tearDown(self):
         pass
@@ -54,5 +56,5 @@ def test_suite():
 
 
 if __name__ == '__main__':
-    logging.basicConfig(level=Settings.current().log_level)
+    logging.basicConfig(level=Settings.current().log_level, format='%(asctime)s [%(thread)d/%(threadName)s] %(message)s')
     unittest.main(argv=Settings.clean_args())
