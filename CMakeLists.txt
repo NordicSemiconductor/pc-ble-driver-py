@@ -13,28 +13,21 @@ endif()
 # Name of the project
 project (pc-ble-driver-py)
 
-if(DEFINED ENV{PYTHON_VERSION} AND NOT WIN32)
-    find_program(PYTHON_CONFIG NAMES "python$ENV{PYTHON_VERSION}-config" python-config)
-    message(STATUS "Python config command: ${PYTHON_CONFIG}")
-    exec_program(${PYTHON_CONFIG}
-        ARGS "--includes"
-        OUTPUT_VARIABLE PYTHON_CFLAGS)
-    exec_program(${PYTHON_CONFIG}
-        ARGS "--ldflags"
-        OUTPUT_VARIABLE PYTHON_LDFLAGS)
-
-    set(CMAKE_CXX_FLAGS "${PYTHON_CFLAGS}")
-    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${PYTHON_LDFLAGS} -stdlib=libc++ -lc++abi")
+if(DEFINED ENV{PYTHON_VERSION})
+    find_package(PythonLibs "$ENV{PYTHON_VERSION}" REQUIRED)
 else()
     find_package(PythonLibs REQUIRED)
 endif()
 
 if(WIN32)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -D_hypot=hypot")
+else()
+    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -stdlib=libc++ -lc++abi")
 endif()
 if(APPLE)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -stdlib=libc++")
 endif()
+
 message(STATUS "CMAKE_CXX_FLAGS: ${CMAKE_CXX_FLAGS}")
 message(STATUS "CMAKE_EXE_LINKER_FLAGS: ${CMAKE_EXE_LINKER_FLAGS}")
 
