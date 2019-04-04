@@ -36,6 +36,7 @@ jobs:
         which pip
         python --version
         pip --version
+        find /opt/hostedtoolcache/Python
       displayName: 'Dig python'
     # - script: |
     #     wget https://repo.anaconda.com/miniconda/Miniconda3-latest-$(conda_version).sh -O $(Agent.HomeDirectory)/miniconda.sh
@@ -109,6 +110,7 @@ jobs:
         which pip
         DYLD_PRINT_LIBRARIES=1 python --version
         pip --version
+        find /Users/vsts/hostedtoolcache/Python
       displayName: 'Dig python'
     - script: |
         ls /Applications
@@ -201,26 +203,37 @@ jobs:
     pool:
       vmImage: 'vs2017-win2016'
     steps:
+    - task: UsePythonVersion@0
+      inputs:
+        versionSpec: '$(python_version)'
+        architecture: '$(python_arch)'
+    - bash: |
+        which python
+        which pip
+        python --version
+        pip --version
+        find /c/vsts/hostedtoolcache/Python
+      displayName: 'Dig python'
     - script: |
         choco install -y --x86 swig
-        choco install -y miniconda3 --params="'/D:$(conda_root)'"
-      condition: ne(variables['python_version'], '2.7')
+        # choco install -y miniconda3 --params="'/D:$(conda_root)'"
+      # condition: ne(variables['python_version'], '2.7')
       displayName: 'Install toolchain on Windows'
     - script: |
         choco install -y --x86 swig
-        choco install -y miniconda3 --params="'/D:$(conda_root)'"
+        # choco install -y miniconda3 --params="'/D:$(conda_root)'"
         choco install -y vcpython27
       condition: eq(variables['python_version'], '2.7')
       displayName: 'Install toolchain on Windows for Python 2.7'
-    - script: |
-        $(conda_root)\Scripts\conda create -yq -n python$(python_version) python=$(python_version)
-      condition: eq(variables['python_arch'], 'x64')
-      displayName: 'Install Python $(python_version)'
-    - script: |
-        call set CONDA_FORCE_32BIT=1
-        $(conda_root)\Scripts\conda create -yq -n python$(python_version) python=$(python_version)
-      condition: eq(variables['python_arch'], 'x86')
-      displayName: 'Install Python $(python_version)'
+    # - script: |
+    #     $(conda_root)\Scripts\conda create -yq -n python$(python_version) python=$(python_version)
+    #   condition: eq(variables['python_arch'], 'x64')
+    #   displayName: 'Install Python $(python_version)'
+    # - script: |
+    #     call set CONDA_FORCE_32BIT=1
+    #     $(conda_root)\Scripts\conda create -yq -n python$(python_version) python=$(python_version)
+    #   condition: eq(variables['python_arch'], 'x86')
+    #   displayName: 'Install Python $(python_version)'
     - script: |
         git clone https://github.com/NordicPlayground/vcpkg.git $(vcpkg_root)
         $(vcpkg_root)\bootstrap-vcpkg.bat
@@ -233,7 +246,7 @@ jobs:
       }
       displayName: 'Install nrf-ble-driver'
     - script: |
-        call $(conda_root)\Scripts\activate python$(python_version)
+        # call $(conda_root)\Scripts\activate python$(python_version)
         pip install -r requirements-dev.txt
         python setup.py bdist_wheel --build-type Release -- -G "Visual Studio 15 2017 Win64"
       env: {
@@ -242,7 +255,7 @@ jobs:
       condition: eq(variables['python_arch'], 'x64')
       displayName: 'Build'
     - script: |
-        call $(conda_root)\Scripts\activate python$(python_version)
+        # call $(conda_root)\Scripts\activate python$(python_version)
         pip install -r requirements-dev.txt
         python setup.py bdist_wheel --build-type Release -- -G "Visual Studio 15 2017"
       env: {
