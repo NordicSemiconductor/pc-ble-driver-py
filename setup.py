@@ -51,13 +51,13 @@ requirements = []
 if py2:
     if sys.version_info[1] < 7:
         print(py_version_old_message)
-        os.exit(-1)
+        sys.exit(-1)
 
     requirements = ['enum34', 'wrapt', 'future', 'typing']
 elif py3:
     if sys.version_info[1] < 6:
         print(py_version_old_message)
-        os.exit(-1)
+        sys.exit(-1)
 
     requirements = ['wrapt', 'future']
 else:
