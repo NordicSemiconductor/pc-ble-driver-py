@@ -3,7 +3,7 @@ trigger:
 
 jobs:
   # Linux
-  - job: Linux_Build
+  - job: Linux
     variables:
       # conda_version: 'Linux-x86_64'
       # conda_root: '$(Agent.HomeDirectory)/miniconda3'
@@ -74,7 +74,7 @@ jobs:
 
 
   # macOS
-  - job: macOS_Build
+  - job: macOS
     variables:
       # conda_version: 'MacOSX-x86_64'
       # conda_root: '$(Agent.HomeDirectory)/miniconda3'
@@ -111,10 +111,10 @@ jobs:
     - script: |
         ls /Applications
         sudo xcode-select -s /Applications/Xcode_10.1.app
-      displayName: 'Install toolchain'
+      displayName: 'Install XCode'
     - script: |
         brew install gcc swig
-      displayName: 'Install toolchain'
+      displayName: 'Install gcc and swig'
     # - script: |
     #     wget https://repo.anaconda.com/miniconda/Miniconda3-latest-$(conda_version).sh -O $(Agent.HomeDirectory)/miniconda.sh
     #     bash $(Agent.HomeDirectory)/miniconda.sh -b -p $(conda_root)
@@ -131,8 +131,6 @@ jobs:
         vcpkg install nrf-ble-driver:$(triplet)
       displayName: 'Install nrf-ble-driver'
     - script: |
-        # export PATH=$(conda_root)/envs/python$(PYTHON_VERSION)/bin:$PATH
-        export
         pip install -r requirements-dev.txt
         python setup.py bdist_wheel --build-type Release -- -DCMAKE_OSX_DEPLOYMENT_TARGET=10.12
       displayName: 'Build'
@@ -152,7 +150,7 @@ jobs:
       condition: ne(variables['Build.Reason'], 'PullRequest')
 
   # Windows
-  - job: Windows_Build
+  - job: Windows
     variables:
       # conda_root: '$(Agent.HomeDirectory)\miniconda3'
       VCPKG_ROOT: '$(Agent.HomeDirectory)\vcpkg'
@@ -206,7 +204,6 @@ jobs:
     #   displayName: 'Dig python'
     - script: |
         choco install -y --x86 swig
-        # choco install -y miniconda3 --params="'/D:$(conda_root)'"
       # condition: ne(variables['PYTHON_VERSION'], '2.7')
       displayName: 'Install toolchain on Windows'
     # - script: |
@@ -233,13 +230,11 @@ jobs:
         vcpkg install nrf-ble-driver:$(triplet)
       displayName: 'Install nrf-ble-driver'
     - script: |
-        # call $(conda_root)\Scripts\activate python$(PYTHON_VERSION)
         pip install -r requirements-dev.txt
         python setup.py bdist_wheel --build-type Release -- -G "Visual Studio 15 2017 Win64"
       condition: eq(variables['python_arch'], 'x64')
       displayName: 'Build'
     - script: |
-        # call $(conda_root)\Scripts\activate python$(PYTHON_VERSION)
         pip install -r requirements-dev.txt
         python setup.py bdist_wheel --build-type Release -- -G "Visual Studio 15 2017"
       condition: eq(variables['python_arch'], 'x86')
