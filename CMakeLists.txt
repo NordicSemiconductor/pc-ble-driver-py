@@ -20,7 +20,7 @@ find_package(SWIG REQUIRED)
 include(${SWIG_USE_FILE})
 
 # nrf-ble-driver
-find_package(nrf-ble-driver CONFIG REQUIRED)
+find_package(nrf-ble-driver 4.1.0 CONFIG REQUIRED)
 
 message(STATUS "Found Python ${PYTHON_VERSION_STRING} in directory ${PYTHON_EXECUTABLE}")
 message(STATUS "Linking towards Python library ${PYTHON_LIBRARY}")

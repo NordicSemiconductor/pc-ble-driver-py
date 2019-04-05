@@ -66,6 +66,10 @@ nrf_sd_ble_api_ver = config.sd_api_ver_get()
 
 ATT_MTU_DEFAULT = None
 
+# Number of seconds to wait before getting items in queue
+# Supports
+WORKER_QUEUE_WAIT_TIME = 1
+
 if nrf_sd_ble_api_ver == 2:
     import pc_ble_driver_py.lib.nrf_ble_driver_sd_api_v2 as driver
     ATT_MTU_DEFAULT = driver.GATT_MTU_SIZE_DEFAULT
@@ -1214,12 +1218,7 @@ class BLEDriver(object):
                  ):
         super(BLEDriver, self).__init__()
         self.observers = list()  # type: List[BLEDriverObserver]
-        self.log_queue = queue.Queue()
-        self.log_worker = Thread(target=self.log_message_handler_thread, name='Log Thread', daemon=True)
-        self.log_worker.start()
-        self.status_queue = queue.Queue()
-        self.status_worker = Thread(target=self.status_handler_thread, name='Status Thread', daemon=True)
-        self.status_worker.start()
+
         if auto_flash:
             try:
                 flasher = Flasher(serial_port=serial_port)
@@ -1244,6 +1243,10 @@ class BLEDriver(object):
         log_severity_level_enum = getattr(RpcLogSeverity, log_severity_level.lower(), RpcLogSeverity.info)
         self.rpc_log_severity_filter(log_severity_level_enum)
         self._keyset = None
+
+        self.log_queue = queue.Queue()
+        self.status_queue = queue.Queue()
+        self.ble_event_queue = queue.Queue()
 
     @NordicSemiErrorCheck
     @wrapt.synchronized(api_lock)
@@ -1282,15 +1285,64 @@ class BLEDriver(object):
     @NordicSemiErrorCheck
     @wrapt.synchronized(api_lock)
     def open(self):
+        self.run_workers = True
+
+        self.log_worker = Thread(target=self.log_message_handler_thread, name='LogThread')
+        self.log_worker.start()
+
+        self.status_worker = Thread(target=self.status_handler_thread, name='StatusThread')
+        self.status_worker.start()
+
+        self.ble_event_worker = Thread(target=self.ble_event_handler_thread, name='EventThread')
+        self.ble_event_worker.start()
+
         return driver.sd_rpc_open(self.rpc_adapter,
                                   self.status_handler,
-                                  self.ble_evt_handler,
+                                  self.ble_event_handler,
                                   self.log_message_handler)
 
     @NordicSemiErrorCheck
     @wrapt.synchronized(api_lock)
     def close(self):
-        return driver.sd_rpc_close(self.rpc_adapter)
+        result = driver.sd_rpc_close(self.rpc_adapter)
+        logger.debug('close result %s', result)
+
+        # Cleanup workers
+        if self.run_workers:
+            self.run_workers = False
+
+            logger.debug('Stopping workers')
+
+            self.log_worker.join()
+
+            # Empty log_queue
+            try:
+                while True:
+                    self.log_queue.get_nowait()
+            except queue.Empty as _:
+                pass
+
+            self.status_worker.join()
+
+            # Empty status_queue
+            try:
+                while True:
+                    self.status_queue.get_nowait()
+            except queue.Empty as _:
+                pass
+
+            self.ble_event_worker.join()
+
+            # Empty ble_event_queue
+            try:
+                while True:
+                    self.ble_event_queue.get_nowait()
+            except queue.Empty as _:
+                pass
+
+            logger.debug('Workers stopped')
+
+        return result
 
     @wrapt.synchronized(observer_lock)
     def observer_register(self, observer):
@@ -1635,7 +1687,8 @@ class BLEDriver(object):
     # IMPORTANT: interpreter crash since it tries to garbage collect
     # IMPORTANT: the object from the binding.
     def status_handler(self, adapter, status_code, status_message):
-        self.status_queue.put([adapter, status_code, status_message])
+        if self.status_queue:
+            self.status_queue.put([adapter, status_code, status_message])
 
     @wrapt.synchronized(observer_lock)
     def status_handler_sync(self, adapter, status_code, status_message):
@@ -1645,12 +1698,13 @@ class BLEDriver(object):
             obs.on_rpc_status(adapter, statusEnum, status_message)
 
     def status_handler_thread(self):
-        while True:
+        while self.run_workers:
             try:
-                item = self.status_queue.get()
-                if item is None:
-                    continue
+                item = self.status_queue.get(True, WORKER_QUEUE_WAIT_TIME)
+                logger.debug('status')
                 self.status_handler_sync(*item)
+            except queue.Empty as _:
+                pass
             except Exception as ex:
                 logger.exception('Exception in status handler: {}'.format(ex))
 
@@ -1682,24 +1736,32 @@ class BLEDriver(object):
             obs.on_rpc_log_entry(adapter, logLevel, log_message)
 
     def log_message_handler_thread(self):
-        while True:
+        while self.run_workers:
             try:
-                item = self.log_queue.get()
-                if item is None:
-                    continue
+                item = self.log_queue.get(True, WORKER_QUEUE_WAIT_TIME)
                 self.log_message_handler_sync(*item)
+            except queue.Empty as _:
+                pass
             except Exception as ex:
                 logger.exception('Exception in log handler: {}'.format(ex))
 
-    # IMPORTANT: Python annotations on callbacks make the reference count
-    # IMPORTANT: for the object become zero in the binding. This makes the
-    # IMPORTANT: interpreter crash since it tries to garbage collect
-    # IMPORTANT: the object from the binding.
-    def ble_evt_handler(self, adapter, ble_event):
-        self.ble_evt_handler_sync(adapter, ble_event)
+    def ble_event_handler_thread(self):
+        while self.run_workers:
+            try:
+                item = self.ble_event_queue.get(True, WORKER_QUEUE_WAIT_TIME)
+                self.ble_event_handler_sync(*item)
+            except queue.Empty as _:
+                pass
+            except Exception as ex:
+                logger.exception('Exception in event handler: {}'.format(ex))
+
+    def ble_event_handler(self, adapter, ble_event):
+        self.ble_event_queue.put([adapter, ble_event])
 
     @wrapt.synchronized(observer_lock)
-    def ble_evt_handler_sync(self, _adapter, ble_event):
+    def ble_event_handler_sync(self, _adapter, ble_event):
+        logger.debug('ble_evt_handler_sync')
+
         try:
             evt_id = BLEEvtID(ble_event.header.evt_id)
         except Exception:
