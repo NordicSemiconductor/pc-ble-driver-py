@@ -5,8 +5,6 @@ jobs:
   # Linux
   - job: Linux
     variables:
-      # conda_version: 'Linux-x86_64'
-      # conda_root: '$(Agent.HomeDirectory)/miniconda3'
       VCPKG_ROOT: '$(Agent.HomeDirectory)/vcpkg'
       python_arch: 'x64'
       triplet: 'x64-linux'
@@ -46,7 +44,7 @@ jobs:
         pyincldir=`dirname ${pyheader}`
         pylib=`ls ${pyroot}/lib/python*/config*/libpython*.a`
         pip install -r requirements-dev.txt
-        python setup.py bdist_wheel --build-type Release -- -DPYTHON_INCLUDE_DIR=${pyincldir} -DPYTHON_LIBRARY=${pylib} -DPYTHON_INCLUDE_DIR=${pyincldir}
+        python setup.py bdist_wheel --build-type Release -- -DPYTHON_INCLUDE_DIR=${pyincldir} -DPYTHON_LIBRARY=${pylib}
       displayName: 'Build'
     - bash: |
         cp -R dist/*.whl "$(Build.ArtifactStagingDirectory)"
@@ -67,8 +65,6 @@ jobs:
   # macOS
   - job: macOS
     variables:
-      # conda_version: 'MacOSX-x86_64'
-      # conda_root: '$(Agent.HomeDirectory)/miniconda3'
       VCPKG_ROOT: '$(Agent.HomeDirectory)/vcpkg'
       python_arch: 'x64'
       triplet: 'x64-osx'
@@ -89,16 +85,6 @@ jobs:
       inputs:
         versionSpec: '$(PYTHON_VERSION)'
         architecture: 'x64'
-    # - script: |
-    #     python_path=`which python`
-    #     python_dir=`dirname python`
-    #     python_incl=${python_dir}/include/python$(PYTHON_VERSION)
-    #     python_lib=
-    #     which pip
-    #     DYLD_PRINT_LIBRARIES=1 python --version
-    #     pip --version
-    #     ls "/Users/vsts/hostedtoolcache/Python$(PYTHON_VERSION).*/x64/include/python2.7"
-    #   displayName: 'Dig python'
     - script: |
         ls /Applications
         sudo xcode-select -s /Applications/Xcode_10.1.app
@@ -121,7 +107,7 @@ jobs:
         pyincldir=`dirname ${pyheader}`
         pylib=`ls ${pyroot}/lib/python*/config*/libpython*.a`
         pip install -r requirements-dev.txt
-        python setup.py bdist_wheel --build-type Release -- -DPYTHON_INCLUDE_DIR=${pyincldir} -DPYTHON_LIBRARY=${pylib} -DCMAKE_OSX_DEPLOYMENT_TARGET=10.12
+        python setup.py bdist_wheel --build-type Release -- -DPYTHON_INCLUDE_DIR=${pyincldir} -DPYTHON_LIBRARY=${pylib} -DCMAKE_OSX_DEPLOYMENT_TARGET=10.13
       displayName: 'Build'
     - bash: |
         cp -R dist/*.whl "$(Build.ArtifactStagingDirectory)"
@@ -141,7 +127,6 @@ jobs:
   # Windows
   - job: Windows
     variables:
-      # conda_root: '$(Agent.HomeDirectory)\miniconda3'
       VCPKG_ROOT: '$(Agent.HomeDirectory)\vcpkg'
     strategy:
       matrix:
@@ -199,6 +184,7 @@ jobs:
     - bash: |
         pypath=`which python`
         pyroot=`dirname ${pypath}`
+        find ${pyroot}
         pyheader=`ls ${pyroot}/include/python*/Python.h`
         pyincldir=`dirname ${pyheader}`
         pylib=`ls ${pyroot}/lib/python*/config*/libpython*.a`
@@ -209,6 +195,7 @@ jobs:
     - bash: |
         pypath=`which python`
         pyroot=`dirname ${pypath}`
+        find ${pyroot}
         pyheader=`ls ${pyroot}/include/python*/Python.h`
         pyincldir=`dirname ${pyheader}`
         pylib=`ls ${pyroot}/lib/python*/config*/libpython*.a`
