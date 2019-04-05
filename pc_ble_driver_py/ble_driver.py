@@ -1288,12 +1288,15 @@ class BLEDriver(object):
         self.run_workers = True
 
         self.log_worker = Thread(target=self.log_message_handler_thread, name='LogThread')
+        self.log_worker.daemon = True
         self.log_worker.start()
 
         self.status_worker = Thread(target=self.status_handler_thread, name='StatusThread')
+        self.status_worker.daemon = True
         self.status_worker.start()
 
         self.ble_event_worker = Thread(target=self.ble_event_handler_thread, name='EventThread')
+        self.ble_event_worker.daemon = True
         self.ble_event_worker.start()
 
         return driver.sd_rpc_open(self.rpc_adapter,
