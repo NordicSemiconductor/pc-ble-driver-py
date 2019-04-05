@@ -7,17 +7,6 @@ jobs:
     variables:
       VCPKG_ROOT: '$(Agent.HomeDirectory)/vcpkg'
       python_arch: 'x64'
-      triplet: 'x64-linux'
-    strategy:
-      matrix:
-        linux_python_27:
-          PYTHON_VERSION: 2.7
-        linux_python_35:
-          PYTHON_VERSION: 3.5
-        linux_python_36:
-          PYTHON_VERSION: 3.6
-        linux_python_37:
-          PYTHON_VERSION: 3.7
     pool:
       vmImage: 'ubuntu-16.04'
     steps:
@@ -25,19 +14,20 @@ jobs:
         sudo apt-get update
         sudo apt-get install ninja-build swig libudev-dev
       displayName: 'Install toolchain'
-    - task: UsePythonVersion@0
-      inputs:
-        versionSpec: '$(PYTHON_VERSION)'
-        architecture: 'x64'
     - script: |
         git clone https://github.com/NordicPlayground/vcpkg.git $(VCPKG_ROOT)
         $(VCPKG_ROOT)/bootstrap-vcpkg.sh
       displayName: 'Install vcpkg'
     - script: |
         export PATH=$VCPKG_ROOT:$PATH
-        vcpkg install nrf-ble-driver:$(triplet)
+        vcpkg install nrf-ble-driver:$(python_arch)-linux
       displayName: 'Install nrf-ble-driver'
-    - script: |
+    - task: UsePythonVersion@0
+      inputs:
+        versionSpec: '2.7'
+        architecture: '$(python_arch)'
+    - bash: |
+        rm -rf _skbuild
         pypath=`which python`
         pyroot=`dirname ${pypath}`
         pyheader=`ls ${pyroot}/include/python*/Python.h`
@@ -45,7 +35,49 @@ jobs:
         pylib=`ls ${pyroot}/lib/python*/config*/libpython*.a`
         pip install -r requirements-dev.txt
         python setup.py bdist_wheel --build-type Release -- -DPYTHON_INCLUDE_DIR=${pyincldir} -DPYTHON_LIBRARY=${pylib}
-      displayName: 'Build'
+      displayName: 'Build for python 2.7'
+    - task: UsePythonVersion@0
+      inputs:
+        versionSpec: '3.5'
+        architecture: '$(python_arch)'
+    - bash: |
+        rm -rf _skbuild
+        pypath=`which python`
+        pyroot=`dirname ${pypath}`
+        pyheader=`ls ${pyroot}/include/python*/Python.h`
+        pyincldir=`dirname ${pyheader}`
+        pylib=`ls ${pyroot}/lib/python*/config*/libpython*.a`
+        pip install -r requirements-dev.txt
+        python setup.py bdist_wheel --build-type Release -- -DPYTHON_INCLUDE_DIR=${pyincldir} -DPYTHON_LIBRARY=${pylib}
+      displayName: 'Build for python 3.5'
+    - task: UsePythonVersion@0
+      inputs:
+        versionSpec: '3.6'
+        architecture: '$(python_arch)'
+    - bash: |
+        rm -rf _skbuild
+        pypath=`which python`
+        pyroot=`dirname ${pypath}`
+        pyheader=`ls ${pyroot}/include/python*/Python.h`
+        pyincldir=`dirname ${pyheader}`
+        pylib=`ls ${pyroot}/lib/python*/config*/libpython*.a`
+        pip install -r requirements-dev.txt
+        python setup.py bdist_wheel --build-type Release -- -DPYTHON_INCLUDE_DIR=${pyincldir} -DPYTHON_LIBRARY=${pylib}
+      displayName: 'Build for python 3.6'
+    - task: UsePythonVersion@0
+      inputs:
+        versionSpec: '3.7'
+        architecture: '$(python_arch)'
+    - bash: |
+        rm -rf _skbuild
+        pypath=`which python`
+        pyroot=`dirname ${pypath}`
+        pyheader=`ls ${pyroot}/include/python*/Python.h`
+        pyincldir=`dirname ${pyheader}`
+        pylib=`ls ${pyroot}/lib/python*/config*/libpython*.a`
+        pip install -r requirements-dev.txt
+        python setup.py bdist_wheel --build-type Release -- -DPYTHON_INCLUDE_DIR=${pyincldir} -DPYTHON_LIBRARY=${pylib}
+      displayName: 'Build for python 3.7'
     - bash: |
         cp -R dist/*.whl "$(Build.ArtifactStagingDirectory)"
       displayName: 'Copy artifacts'
@@ -67,24 +99,9 @@ jobs:
     variables:
       VCPKG_ROOT: '$(Agent.HomeDirectory)/vcpkg'
       python_arch: 'x64'
-      triplet: 'x64-osx'
-    strategy:
-      matrix:
-        mac_python_27:
-          PYTHON_VERSION: 2.7
-        mac_python_35:
-          PYTHON_VERSION: 3.5
-        mac_python_36:
-          PYTHON_VERSION: 3.6
-        mac_python_37:
-          PYTHON_VERSION: 3.7
     pool:
       vmImage: 'macos-10.13'
     steps:
-    - task: UsePythonVersion@0
-      inputs:
-        versionSpec: '$(PYTHON_VERSION)'
-        architecture: 'x64'
     - script: |
         ls /Applications
         sudo xcode-select -s /Applications/Xcode_10.1.app
@@ -98,9 +115,14 @@ jobs:
       displayName: 'Install vcpkg'
     - script: |
         export PATH=$VCPKG_ROOT:$PATH
-        vcpkg install nrf-ble-driver:$(triplet)
+        vcpkg install nrf-ble-driver:$(python_arch)-osx
       displayName: 'Install nrf-ble-driver'
-    - script: |
+    - task: UsePythonVersion@0
+      inputs:
+        versionSpec: '2.7'
+        architecture: '$(python_arch)'
+    - bash: |
+        rm -rf _skbuild
         pypath=`which python`
         pyroot=`dirname ${pypath}`
         pyheader=`ls ${pyroot}/include/python*/Python.h`
@@ -108,7 +130,49 @@ jobs:
         pylib=`ls ${pyroot}/lib/python*/config*/libpython*.a`
         pip install -r requirements-dev.txt
         python setup.py bdist_wheel --build-type Release -- -DPYTHON_INCLUDE_DIR=${pyincldir} -DPYTHON_LIBRARY=${pylib} -DCMAKE_OSX_DEPLOYMENT_TARGET=10.13
-      displayName: 'Build'
+      displayName: 'Build for python 2.7'
+    - task: UsePythonVersion@0
+      inputs:
+        versionSpec: '3.5'
+        architecture: '$(python_arch)'
+    - bash: |
+        rm -rf _skbuild
+        pypath=`which python`
+        pyroot=`dirname ${pypath}`
+        pyheader=`ls ${pyroot}/include/python*/Python.h`
+        pyincldir=`dirname ${pyheader}`
+        pylib=`ls ${pyroot}/lib/python*/config*/libpython*.a`
+        pip install -r requirements-dev.txt
+        python setup.py bdist_wheel --build-type Release -- -DPYTHON_INCLUDE_DIR=${pyincldir} -DPYTHON_LIBRARY=${pylib} -DCMAKE_OSX_DEPLOYMENT_TARGET=10.13
+      displayName: 'Build for python 3.5'
+    - task: UsePythonVersion@0
+      inputs:
+        versionSpec: '3.6'
+        architecture: '$(python_arch)'
+    - bash: |
+        rm -rf _skbuild
+        pypath=`which python`
+        pyroot=`dirname ${pypath}`
+        pyheader=`ls ${pyroot}/include/python*/Python.h`
+        pyincldir=`dirname ${pyheader}`
+        pylib=`ls ${pyroot}/lib/python*/config*/libpython*.a`
+        pip install -r requirements-dev.txt
+        python setup.py bdist_wheel --build-type Release -- -DPYTHON_INCLUDE_DIR=${pyincldir} -DPYTHON_LIBRARY=${pylib} -DCMAKE_OSX_DEPLOYMENT_TARGET=10.13
+      displayName: 'Build for python 3.6'
+    - task: UsePythonVersion@0
+      inputs:
+        versionSpec: '3.7'
+        architecture: '$(python_arch)'
+    - bash: |
+        rm -rf _skbuild
+        pypath=`which python`
+        pyroot=`dirname ${pypath}`
+        pyheader=`ls ${pyroot}/include/python*/Python.h`
+        pyincldir=`dirname ${pyheader}`
+        pylib=`ls ${pyroot}/lib/python*/config*/libpython*.a`
+        pip install -r requirements-dev.txt
+        python setup.py bdist_wheel --build-type Release -- -DPYTHON_INCLUDE_DIR=${pyincldir} -DPYTHON_LIBRARY=${pylib} -DCMAKE_OSX_DEPLOYMENT_TARGET=10.13
+      displayName: 'Build for python 3.7'
     - bash: |
         cp -R dist/*.whl "$(Build.ArtifactStagingDirectory)"
       displayName: 'Copy artifacts'
@@ -130,48 +194,17 @@ jobs:
       VCPKG_ROOT: '$(Agent.HomeDirectory)\vcpkg'
     strategy:
       matrix:
-        win64_python_27:
-          PYTHON_VERSION: 2.7
+        win64:
           python_arch: 'x64'
-          triplet: 'x64-windows'
-        win64_python_35:
-          PYTHON_VERSION: 3.5
-          python_arch: 'x64'
-          triplet: 'x64-windows'
-        win64_python_36:
-          PYTHON_VERSION: 3.6
-          python_arch: 'x64'
-          triplet: 'x64-windows'
-        win64_python_37:
-          PYTHON_VERSION: 3.7
-          python_arch: 'x64'
-          triplet: 'x64-windows'
-        win32_python_27:
-          PYTHON_VERSION: 2.7
+          generator: 'Visual Studio 15 2017 Win64'
+        win32:
           python_arch: 'x86'
-          triplet: 'x86-windows'
-        win32_python_35:
-          PYTHON_VERSION: 3.5
-          python_arch: 'x86'
-          triplet: 'x86-windows'
-        win32_python_36:
-          PYTHON_VERSION: 3.6
-          python_arch: 'x86'
-          triplet: 'x86-windows'
-        win32_python_37:
-          PYTHON_VERSION: 3.7
-          python_arch: 'x86'
-          triplet: 'x86-windows'
+          generator: 'Visual Studio 15 2017'
     pool:
       vmImage: 'vs2017-win2016'
     steps:
-    - task: UsePythonVersion@0
-      inputs:
-        versionSpec: '$(PYTHON_VERSION)'
-        architecture: '$(python_arch)'
     - script: |
         choco install -y --x86 swig
-      # condition: ne(variables['PYTHON_VERSION'], '2.7')
       displayName: 'Install toolchain on Windows'
     - script: |
         git clone https://github.com/NordicPlayground/vcpkg.git $(VCPKG_ROOT)
@@ -179,28 +212,64 @@ jobs:
       displayName: 'Install vcpkg'
     - script: |
         set PATH=$(VCPKG_ROOT);%PATH%
-        vcpkg install nrf-ble-driver:$(triplet)
+        vcpkg install nrf-ble-driver:$(python_arch)-windows
       displayName: 'Install nrf-ble-driver'
+    - task: UsePythonVersion@0
+      inputs:
+        versionSpec: '2.7'
+        architecture: '$(python_arch)'
     - bash: |
+        rm -rf _skbuild
         pypath=`which python`
         pyroot=`dirname ${pypath}`
         pyheader=`ls ${pyroot}/include/Python.h`
         pyincldir=`dirname ${pyheader}`
-        pylib=`ls ${pyroot}/libs/libpython*.a`
+        pylib=`ls -1 ${pyroot}/libs/python*.lib`
         pip install -r requirements-dev.txt
-        python setup.py bdist_wheel --build-type Release -- -DPYTHON_INCLUDE_DIR=${pyincldir} -DPYTHON_LIBRARY=${pylib} -G "Visual Studio 15 2017 Win64"
-      condition: eq(variables['python_arch'], 'x64')
-      displayName: 'Build'
+        python setup.py bdist_wheel --build-type Release -- -DPYTHON_INCLUDE_DIR=${pyincldir} -DPYTHON_LIBRARY=${pylib} -G $(generator)
+      displayName: 'Build for python 2.7'
+    - task: UsePythonVersion@0
+      inputs:
+        versionSpec: '3.5'
+        architecture: '$(python_arch)'
     - bash: |
+        rm -rf _skbuild
         pypath=`which python`
         pyroot=`dirname ${pypath}`
         pyheader=`ls ${pyroot}/include/Python.h`
         pyincldir=`dirname ${pyheader}`
-        pylib=`ls ${pyroot}/libs/libpython*.a`
+        pylib=`ls -1 ${pyroot}/libs/python*.lib`
         pip install -r requirements-dev.txt
-        python setup.py bdist_wheel --build-type Release -- -DPYTHON_INCLUDE_DIR=${pyincldir} -DPYTHON_LIBRARY=${pylib} -G "Visual Studio 15 2017"
-      condition: eq(variables['python_arch'], 'x86')
-      displayName: 'Build'
+        python setup.py bdist_wheel --build-type Release -- -DPYTHON_INCLUDE_DIR=${pyincldir} -DPYTHON_LIBRARY=${pylib} -G $(generator)
+      displayName: 'Build for python 3.5'
+    - task: UsePythonVersion@0
+      inputs:
+        versionSpec: '3.6'
+        architecture: '$(python_arch)'
+    - bash: |
+        rm -rf _skbuild
+        pypath=`which python`
+        pyroot=`dirname ${pypath}`
+        pyheader=`ls ${pyroot}/include/Python.h`
+        pyincldir=`dirname ${pyheader}`
+        pylib=`ls -1 ${pyroot}/libs/python*.lib`
+        pip install -r requirements-dev.txt
+        python setup.py bdist_wheel --build-type Release -- -DPYTHON_INCLUDE_DIR=${pyincldir} -DPYTHON_LIBRARY=${pylib} -G $(generator)
+      displayName: 'Build for python 3.6'
+    - task: UsePythonVersion@0
+      inputs:
+        versionSpec: '3.7'
+        architecture: '$(python_arch)'
+    - bash: |
+        rm -rf _skbuild
+        pypath=`which python`
+        pyroot=`dirname ${pypath}`
+        pyheader=`ls ${pyroot}/include/Python.h`
+        pyincldir=`dirname ${pyheader}`
+        pylib=`ls -1 ${pyroot}/libs/python*.lib`
+        pip install -r requirements-dev.txt
+        python setup.py bdist_wheel --build-type Release -- -DPYTHON_INCLUDE_DIR=${pyincldir} -DPYTHON_LIBRARY=${pylib} -G $(generator)
+      displayName: 'Build for python 3.7'
     - bash: |
         cp -R dist/*.whl "$(Build.ArtifactStagingDirectory)"
       displayName: 'Copy artifacts'
