@@ -184,10 +184,9 @@ jobs:
     - bash: |
         pypath=`which python`
         pyroot=`dirname ${pypath}`
-        find ${pyroot}
-        pyheader=`ls ${pyroot}/include/python*/Python.h`
+        pyheader=`ls ${pyroot}/include/Python.h`
         pyincldir=`dirname ${pyheader}`
-        pylib=`ls ${pyroot}/lib/python*/config*/libpython*.a`
+        pylib=`ls ${pyroot}/libs/libpython*.a`
         pip install -r requirements-dev.txt
         python setup.py bdist_wheel --build-type Release -- -DPYTHON_INCLUDE_DIR=${pyincldir} -DPYTHON_LIBRARY=${pylib} -G "Visual Studio 15 2017 Win64"
       condition: eq(variables['python_arch'], 'x64')
@@ -195,10 +194,9 @@ jobs:
     - bash: |
         pypath=`which python`
         pyroot=`dirname ${pypath}`
-        find ${pyroot}
-        pyheader=`ls ${pyroot}/include/python*/Python.h`
+        pyheader=`ls ${pyroot}/include/Python.h`
         pyincldir=`dirname ${pyheader}`
-        pylib=`ls ${pyroot}/lib/python*/config*/libpython*.a`
+        pylib=`ls ${pyroot}/libs/libpython*.a`
         pip install -r requirements-dev.txt
         python setup.py bdist_wheel --build-type Release -- -DPYTHON_INCLUDE_DIR=${pyincldir} -DPYTHON_LIBRARY=${pylib} -G "Visual Studio 15 2017"
       condition: eq(variables['python_arch'], 'x86')
