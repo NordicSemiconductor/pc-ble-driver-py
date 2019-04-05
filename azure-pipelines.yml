@@ -1,5 +1,8 @@
 trigger:
+- feature/s132v5_py3
 - test-azure
+- master
+- release/*
 
 jobs:
   # Linux
@@ -294,6 +297,6 @@ jobs:
   #       connectionType: 'connectedServiceName'
   #       serviceConnection: 'waylandJenkins'
   #       method: 'POST'
-  #       urlSuffix: 'view/pc-nrfjprog-js/job/pc-nrfjprog-js-$(osType)/buildWithParameters?BRANCH=$(Build.SourceBranch)&VSTS_URL=$(system.CollectionUri)&TOKEN=$(system.AccessToken)&PROJECT_ID=$(system.teamProjectId)&HUB_NAME=$(system.hostType)&PLAN_ID=$(system.planId)&TASK_ID=$(system.taskInstanceId)&JOB_ID=$(system.jobId)'
+  #       urlSuffix: 'view/pc-ble-driver-py/job/pc-ble-driver-py-$(osType)/buildWithParameters?BRANCH=$(Build.SourceBranch)&VSTS_URL=$(system.CollectionUri)&TOKEN=$(system.AccessToken)&PROJECT_ID=$(system.teamProjectId)&HUB_NAME=$(system.hostType)&PLAN_ID=$(system.planId)&TASK_ID=$(system.taskInstanceId)&JOB_ID=$(system.jobId)'
   #       waitForCompletion: 'true'
   #     condition: ne(variables['Build.Reason'], 'PullRequest')
