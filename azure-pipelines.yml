@@ -5,6 +5,8 @@ jobs:
   # Linux
   - job: Linux
     variables:
+      conda_version: 'Linux-x86_64'
+      conda_root: '$(Agent.HomeDirectory)/miniconda3'
       VCPKG_ROOT: '$(Agent.HomeDirectory)/vcpkg'
       python_arch: 'x64'
     pool:
@@ -15,6 +17,10 @@ jobs:
         sudo apt-get install ninja-build swig libudev-dev
       displayName: 'Install toolchain'
     - script: |
+        wget https://repo.anaconda.com/miniconda/Miniconda3-latest-$(conda_version).sh -O $(Agent.HomeDirectory)/miniconda.sh
+        bash $(Agent.HomeDirectory)/miniconda.sh -b -p $(conda_root)
+      displayName: 'Install conda'
+    - script: |
         git clone https://github.com/NordicPlayground/vcpkg.git $(VCPKG_ROOT)
         $(VCPKG_ROOT)/bootstrap-vcpkg.sh
       displayName: 'Install vcpkg'
@@ -22,61 +28,41 @@ jobs:
         export PATH=$VCPKG_ROOT:$PATH
         vcpkg install nrf-ble-driver:$(python_arch)-linux
       displayName: 'Install nrf-ble-driver'
-    - task: UsePythonVersion@0
-      inputs:
-        versionSpec: '2.7'
-        architecture: '$(python_arch)'
+    - script: |
+        $(conda_root)/bin/conda create -yq -n python2.7 python=2.7
+      displayName: 'Install Python 3.5'
     - bash: |
+        export PATH=$(conda_root)/envs/python2.7/bin:$PATH
         rm -rf _skbuild
-        pypath=`which python`
-        pyroot=`dirname ${pypath}`
-        pyheader=`ls ${pyroot}/include/python*/Python.h`
-        pyincldir=`dirname ${pyheader}`
-        pylib=`ls ${pyroot}/lib/python*/config*/libpython*.a`
         pip install -r requirements-dev.txt
-        python setup.py bdist_wheel --build-type RelWithDebInfo -- -DPYTHON_INCLUDE_DIR=${pyincldir} -DPYTHON_LIBRARY=${pylib}
+        python setup.py bdist_wheel --build-type RelWithDebInfo
       displayName: 'Build for python 2.7'
-    - task: UsePythonVersion@0
-      inputs:
-        versionSpec: '3.5'
-        architecture: '$(python_arch)'
+    - script: |
+        $(conda_root)/bin/conda create -yq -n python3.5 python=3.5
+      displayName: 'Install Python 3.5'
     - bash: |
+        export PATH=$(conda_root)/envs/python3.5/bin:$PATH
         rm -rf _skbuild
-        pypath=`which python`
-        pyroot=`dirname ${pypath}`
-        pyheader=`ls ${pyroot}/include/python*/Python.h`
-        pyincldir=`dirname ${pyheader}`
-        pylib=`ls ${pyroot}/lib/python*/config*/libpython*.a`
         pip install -r requirements-dev.txt
-        python setup.py bdist_wheel --build-type RelWithDebInfo -- -DPYTHON_INCLUDE_DIR=${pyincldir} -DPYTHON_LIBRARY=${pylib}
+        python setup.py bdist_wheel --build-type RelWithDebInfo
       displayName: 'Build for python 3.5'
-    - task: UsePythonVersion@0
-      inputs:
-        versionSpec: '3.6'
-        architecture: '$(python_arch)'
+    - script: |
+        $(conda_root)/bin/conda create -yq -n python3.6 python=3.6
+      displayName: 'Install Python 3.6'
     - bash: |
+        export PATH=$(conda_root)/envs/python3.6/bin:$PATH
         rm -rf _skbuild
-        pypath=`which python`
-        pyroot=`dirname ${pypath}`
-        pyheader=`ls ${pyroot}/include/python*/Python.h`
-        pyincldir=`dirname ${pyheader}`
-        pylib=`ls ${pyroot}/lib/python*/config*/libpython*.a`
         pip install -r requirements-dev.txt
-        python setup.py bdist_wheel --build-type RelWithDebInfo -- -DPYTHON_INCLUDE_DIR=${pyincldir} -DPYTHON_LIBRARY=${pylib}
+        python setup.py bdist_wheel --build-type RelWithDebInfo
       displayName: 'Build for python 3.6'
-    - task: UsePythonVersion@0
-      inputs:
-        versionSpec: '3.7'
-        architecture: '$(python_arch)'
+    - script: |
+        $(conda_root)/bin/conda create -yq -n python3.7 python=3.7
+      displayName: 'Install Python 3.7'
     - bash: |
+        export PATH=$(conda_root)/envs/python3.7/bin:$PATH
         rm -rf _skbuild
-        pypath=`which python`
-        pyroot=`dirname ${pypath}`
-        pyheader=`ls ${pyroot}/include/python*/Python.h`
-        pyincldir=`dirname ${pyheader}`
-        pylib=`ls ${pyroot}/lib/python*/config*/libpython*.a`
         pip install -r requirements-dev.txt
-        python setup.py bdist_wheel --build-type RelWithDebInfo -- -DPYTHON_INCLUDE_DIR=${pyincldir} -DPYTHON_LIBRARY=${pylib}
+        python setup.py bdist_wheel --build-type RelWithDebInfo
       displayName: 'Build for python 3.7'
     - bash: |
         cp -R dist/*.whl "$(Build.ArtifactStagingDirectory)"
