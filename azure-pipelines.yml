@@ -44,8 +44,9 @@ jobs:
         pyroot=`dirname ${pypath}`
         pyheader=`ls ${pyroot}/include/python*/Python.h`
         pyincldir=`dirname ${pyheader}`
+        pylib=`ls ${pyroot}/lib/python*/config*/libpython*.a`
         pip install -r requirements-dev.txt
-        python setup.py bdist_wheel --build-type Release -- -DPYTHON_INCLUDE_DIR=${pyincldir}
+        python setup.py bdist_wheel --build-type Release -- -DPYTHON_INCLUDE_DIR=${pyincldir} -DPYTHON_LIBRARY=${pylib} -DPYTHON_INCLUDE_DIR=${pyincldir}
       displayName: 'Build'
     - bash: |
         cp -R dist/*.whl "$(Build.ArtifactStagingDirectory)"
@@ -118,8 +119,9 @@ jobs:
         pyroot=`dirname ${pypath}`
         pyheader=`ls ${pyroot}/include/python*/Python.h`
         pyincldir=`dirname ${pyheader}`
+        pylib=`ls ${pyroot}/lib/python*/config*/libpython*.a`
         pip install -r requirements-dev.txt
-        python setup.py bdist_wheel --build-type Release -- -DPYTHON_INCLUDE_DIR=${pyincldir} -DCMAKE_OSX_DEPLOYMENT_TARGET=10.12
+        python setup.py bdist_wheel --build-type Release -- -DPYTHON_INCLUDE_DIR=${pyincldir} -DPYTHON_LIBRARY=${pylib} -DCMAKE_OSX_DEPLOYMENT_TARGET=10.12
       displayName: 'Build'
     - bash: |
         cp -R dist/*.whl "$(Build.ArtifactStagingDirectory)"
@@ -199,8 +201,9 @@ jobs:
         pyroot=`dirname ${pypath}`
         pyheader=`ls ${pyroot}/include/python*/Python.h`
         pyincldir=`dirname ${pyheader}`
+        pylib=`ls ${pyroot}/lib/python*/config*/libpython*.a`
         pip install -r requirements-dev.txt
-        python setup.py bdist_wheel --build-type Release -- -DPYTHON_INCLUDE_DIR=${pyincldir} -G "Visual Studio 15 2017 Win64"
+        python setup.py bdist_wheel --build-type Release -- -DPYTHON_INCLUDE_DIR=${pyincldir} -DPYTHON_LIBRARY=${pylib} -G "Visual Studio 15 2017 Win64"
       condition: eq(variables['python_arch'], 'x64')
       displayName: 'Build'
     - bash: |
@@ -208,8 +211,9 @@ jobs:
         pyroot=`dirname ${pypath}`
         pyheader=`ls ${pyroot}/include/python*/Python.h`
         pyincldir=`dirname ${pyheader}`
+        pylib=`ls ${pyroot}/lib/python*/config*/libpython*.a`
         pip install -r requirements-dev.txt
-        python setup.py bdist_wheel --build-type Release -- -DPYTHON_INCLUDE_DIR=${pyincldir} -G "Visual Studio 15 2017"
+        python setup.py bdist_wheel --build-type Release -- -DPYTHON_INCLUDE_DIR=${pyincldir} -DPYTHON_LIBRARY=${pylib} -G "Visual Studio 15 2017"
       condition: eq(variables['python_arch'], 'x86')
       displayName: 'Build'
     - bash: |
