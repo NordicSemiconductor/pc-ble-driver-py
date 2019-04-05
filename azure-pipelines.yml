@@ -213,7 +213,7 @@ jobs:
         pyincldir=`dirname ${pyheader}`
         pylib=`ls -1 ${pyroot}/libs/python*.lib`
         pip install -r requirements-dev.txt
-        python setup.py bdist_wheel --build-type RelWithDebInfo -- -DPYTHON_INCLUDE_DIR=${pyincldir} -DPYTHON_LIBRARY=${pylib} -G $(generator)
+        python setup.py bdist_wheel --build-type RelWithDebInfo -- -DPYTHON_INCLUDE_DIR=${pyincldir} -DPYTHON_LIBRARY=${pylib} -G "$(generator)"
       displayName: 'Build for python 2.7'
     - task: UsePythonVersion@0
       inputs:
@@ -227,7 +227,7 @@ jobs:
         pyincldir=`dirname ${pyheader}`
         pylib=`ls -1 ${pyroot}/libs/python*.lib`
         pip install -r requirements-dev.txt
-        python setup.py bdist_wheel --build-type RelWithDebInfo -- -DPYTHON_INCLUDE_DIR=${pyincldir} -DPYTHON_LIBRARY=${pylib} -G $(generator)
+        python setup.py bdist_wheel --build-type RelWithDebInfo -- -DPYTHON_INCLUDE_DIR=${pyincldir} -DPYTHON_LIBRARY=${pylib} -G "$(generator)"
       displayName: 'Build for python 3.5'
     - task: UsePythonVersion@0
       inputs:
@@ -241,7 +241,7 @@ jobs:
         pyincldir=`dirname ${pyheader}`
         pylib=`ls -1 ${pyroot}/libs/python*.lib`
         pip install -r requirements-dev.txt
-        python setup.py bdist_wheel --build-type RelWithDebInfo -- -DPYTHON_INCLUDE_DIR=${pyincldir} -DPYTHON_LIBRARY=${pylib} -G $(generator)
+        python setup.py bdist_wheel --build-type RelWithDebInfo -- -DPYTHON_INCLUDE_DIR=${pyincldir} -DPYTHON_LIBRARY=${pylib} -G "$(generator)"
       displayName: 'Build for python 3.6'
     - task: UsePythonVersion@0
       inputs:
@@ -255,7 +255,7 @@ jobs:
         pyincldir=`dirname ${pyheader}`
         pylib=`ls -1 ${pyroot}/libs/python*.lib`
         pip install -r requirements-dev.txt
-        python setup.py bdist_wheel --build-type RelWithDebInfo -- -DPYTHON_INCLUDE_DIR=${pyincldir} -DPYTHON_LIBRARY=${pylib} -G $(generator)
+        python setup.py bdist_wheel --build-type RelWithDebInfo -- -DPYTHON_INCLUDE_DIR=${pyincldir} -DPYTHON_LIBRARY=${pylib} -G "$(generator)"
       displayName: 'Build for python 3.7'
     - bash: |
         cp -R dist/*.whl "$(Build.ArtifactStagingDirectory)"
