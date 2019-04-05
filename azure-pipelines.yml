@@ -211,7 +211,7 @@ jobs:
         pyroot=`dirname ${pypath}`
         pyheader=`ls ${pyroot}/include/Python.h`
         pyincldir=`dirname ${pyheader}`
-        pylib=`ls -1 ${pyroot}/libs/python*.lib`
+        pylib=`ls ${pyroot}/libs/python27.lib`
         pip install -r requirements-dev.txt
         python setup.py bdist_wheel --build-type RelWithDebInfo -- -DPYTHON_INCLUDE_DIR=${pyincldir} -DPYTHON_LIBRARY=${pylib} -G "$(generator)"
       displayName: 'Build for python 2.7'
@@ -225,7 +225,7 @@ jobs:
         pyroot=`dirname ${pypath}`
         pyheader=`ls ${pyroot}/include/Python.h`
         pyincldir=`dirname ${pyheader}`
-        pylib=`ls -1 ${pyroot}/libs/python*.lib`
+        pylib=`ls ${pyroot}/libs/python35.lib`
         pip install -r requirements-dev.txt
         python setup.py bdist_wheel --build-type RelWithDebInfo -- -DPYTHON_INCLUDE_DIR=${pyincldir} -DPYTHON_LIBRARY=${pylib} -G "$(generator)"
       displayName: 'Build for python 3.5'
@@ -239,7 +239,7 @@ jobs:
         pyroot=`dirname ${pypath}`
         pyheader=`ls ${pyroot}/include/Python.h`
         pyincldir=`dirname ${pyheader}`
-        pylib=`ls -1 ${pyroot}/libs/python*.lib`
+        pylib=`ls ${pyroot}/libs/python36.lib`
         pip install -r requirements-dev.txt
         python setup.py bdist_wheel --build-type RelWithDebInfo -- -DPYTHON_INCLUDE_DIR=${pyincldir} -DPYTHON_LIBRARY=${pylib} -G "$(generator)"
       displayName: 'Build for python 3.6'
@@ -253,7 +253,7 @@ jobs:
         pyroot=`dirname ${pypath}`
         pyheader=`ls ${pyroot}/include/Python.h`
         pyincldir=`dirname ${pyheader}`
-        pylib=`ls -1 ${pyroot}/libs/python*.lib`
+        pylib=`ls ${pyroot}/libs/python37.lib`
         pip install -r requirements-dev.txt
         python setup.py bdist_wheel --build-type RelWithDebInfo -- -DPYTHON_INCLUDE_DIR=${pyincldir} -DPYTHON_LIBRARY=${pylib} -G "$(generator)"
       displayName: 'Build for python 3.7'
