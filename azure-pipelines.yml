@@ -31,20 +31,6 @@ jobs:
       inputs:
         versionSpec: '$(PYTHON_VERSION)'
         architecture: 'x64'
-    # - script: |
-    #     which python
-    #     which pip
-    #     python --version
-    #     pip --version
-    #     find /opt/hostedtoolcache/Python
-    #   displayName: 'Dig python'
-    # - script: |
-    #     wget https://repo.anaconda.com/miniconda/Miniconda3-latest-$(conda_version).sh -O $(Agent.HomeDirectory)/miniconda.sh
-    #     bash $(Agent.HomeDirectory)/miniconda.sh -b -p $(conda_root)
-    #   displayName: 'Install conda'
-    # - script: |
-    #     $(conda_root)/bin/conda create -yq -n python$(PYTHON_VERSION) python=$(PYTHON_VERSION)
-    #   displayName: 'Install Python $(PYTHON_VERSION)'
     - script: |
         git clone https://github.com/NordicPlayground/vcpkg.git $(VCPKG_ROOT)
         $(VCPKG_ROOT)/bootstrap-vcpkg.sh
@@ -54,8 +40,12 @@ jobs:
         vcpkg install nrf-ble-driver:$(triplet)
       displayName: 'Install nrf-ble-driver'
     - script: |
+        pypath=`which python`
+        pyroot=`dirname ${pypath}`
+        pyheader=`ls ${pyroot}/include/python*/Python.h`
+        pyincldir=`dirname ${pyheader}`
         pip install -r requirements-dev.txt
-        python setup.py bdist_wheel --build-type Release
+        python setup.py bdist_wheel --build-type Release -- -DPYTHON_INCLUDE_DIR=${pyincldir}
       displayName: 'Build'
     - bash: |
         cp -R dist/*.whl "$(Build.ArtifactStagingDirectory)"
@@ -115,13 +105,6 @@ jobs:
     - script: |
         brew install gcc swig
       displayName: 'Install gcc and swig'
-    # - script: |
-    #     wget https://repo.anaconda.com/miniconda/Miniconda3-latest-$(conda_version).sh -O $(Agent.HomeDirectory)/miniconda.sh
-    #     bash $(Agent.HomeDirectory)/miniconda.sh -b -p $(conda_root)
-    #   displayName: 'Install conda'
-    # - script: |
-    #     $(conda_root)/bin/conda create -yq -n python$(PYTHON_VERSION) python=$(PYTHON_VERSION)
-    #   displayName: 'Install Python $(PYTHON_VERSION)'
     - script: |
         git clone https://github.com/NordicPlayground/vcpkg.git $(VCPKG_ROOT)
         $(VCPKG_ROOT)/bootstrap-vcpkg.sh
@@ -131,8 +114,12 @@ jobs:
         vcpkg install nrf-ble-driver:$(triplet)
       displayName: 'Install nrf-ble-driver'
     - script: |
+        pypath=`which python`
+        pyroot=`dirname ${pypath}`
+        pyheader=`ls ${pyroot}/include/python*/Python.h`
+        pyincldir=`dirname ${pyheader}`
         pip install -r requirements-dev.txt
-        python setup.py bdist_wheel --build-type Release -- -DCMAKE_OSX_DEPLOYMENT_TARGET=10.12
+        python setup.py bdist_wheel --build-type Release -- -DPYTHON_INCLUDE_DIR=${pyincldir} -DCMAKE_OSX_DEPLOYMENT_TARGET=10.12
       displayName: 'Build'
     - bash: |
         cp -R dist/*.whl "$(Build.ArtifactStagingDirectory)"
@@ -195,32 +182,10 @@ jobs:
       inputs:
         versionSpec: '$(PYTHON_VERSION)'
         architecture: '$(python_arch)'
-    # - bash: |
-    #     which python
-    #     which pip
-    #     python --version
-    #     pip --version
-    #     find /c/hostedtoolcache/Python
-    #   displayName: 'Dig python'
     - script: |
         choco install -y --x86 swig
       # condition: ne(variables['PYTHON_VERSION'], '2.7')
       displayName: 'Install toolchain on Windows'
-    # - script: |
-    #     choco install -y --x86 swig
-    #     # choco install -y miniconda3 --params="'/D:$(conda_root)'"
-    #     choco install -y vcpython27
-    #   condition: eq(variables['PYTHON_VERSION'], '2.7')
-    #   displayName: 'Install toolchain on Windows for Python 2.7'
-    # - script: |
-    #     $(conda_root)\Scripts\conda create -yq -n python$(PYTHON_VERSION) python=$(PYTHON_VERSION)
-    #   condition: eq(variables['python_arch'], 'x64')
-    #   displayName: 'Install Python $(PYTHON_VERSION)'
-    # - script: |
-    #     call set CONDA_FORCE_32BIT=1
-    #     $(conda_root)\Scripts\conda create -yq -n python$(PYTHON_VERSION) python=$(PYTHON_VERSION)
-    #   condition: eq(variables['python_arch'], 'x86')
-    #   displayName: 'Install Python $(PYTHON_VERSION)'
     - script: |
         git clone https://github.com/NordicPlayground/vcpkg.git $(VCPKG_ROOT)
         $(VCPKG_ROOT)\bootstrap-vcpkg.bat
@@ -229,14 +194,22 @@ jobs:
         set PATH=$(VCPKG_ROOT);%PATH%
         vcpkg install nrf-ble-driver:$(triplet)
       displayName: 'Install nrf-ble-driver'
-    - script: |
+    - bash: |
+        pypath=`which python`
+        pyroot=`dirname ${pypath}`
+        pyheader=`ls ${pyroot}/include/python*/Python.h`
+        pyincldir=`dirname ${pyheader}`
         pip install -r requirements-dev.txt
-        python setup.py bdist_wheel --build-type Release -- -G "Visual Studio 15 2017 Win64"
+        python setup.py bdist_wheel --build-type Release -- -DPYTHON_INCLUDE_DIR=${pyincldir} -G "Visual Studio 15 2017 Win64"
       condition: eq(variables['python_arch'], 'x64')
       displayName: 'Build'
-    - script: |
+    - bash: |
+        pypath=`which python`
+        pyroot=`dirname ${pypath}`
+        pyheader=`ls ${pyroot}/include/python*/Python.h`
+        pyincldir=`dirname ${pyheader}`
         pip install -r requirements-dev.txt
-        python setup.py bdist_wheel --build-type Release -- -G "Visual Studio 15 2017"
+        python setup.py bdist_wheel --build-type Release -- -DPYTHON_INCLUDE_DIR=${pyincldir} -G "Visual Studio 15 2017"
       condition: eq(variables['python_arch'], 'x86')
       displayName: 'Build'
     - bash: |
