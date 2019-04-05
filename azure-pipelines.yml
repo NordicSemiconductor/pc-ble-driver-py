@@ -205,6 +205,7 @@ jobs:
     steps:
     - script: |
         choco install -y --x86 swig
+        choco install -y vcpython27
       displayName: 'Install toolchain on Windows'
     - script: |
         git clone https://github.com/NordicPlayground/vcpkg.git $(VCPKG_ROOT)
