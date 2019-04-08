@@ -245,28 +245,30 @@ jobs:
         addChangeLog: 'false'
       condition: ne(variables['Build.Reason'], 'PullRequest')
 
-  # - job: Test
-  #   dependsOn: [
-  #     Build,
-  #   ]
-  #   strategy:
-  #     matrix:
-  #       linux:
-  #         osType: 'linux'
-  #       mac:
-  #         osType: 'mac'
-  #       win64:
-  #         osType: 'win64'
-  #       win32:
-  #         osType: 'win32'
-  #   pool: server
-  #   steps:
-  #   - task: InvokeRESTAPI@1
-  #     displayName: Test
-  #     inputs:
-  #       connectionType: 'connectedServiceName'
-  #       serviceConnection: 'waylandJenkins'
-  #       method: 'POST'
-  #       urlSuffix: 'view/pc-ble-driver-py/job/pc-ble-driver-py-$(osType)/buildWithParameters?BRANCH=$(Build.SourceBranch)&VSTS_URL=$(system.CollectionUri)&TOKEN=$(system.AccessToken)&PROJECT_ID=$(system.teamProjectId)&HUB_NAME=$(system.hostType)&PLAN_ID=$(system.planId)&TASK_ID=$(system.taskInstanceId)&JOB_ID=$(system.jobId)'
-  #       waitForCompletion: 'true'
-  #     condition: ne(variables['Build.Reason'], 'PullRequest')
+  - job: Test
+    dependsOn: [
+      Windows,
+      Linux,
+      macOS,
+    ]
+    strategy:
+      matrix:
+        linux:
+          osType: 'linux'
+        mac:
+          osType: 'mac'
+        win64:
+          osType: 'win64'
+        win32:
+          osType: 'win32'
+    pool: server
+    steps:
+    - task: InvokeRESTAPI@1
+      displayName: Test
+      inputs:
+        connectionType: 'connectedServiceName'
+        serviceConnection: 'waylandJenkins'
+        method: 'POST'
+        urlSuffix: 'view/pc-ble-driver-py/job/pc-ble-driver-py-$(osType)/buildWithParameters?BRANCH=$(Build.SourceBranch)&VSTS_URL=$(system.CollectionUri)&TOKEN=$(system.AccessToken)&PROJECT_ID=$(system.teamProjectId)&HUB_NAME=$(system.hostType)&PLAN_ID=$(system.planId)&TASK_ID=$(system.taskInstanceId)&JOB_ID=$(system.jobId)'
+        waitForCompletion: 'true'
+      condition: ne(variables['Build.Reason'], 'PullRequest')
