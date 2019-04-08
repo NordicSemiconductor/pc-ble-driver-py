@@ -106,61 +106,55 @@ jobs:
         export PATH=$VCPKG_ROOT:$PATH
         vcpkg install nrf-ble-driver:$(python_arch)-osx
       displayName: 'Install nrf-ble-driver'
-    - task: UsePythonVersion@0
-      inputs:
-        versionSpec: '2.7'
-        architecture: '$(python_arch)'
+    # - task: UsePythonVersion@0
+    #   inputs:
+    #     versionSpec: '2.7'
+    #     architecture: '$(python_arch)'
+    - bash: |
+        wget https://www.python.org/ftp/python/2.7.16/python-2.7.16-macosx10.9.pkg
+        wget https://www.python.org/ftp/python/3.5.4/python-3.5.4-macosx10.6.pkg
+        wget https://www.python.org/ftp/python/3.6.8/python-3.6.8-macosx10.9.pkg
+        wget https://www.python.org/ftp/python/3.7.3/python-3.7.3-macosx10.9.pkg
+        sudo installer -pkg python-2.7.16-macosx10.9.pkg -target /
+        sudo installer -pkg python-3.5.4-macosx10.6.pkg -target /
+        sudo installer -pkg python-3.6.8-macosx10.9.pkg -target /
+        sudo installer -pkg python-3.7.3-macosx10.9.pkg -target /
+      displayName: 'Install all pythons'
     - bash: |
         rm -rf _skbuild
-        pypath=`which python`
-        pyroot=`dirname ${pypath}`
-        pyheader=`ls ${pyroot}/include/python*/Python.h`
-        pyincldir=`dirname ${pyheader}`
-        pylib=`ls ${pyroot}/lib/python*/config*/libpython*.a`
-        pip install -r requirements-dev.txt
-        python setup.py bdist_wheel --build-type RelWithDebInfo -- -DPYTHON_INCLUDE_DIR=${pyincldir} -DPYTHON_LIBRARY=${pylib} -DCMAKE_OSX_DEPLOYMENT_TARGET=10.13
+        pypath=`which python2.7`
+        ${pypath} -m pip install -r requirements-dev.txt
+        ${pypath} setup.py bdist_wheel --build-type RelWithDebInfo -- -DCMAKE_OSX_DEPLOYMENT_TARGET=10.9
       displayName: 'Build for python 2.7'
-    - task: UsePythonVersion@0
-      inputs:
-        versionSpec: '3.5'
-        architecture: '$(python_arch)'
+    # - task: UsePythonVersion@0
+    #   inputs:
+    #     versionSpec: '3.5'
+    #     architecture: '$(python_arch)'
     - bash: |
         rm -rf _skbuild
-        pypath=`which python`
-        pyroot=`dirname ${pypath}`
-        pyheader=`ls ${pyroot}/include/python*/Python.h`
-        pyincldir=`dirname ${pyheader}`
-        pylib=`ls ${pyroot}/lib/python*/config*/libpython*.a`
-        pip install -r requirements-dev.txt
-        python setup.py bdist_wheel --build-type RelWithDebInfo -- -DPYTHON_INCLUDE_DIR=${pyincldir} -DPYTHON_LIBRARY=${pylib} -DCMAKE_OSX_DEPLOYMENT_TARGET=10.13
+        pypath=`which python3.5`
+        ${pypath} -m pip install -r requirements-dev.txt
+        ${pypath} setup.py bdist_wheel --build-type RelWithDebInfo -- -DCMAKE_OSX_DEPLOYMENT_TARGET=10.6
       displayName: 'Build for python 3.5'
-    - task: UsePythonVersion@0
-      inputs:
-        versionSpec: '3.6'
-        architecture: '$(python_arch)'
+    # - task: UsePythonVersion@0
+    #   inputs:
+    #     versionSpec: '3.6'
+    #     architecture: '$(python_arch)'
     - bash: |
         rm -rf _skbuild
-        pypath=`which python`
-        pyroot=`dirname ${pypath}`
-        pyheader=`ls ${pyroot}/include/python*/Python.h`
-        pyincldir=`dirname ${pyheader}`
-        pylib=`ls ${pyroot}/lib/python*/config*/libpython*.a`
-        pip install -r requirements-dev.txt
-        python setup.py bdist_wheel --build-type RelWithDebInfo -- -DPYTHON_INCLUDE_DIR=${pyincldir} -DPYTHON_LIBRARY=${pylib} -DCMAKE_OSX_DEPLOYMENT_TARGET=10.13
+        pypath=`which python3.6`
+        ${pypath} -m pip install -r requirements-dev.txt
+        ${pypath} setup.py bdist_wheel --build-type RelWithDebInfo -- -DCMAKE_OSX_DEPLOYMENT_TARGET=10.9
       displayName: 'Build for python 3.6'
-    - task: UsePythonVersion@0
-      inputs:
-        versionSpec: '3.7'
-        architecture: '$(python_arch)'
+    # - task: UsePythonVersion@0
+    #   inputs:
+    #     versionSpec: '3.7'
+    #     architecture: '$(python_arch)'
     - bash: |
         rm -rf _skbuild
-        pypath=`which python`
-        pyroot=`dirname ${pypath}`
-        pyheader=`ls ${pyroot}/include/python*/Python.h`
-        pyincldir=`dirname ${pyheader}`
-        pylib=`ls ${pyroot}/lib/python*/config*/libpython*.a`
-        pip install -r requirements-dev.txt
-        python setup.py bdist_wheel --build-type RelWithDebInfo -- -DPYTHON_INCLUDE_DIR=${pyincldir} -DPYTHON_LIBRARY=${pylib} -DCMAKE_OSX_DEPLOYMENT_TARGET=10.13
+        pypath=`which python3.7`
+        ${pypath} -m pip install -r requirements-dev.txt
+        ${pypath} setup.py bdist_wheel --build-type RelWithDebInfo -- -DCMAKE_OSX_DEPLOYMENT_TARGET=10.9
       displayName: 'Build for python 3.7'
     - bash: |
         cp -R dist/*.whl "$(Build.ArtifactStagingDirectory)"
