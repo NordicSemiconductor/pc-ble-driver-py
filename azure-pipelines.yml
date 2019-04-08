@@ -33,7 +33,7 @@ jobs:
       displayName: 'Install nrf-ble-driver'
     - script: |
         $(conda_root)/bin/conda create -yq -n python2.7 python=2.7
-      displayName: 'Install Python 3.5'
+      displayName: 'Install Python 2.7'
     - bash: |
         export PATH=$(conda_root)/envs/python2.7/bin:$PATH
         rm -rf _skbuild
