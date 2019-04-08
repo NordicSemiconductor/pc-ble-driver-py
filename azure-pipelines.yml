@@ -1,0 +1,272 @@
+trigger:
+- feature/s132v5_py3
+- test-azure
+- master
+- release/*
+
+jobs:
+  # Linux
+  - job: Linux
+    variables:
+      conda_version: 'Linux-x86_64'
+      conda_root: '$(Agent.HomeDirectory)/miniconda3'
+      VCPKG_ROOT: '$(Agent.HomeDirectory)/vcpkg'
+      python_arch: 'x64'
+    pool:
+      vmImage: 'ubuntu-16.04'
+    steps:
+    - script: |
+        sudo apt-get update
+        sudo apt-get install ninja-build swig libudev-dev
+      displayName: 'Install toolchain'
+    - script: |
+        wget https://repo.anaconda.com/miniconda/Miniconda3-latest-$(conda_version).sh -O $(Agent.HomeDirectory)/miniconda.sh
+        bash $(Agent.HomeDirectory)/miniconda.sh -b -p $(conda_root)
+      displayName: 'Install conda'
+    - script: |
+        git clone https://github.com/NordicPlayground/vcpkg.git $(VCPKG_ROOT)
+        $(VCPKG_ROOT)/bootstrap-vcpkg.sh
+      displayName: 'Install vcpkg'
+    - script: |
+        export PATH=$VCPKG_ROOT:$PATH
+        vcpkg install nrf-ble-driver:$(python_arch)-linux
+      displayName: 'Install nrf-ble-driver'
+    - script: |
+        $(conda_root)/bin/conda create -yq -n python2.7 python=2.7
+      displayName: 'Install Python 2.7'
+    - bash: |
+        export PATH=$(conda_root)/envs/python2.7/bin:$PATH
+        rm -rf _skbuild
+        pip install -r requirements-dev.txt
+        python setup.py bdist_wheel --build-type RelWithDebInfo
+      displayName: 'Build for python 2.7'
+    - script: |
+        $(conda_root)/bin/conda create -yq -n python3.5 python=3.5
+      displayName: 'Install Python 3.5'
+    - bash: |
+        export PATH=$(conda_root)/envs/python3.5/bin:$PATH
+        rm -rf _skbuild
+        pip install -r requirements-dev.txt
+        python setup.py bdist_wheel --build-type RelWithDebInfo
+      displayName: 'Build for python 3.5'
+    - script: |
+        $(conda_root)/bin/conda create -yq -n python3.6 python=3.6
+      displayName: 'Install Python 3.6'
+    - bash: |
+        export PATH=$(conda_root)/envs/python3.6/bin:$PATH
+        rm -rf _skbuild
+        pip install -r requirements-dev.txt
+        python setup.py bdist_wheel --build-type RelWithDebInfo
+      displayName: 'Build for python 3.6'
+    - script: |
+        $(conda_root)/bin/conda create -yq -n python3.7 python=3.7
+      displayName: 'Install Python 3.7'
+    - bash: |
+        export PATH=$(conda_root)/envs/python3.7/bin:$PATH
+        rm -rf _skbuild
+        pip install -r requirements-dev.txt
+        python setup.py bdist_wheel --build-type RelWithDebInfo
+      displayName: 'Build for python 3.7'
+    - bash: |
+        cp -R dist/*.whl "$(Build.ArtifactStagingDirectory)"
+      displayName: 'Copy artifacts'
+    - task: GitHubRelease@0
+      inputs:
+        gitHubConnection: 'waylandCI'
+        repositoryName: 'NordicSemiconductor/pc-ble-driver-py'
+        action: 'edit'
+        tagSource: 'Git tag'
+        tag: '$(Build.SourceBranchName)'
+        assetUploadMode: 'replace'
+        isDraft: 'true'
+        addChangeLog: 'false'
+      condition: ne(variables['Build.Reason'], 'PullRequest')
+
+
+  # macOS
+  - job: macOS
+    variables:
+      VCPKG_ROOT: '$(Agent.HomeDirectory)/vcpkg'
+      python_arch: 'x64'
+    pool:
+      vmImage: 'macos-10.13'
+    steps:
+    - script: |
+        ls /Applications
+        sudo xcode-select -s /Applications/Xcode_10.1.app
+      displayName: 'Install XCode'
+    - script: |
+        brew install gcc swig
+      displayName: 'Install gcc and swig'
+    - script: |
+        git clone https://github.com/NordicPlayground/vcpkg.git $(VCPKG_ROOT)
+        $(VCPKG_ROOT)/bootstrap-vcpkg.sh
+      displayName: 'Install vcpkg'
+    - script: |
+        export PATH=$VCPKG_ROOT:$PATH
+        vcpkg install nrf-ble-driver:$(python_arch)-osx
+      displayName: 'Install nrf-ble-driver'
+    - bash: |
+        wget https://www.python.org/ftp/python/2.7.16/python-2.7.16-macosx10.9.pkg
+        wget https://www.python.org/ftp/python/3.6.8/python-3.6.8-macosx10.9.pkg
+        wget https://www.python.org/ftp/python/3.7.3/python-3.7.3-macosx10.9.pkg
+        sudo installer -pkg python-2.7.16-macosx10.9.pkg -target /
+        sudo installer -pkg python-3.6.8-macosx10.9.pkg -target /
+        sudo installer -pkg python-3.7.3-macosx10.9.pkg -target /
+      displayName: 'Install all pythons'
+    - bash: |
+        rm -rf _skbuild
+        pypath=`which python2.7`
+        ${pypath} -m pip install -r requirements-dev.txt
+        ${pypath} setup.py bdist_wheel --build-type RelWithDebInfo -- -DCMAKE_OSX_DEPLOYMENT_TARGET=10.9
+      displayName: 'Build for python 2.7'
+    - bash: |
+        rm -rf _skbuild
+        pypath=`which python3.6`
+        ${pypath} -m pip install -r requirements-dev.txt
+        ${pypath} setup.py bdist_wheel --build-type RelWithDebInfo -- -DCMAKE_OSX_DEPLOYMENT_TARGET=10.9
+      displayName: 'Build for python 3.6'
+    - bash: |
+        rm -rf _skbuild
+        pypath=`which python3.7`
+        ${pypath} -m pip install -r requirements-dev.txt
+        ${pypath} setup.py bdist_wheel --build-type RelWithDebInfo -- -DCMAKE_OSX_DEPLOYMENT_TARGET=10.9
+      displayName: 'Build for python 3.7'
+    - bash: |
+        cp -R dist/*.whl "$(Build.ArtifactStagingDirectory)"
+      displayName: 'Copy artifacts'
+    - task: GitHubRelease@0
+      inputs:
+        gitHubConnection: 'waylandCI'
+        repositoryName: 'NordicSemiconductor/pc-ble-driver-py'
+        action: 'edit'
+        tagSource: 'Git tag'
+        tag: '$(Build.SourceBranchName)'
+        assetUploadMode: 'replace'
+        isDraft: 'true'
+        addChangeLog: 'false'
+      condition: ne(variables['Build.Reason'], 'PullRequest')
+
+  # Windows
+  - job: Windows
+    variables:
+      VCPKG_ROOT: '$(Agent.HomeDirectory)\vcpkg'
+    strategy:
+      matrix:
+        win64:
+          python_arch: 'x64'
+          generator: 'Visual Studio 15 2017 Win64'
+        win32:
+          python_arch: 'x86'
+          generator: 'Visual Studio 15 2017'
+    pool:
+      vmImage: 'vs2017-win2016'
+    steps:
+    - script: |
+        choco install -y --x86 swig
+        choco install -y vcpython27
+      displayName: 'Install toolchain on Windows'
+    - script: |
+        git clone https://github.com/NordicPlayground/vcpkg.git $(VCPKG_ROOT)
+        $(VCPKG_ROOT)\bootstrap-vcpkg.bat
+      displayName: 'Install vcpkg'
+    - script: |
+        set PATH=$(VCPKG_ROOT);%PATH%
+        vcpkg install nrf-ble-driver:$(python_arch)-windows
+      displayName: 'Install nrf-ble-driver'
+    - task: UsePythonVersion@0
+      inputs:
+        versionSpec: '2.7'
+        architecture: '$(python_arch)'
+    - bash: |
+        rm -rf _skbuild
+        pypath=`which python`
+        pyroot=`dirname ${pypath}`
+        pyheader=`ls ${pyroot}/include/Python.h`
+        pyincldir=`dirname ${pyheader}`
+        pylib=`ls ${pyroot}/libs/python27.lib`
+        pip install -r requirements-dev.txt
+        python setup.py bdist_wheel --build-type RelWithDebInfo -- -DPYTHON_INCLUDE_DIR=${pyincldir} -DPYTHON_LIBRARY=${pylib} -G "$(generator)"
+      displayName: 'Build for python 2.7'
+    - task: UsePythonVersion@0
+      inputs:
+        versionSpec: '3.5'
+        architecture: '$(python_arch)'
+    - bash: |
+        rm -rf _skbuild
+        pypath=`which python`
+        pyroot=`dirname ${pypath}`
+        pyheader=`ls ${pyroot}/include/Python.h`
+        pyincldir=`dirname ${pyheader}`
+        pylib=`ls ${pyroot}/libs/python35.lib`
+        pip install -r requirements-dev.txt
+        python setup.py bdist_wheel --build-type RelWithDebInfo -- -DPYTHON_INCLUDE_DIR=${pyincldir} -DPYTHON_LIBRARY=${pylib} -G "$(generator)"
+      displayName: 'Build for python 3.5'
+    - task: UsePythonVersion@0
+      inputs:
+        versionSpec: '3.6'
+        architecture: '$(python_arch)'
+    - bash: |
+        rm -rf _skbuild
+        pypath=`which python`
+        pyroot=`dirname ${pypath}`
+        pyheader=`ls ${pyroot}/include/Python.h`
+        pyincldir=`dirname ${pyheader}`
+        pylib=`ls ${pyroot}/libs/python36.lib`
+        pip install -r requirements-dev.txt
+        python setup.py bdist_wheel --build-type RelWithDebInfo -- -DPYTHON_INCLUDE_DIR=${pyincldir} -DPYTHON_LIBRARY=${pylib} -G "$(generator)"
+      displayName: 'Build for python 3.6'
+    - task: UsePythonVersion@0
+      inputs:
+        versionSpec: '3.7'
+        architecture: '$(python_arch)'
+    - bash: |
+        rm -rf _skbuild
+        pypath=`which python`
+        pyroot=`dirname ${pypath}`
+        pyheader=`ls ${pyroot}/include/Python.h`
+        pyincldir=`dirname ${pyheader}`
+        pylib=`ls ${pyroot}/libs/python37.lib`
+        pip install -r requirements-dev.txt
+        python setup.py bdist_wheel --build-type RelWithDebInfo -- -DPYTHON_INCLUDE_DIR=${pyincldir} -DPYTHON_LIBRARY=${pylib} -G "$(generator)"
+      displayName: 'Build for python 3.7'
+    - bash: |
+        cp -R dist/*.whl "$(Build.ArtifactStagingDirectory)"
+      displayName: 'Copy artifacts'
+    - task: GitHubRelease@0
+      inputs:
+        gitHubConnection: 'waylandCI'
+        repositoryName: 'NordicSemiconductor/pc-ble-driver-py'
+        action: 'edit'
+        tagSource: 'Git tag'
+        tag: '$(Build.SourceBranchName)'
+        assetUploadMode: 'replace'
+        isDraft: 'true'
+        addChangeLog: 'false'
+      condition: ne(variables['Build.Reason'], 'PullRequest')
+
+  # - job: Test
+  #   dependsOn: [
+  #     Build,
+  #   ]
+  #   strategy:
+  #     matrix:
+  #       linux:
+  #         osType: 'linux'
+  #       mac:
+  #         osType: 'mac'
+  #       win64:
+  #         osType: 'win64'
+  #       win32:
+  #         osType: 'win32'
+  #   pool: server
+  #   steps:
+  #   - task: InvokeRESTAPI@1
+  #     displayName: Test
+  #     inputs:
+  #       connectionType: 'connectedServiceName'
+  #       serviceConnection: 'waylandJenkins'
+  #       method: 'POST'
+  #       urlSuffix: 'view/pc-ble-driver-py/job/pc-ble-driver-py-$(osType)/buildWithParameters?BRANCH=$(Build.SourceBranch)&VSTS_URL=$(system.CollectionUri)&TOKEN=$(system.AccessToken)&PROJECT_ID=$(system.teamProjectId)&HUB_NAME=$(system.hostType)&PLAN_ID=$(system.planId)&TASK_ID=$(system.taskInstanceId)&JOB_ID=$(system.jobId)'
+  #       waitForCompletion: 'true'
+  #     condition: ne(variables['Build.Reason'], 'PullRequest')

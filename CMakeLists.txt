@@ -1,12 +1,18 @@
 cmake_minimum_required(VERSION 3.13)
 
 if(DEFINED ENV{VCPKG_ROOT} AND NOT DEFINED CMAKE_TOOLCHAIN_FILE)
-  set(CMAKE_TOOLCHAIN_FILE "$ENV{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake"
-      CACHE STRING "")
+    set(CMAKE_TOOLCHAIN_FILE "$ENV{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake"
+        CACHE STRING "")
 endif()
 
 # Name of the project
 project (pc-ble-driver-py)
+
+find_package(PythonExtensions REQUIRED)
+
+if(WIN32)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -D_hypot=hypot")
+endif()
 
 set(PC_BLE_DRIVER_PY_OUTDIR ${CMAKE_BINARY_DIR}/outdir)
 
@@ -21,9 +27,6 @@ include(${SWIG_USE_FILE})
 
 # nrf-ble-driver
 find_package(nrf-ble-driver 4.1.0 CONFIG REQUIRED)
-
-message(STATUS "Found Python ${PYTHON_VERSION_STRING} in directory ${PYTHON_EXECUTABLE}")
-message(STATUS "Linking towards Python library ${PYTHON_LIBRARY}")
 
 # PYTHON_INCLUDE_DIR provided by scikit-build
 include_directories(${PYTHON_INCLUDE_DIR})
@@ -103,6 +106,8 @@ foreach(SD_API_VER ${SD_API_VERS})
         OUTPUT_DIR ${PC_BLE_DRIVER_PY_OUTDIR}
     )
 
+    set_property(TARGET ${PYTHON_MODULE_${SD_API_VER}} PROPERTY CXX_STANDARD 14)
+
     set_source_files_properties(${PC_BLE_DRIVER_PY_OUTDIR}/${PYTHON_MODULE_${SD_API_VER}}PYTHON_wrap.c PROPERTIES LANGUAGE CXX)
 
     if(MSFT_NON_STANDARD_COMPILER)
@@ -119,6 +124,9 @@ foreach(SD_API_VER ${SD_API_VERS})
         TARGET ${PYTHON_MODULE_${SD_API_VER}}
         PROPERTY RESOURCE "${CONNECTIVITY_SD_API_V${SD_API_VER}_FILES}"
     )
+    if(APPLE)
+        set_property(TARGET ${PYTHON_MODULE_${SD_API_VER}} PROPERTY SUFFIX ".so")
+    endif()
 endforeach()
 
 set(BUILD_OUTPUT_LIB_DIR "pc_ble_driver_py/lib")
