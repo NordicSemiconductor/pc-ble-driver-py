@@ -36,8 +36,6 @@
 #
 import collections
 import functools
-import importlib
-import os
 import re
 import subprocess
 import sys
@@ -48,9 +46,10 @@ import logging
 from abc import abstractmethod
 from threading import Thread, Lock
 
-import wrapt
 from enum import Enum
 from typing import List
+
+import wrapt
 
 from pc_ble_driver_py.observers import *
 
@@ -72,12 +71,16 @@ WORKER_QUEUE_WAIT_TIME = 1
 
 if nrf_sd_ble_api_ver == 2:
     import pc_ble_driver_py.lib.nrf_ble_driver_sd_api_v2 as driver
+
     ATT_MTU_DEFAULT = driver.GATT_MTU_SIZE_DEFAULT
 elif nrf_sd_ble_api_ver == 5:
     import pc_ble_driver_py.lib.nrf_ble_driver_sd_api_v5 as driver
+
     ATT_MTU_DEFAULT = driver.BLE_GATT_ATT_MTU_DEFAULT
 else:
-    raise NordicSemiException('SoftDevice API {} not supported', nrf_sd_ble_api_ver)
+    raise NordicSemiException(
+        "SoftDevice API {} not supported".format(nrf_sd_ble_api_ver)
+    )
 
 import pc_ble_driver_py.ble_driver_types as util
 from pc_ble_driver_py.exceptions import NordicSemiException
@@ -91,8 +94,12 @@ def NordicSemiErrorCheck(wrapped=None, expected=driver.NRF_SUCCESS):
     def wrapper(wrapped, _instance, args, kwargs):
         err_code = wrapped(*args, **kwargs)
         if err_code != expected:
-            raise NordicSemiException('Failed to {}. Error code: {}'.format(wrapped.__name__, err_code),
-                                      error_code=err_code)
+            raise NordicSemiException(
+                "Failed to {}. Error code: {}".format(
+                    wrapped.__name__, err_code
+                ),
+                error_code=err_code,
+            )
 
     return wrapper(wrapped)
 
@@ -105,8 +112,11 @@ class BLEEvtID(Enum):
     gap_evt_sec_request = driver.BLE_GAP_EVT_SEC_REQUEST
     gap_evt_adv_report = driver.BLE_GAP_EVT_ADV_REPORT
     gap_evt_timeout = driver.BLE_GAP_EVT_TIMEOUT
-    gap_evt_conn_param_update_request = driver.BLE_GAP_EVT_CONN_PARAM_UPDATE_REQUEST
+    gap_evt_conn_param_update_request = (
+        driver.BLE_GAP_EVT_CONN_PARAM_UPDATE_REQUEST
+    )
     gap_evt_conn_param_update = driver.BLE_GAP_EVT_CONN_PARAM_UPDATE
+    gap_evt_rssi_changed = driver.BLE_GAP_EVT_RSSI_CHANGED
     gap_evt_auth_status = driver.BLE_GAP_EVT_AUTH_STATUS
     gap_evt_auth_key_request = driver.BLE_GAP_EVT_AUTH_KEY_REQUEST
     gap_evt_conn_sec_update = driver.BLE_GAP_EVT_CONN_SEC_UPDATE
@@ -123,23 +133,31 @@ class BLEEvtID(Enum):
         evt_tx_complete = driver.BLE_EVT_TX_COMPLETE
 
     if nrf_sd_ble_api_ver == 5:
-        gatts_evt_exchange_mtu_request = driver.BLE_GATTS_EVT_EXCHANGE_MTU_REQUEST
+        gatts_evt_exchange_mtu_request = (
+            driver.BLE_GATTS_EVT_EXCHANGE_MTU_REQUEST
+        )
         gattc_evt_exchange_mtu_rsp = driver.BLE_GATTC_EVT_EXCHANGE_MTU_RSP
         gap_evt_data_length_update = driver.BLE_GAP_EVT_DATA_LENGTH_UPDATE
-        gap_evt_data_length_update_request = driver.BLE_GAP_EVT_DATA_LENGTH_UPDATE_REQUEST
-        gattc_evt_write_cmd_tx_complete = driver.BLE_GATTC_EVT_WRITE_CMD_TX_COMPLETE
+        gap_evt_data_length_update_request = (
+            driver.BLE_GAP_EVT_DATA_LENGTH_UPDATE_REQUEST
+        )
+        gattc_evt_write_cmd_tx_complete = (
+            driver.BLE_GATTC_EVT_WRITE_CMD_TX_COMPLETE
+        )
         gatts_evt_hvn_tx_complete = driver.BLE_GATTS_EVT_HVN_TX_COMPLETE
 
 
 class BLEEnableParams(object):
-    def __init__(self,
-                 vs_uuid_count,
-                 service_changed,
-                 periph_conn_count,
-                 central_conn_count,
-                 central_sec_count,
-                 attr_tab_size=driver.BLE_GATTS_ATTR_TAB_SIZE_DEFAULT,
-                 att_mtu=ATT_MTU_DEFAULT):
+    def __init__(
+        self,
+        vs_uuid_count,
+        service_changed,
+        periph_conn_count,
+        central_conn_count,
+        central_sec_count,
+        attr_tab_size=driver.BLE_GATTS_ATTR_TAB_SIZE_DEFAULT,
+        att_mtu=ATT_MTU_DEFAULT,
+    ):
         self.vs_uuid_count = vs_uuid_count
         self.attr_tab_size = attr_tab_size
         self.service_changed = service_changed
@@ -152,16 +170,87 @@ class BLEEnableParams(object):
     def to_c(self):
         ble_enable_params = driver.ble_enable_params_t()
         ble_enable_params.common_enable_params.p_conn_bw_counts = None
-        ble_enable_params.common_enable_params.vs_uuid_count = self.vs_uuid_count
-        ble_enable_params.gatts_enable_params.attr_tab_size = self.attr_tab_size
-        ble_enable_params.gatts_enable_params.service_changed = self.service_changed
-        ble_enable_params.gap_enable_params.periph_conn_count = self.periph_conn_count
-        ble_enable_params.gap_enable_params.central_conn_count = self.central_conn_count
-        ble_enable_params.gap_enable_params.central_sec_count = self.central_sec_count
+        ble_enable_params.common_enable_params.vs_uuid_count = (
+            self.vs_uuid_count
+        )
+        ble_enable_params.gatts_enable_params.attr_tab_size = (
+            self.attr_tab_size
+        )
+        ble_enable_params.gatts_enable_params.service_changed = (
+            self.service_changed
+        )
+        ble_enable_params.gap_enable_params.periph_conn_count = (
+            self.periph_conn_count
+        )
+        ble_enable_params.gap_enable_params.central_conn_count = (
+            self.central_conn_count
+        )
+        ble_enable_params.gap_enable_params.central_sec_count = (
+            self.central_sec_count
+        )
         if nrf_sd_ble_api_ver >= 3:
             ble_enable_params.gatt_enable_params.att_mtu = self.att_mtu
 
         return ble_enable_params
+
+
+class BLEVersion(object):
+    def __init__(
+        self, company_id, subversion_number, version_number, softdevice_info
+    ):
+        self.company_id = company_id
+        self.subversion_number = subversion_number
+        self.version_number = version_number
+        self.softdevice_info = softdevice_info
+
+    @classmethod
+    def _subversion_number_to_softdevice_info(cls, subversion_number):
+        version = {
+            0xA7: {"type": "s112", "major": 6, "minor": 0, "patch": 0},
+            0xB0: {"type": "s112", "major": 6, "minor": 1, "patch": 0},
+            0xB8: {"type": "s112", "major": 6, "minor": 1, "patch": 1},
+            0x67: {"type": "s130", "major": 1, "minor": 0, "patch": 0},
+            0x80: {"type": "s130", "major": 2, "minor": 0, "patch": 0},
+            0x81: {"type": "s132", "major": 2, "minor": 0, "patch": 0},
+            0x87: {"type": "s130", "major": 2, "minor": 0, "patch": 1},
+            0x88: {"type": "s132", "major": 2, "minor": 0, "patch": 1},
+            0x8C: {"type": "s132", "major": 3, "minor": 0, "patch": 0},
+            0x91: {"type": "s132", "major": 3, "minor": 1, "patch": 0},
+            0x95: {"type": "s132", "major": 4, "minor": 0, "patch": 0},
+            0x98: {"type": "s132", "major": 4, "minor": 0, "patch": 2},
+            0x99: {"type": "s132", "major": 4, "minor": 0, "patch": 3},
+            0x9E: {"type": "s132", "major": 4, "minor": 0, "patch": 4},
+            0x9F: {"type": "s132", "major": 4, "minor": 0, "patch": 5},
+            0x9D: {"type": "s132", "major": 5, "minor": 0, "patch": 0},
+            0xA5: {"type": "s132", "major": 5, "minor": 1, "patch": 0},
+            0xA8: {"type": "s132", "major": 6, "minor": 0, "patch": 0},
+            0xAF: {"type": "s132", "major": 6, "minor": 1, "patch": 0},
+            0xB7: {"type": "s132", "major": 6, "minor": 1, "patch": 1},
+            0xA9: {"type": "s140", "major": 6, "minor": 0, "patch": 0},
+            0xAE: {"type": "s140", "major": 6, "minor": 1, "patch": 0},
+            0xB6: {"type": "s140", "major": 6, "minor": 1, "patch": 1},
+        }
+
+        if subversion_number not in version:
+            raise ValueError(
+                "subversion_number %d does not map to a SoftDevice version",
+                subversion_number,
+            )
+
+        return version[subversion_number]
+
+    @classmethod
+    def from_c(cls, ble_version):
+        softdevice_info = cls._subversion_number_to_softdevice_info(
+            ble_version.subversion_number
+        )
+
+        return cls(
+            company_id=ble_version.company_id,
+            subversion_number=ble_version.subversion_number,
+            version_number=ble_version.version_number,
+            softdevice_info=softdevice_info,
+        )
 
 
 class BLEGapAdvType(Enum):
@@ -240,8 +329,9 @@ class BLEGapAdvParams(object):
         adv_params.p_peer_addr = None  # Undirected advertisement.
         adv_params.fp = driver.BLE_GAP_ADV_FP_ANY
         adv_params.p_whitelist = None
-        adv_params.interval = util.msec_to_units(self.interval_ms,
-                                                 util.UNIT_0_625_MS)
+        adv_params.interval = util.msec_to_units(
+            self.interval_ms, util.UNIT_0_625_MS
+        )
         adv_params.timeout = self.timeout_s
 
         return adv_params
@@ -258,10 +348,12 @@ class BLEGapScanParams(object):
         scan_params.active = True
         scan_params.selective = False
         scan_params.p_whitelist = None
-        scan_params.interval = util.msec_to_units(self.interval_ms,
-                                                  util.UNIT_0_625_MS)
-        scan_params.window = util.msec_to_units(self.window_ms,
-                                                util.UNIT_0_625_MS)
+        scan_params.interval = util.msec_to_units(
+            self.interval_ms, util.UNIT_0_625_MS
+        )
+        scan_params.window = util.msec_to_units(
+            self.window_ms, util.UNIT_0_625_MS
+        )
         scan_params.timeout = self.timeout_s
 
         return scan_params
@@ -275,16 +367,26 @@ class BLEGapConnSec(object):
 
     @classmethod
     def from_c(cls, conn_sec):
-        return cls(sec_mode=conn_sec.sec_mode.sm,
-                   level=conn_sec.sec_mode.lv,
-                   encr_key_size=conn_sec.encr_key_size)
+        return cls(
+            sec_mode=conn_sec.sec_mode.sm,
+            level=conn_sec.sec_mode.lv,
+            encr_key_size=conn_sec.encr_key_size,
+        )
 
     def __str__(self):
-        return "sec_mode({0.sec_mode}) level({0.level}) encr_key_size({0.encr_key_size})".format(self)
+        return "sec_mode({0.sec_mode}) level({0.level}) encr_key_size({0.encr_key_size})".format(
+            self
+        )
 
 
 class BLEGapConnParams(object):
-    def __init__(self, min_conn_interval_ms, max_conn_interval_ms, conn_sup_timeout_ms, slave_latency):
+    def __init__(
+        self,
+        min_conn_interval_ms,
+        max_conn_interval_ms,
+        conn_sup_timeout_ms,
+        slave_latency,
+    ):
         self.min_conn_interval_ms = min_conn_interval_ms
         self.max_conn_interval_ms = max_conn_interval_ms
         self.conn_sup_timeout_ms = conn_sup_timeout_ms
@@ -292,40 +394,54 @@ class BLEGapConnParams(object):
 
     @classmethod
     def from_c(cls, conn_params):
-        return cls(min_conn_interval_ms=util.units_to_msec(conn_params.min_conn_interval,
-                                                           util.UNIT_1_25_MS),
-                   max_conn_interval_ms=util.units_to_msec(conn_params.max_conn_interval,
-                                                           util.UNIT_1_25_MS),
-                   conn_sup_timeout_ms=util.units_to_msec(conn_params.conn_sup_timeout,
-                                                          util.UNIT_10_MS),
-                   slave_latency=conn_params.slave_latency)
+        return cls(
+            min_conn_interval_ms=util.units_to_msec(
+                conn_params.min_conn_interval, util.UNIT_1_25_MS
+            ),
+            max_conn_interval_ms=util.units_to_msec(
+                conn_params.max_conn_interval, util.UNIT_1_25_MS
+            ),
+            conn_sup_timeout_ms=util.units_to_msec(
+                conn_params.conn_sup_timeout, util.UNIT_10_MS
+            ),
+            slave_latency=conn_params.slave_latency,
+        )
 
     def to_c(self):
         conn_params = driver.ble_gap_conn_params_t()
-        conn_params.min_conn_interval = util.msec_to_units(self.min_conn_interval_ms,
-                                                           util.UNIT_1_25_MS)
-        conn_params.max_conn_interval = util.msec_to_units(self.max_conn_interval_ms,
-                                                           util.UNIT_1_25_MS)
-        conn_params.conn_sup_timeout = util.msec_to_units(self.conn_sup_timeout_ms,
-                                                          util.UNIT_10_MS)
+        conn_params.min_conn_interval = util.msec_to_units(
+            self.min_conn_interval_ms, util.UNIT_1_25_MS
+        )
+        conn_params.max_conn_interval = util.msec_to_units(
+            self.max_conn_interval_ms, util.UNIT_1_25_MS
+        )
+        conn_params.conn_sup_timeout = util.msec_to_units(
+            self.conn_sup_timeout_ms, util.UNIT_10_MS
+        )
         conn_params.slave_latency = self.slave_latency
         return conn_params
 
     def __str__(self):
-        return ("Connection Parameters min_conn_interval_ms({0.min_conn_interval_ms}) "
-                "max_conn_interval_ms({0.max_conn_interval_ms}) conn_sup_timeout_ms({0.conn_sup_timeout_ms}) "
-                "slave_latency({0.slave_latency})").format(self)
+        return (
+            "Connection Parameters min_conn_interval_ms({0.min_conn_interval_ms}) "
+            "max_conn_interval_ms({0.max_conn_interval_ms}) conn_sup_timeout_ms({0.conn_sup_timeout_ms}) "
+            "slave_latency({0.slave_latency})"
+        ).format(self)
 
 
 class BLEGapAddr(object):
     class Types(Enum):
         public = driver.BLE_GAP_ADDR_TYPE_PUBLIC
         random_static = driver.BLE_GAP_ADDR_TYPE_RANDOM_STATIC
-        random_private_resolvable = driver.BLE_GAP_ADDR_TYPE_RANDOM_PRIVATE_RESOLVABLE
-        random_private_non_resolvable = driver.BLE_GAP_ADDR_TYPE_RANDOM_PRIVATE_NON_RESOLVABLE
+        random_private_resolvable = (
+            driver.BLE_GAP_ADDR_TYPE_RANDOM_PRIVATE_RESOLVABLE
+        )
+        random_private_non_resolvable = (
+            driver.BLE_GAP_ADDR_TYPE_RANDOM_PRIVATE_NON_RESOLVABLE
+        )
 
     def __init__(self, addr_type, addr):
-        assert isinstance(addr_type, BLEGapAddr.Types), 'Invalid argument type'
+        assert isinstance(addr_type, BLEGapAddr.Types), "Invalid argument type"
         self.addr_type = addr_type
         self.addr = addr
 
@@ -339,10 +455,11 @@ class BLEGapAddr(object):
 
     @classmethod
     def from_c(cls, addr):
-        addr_list = util.uint8_array_to_list(addr.addr, driver.BLE_GAP_ADDR_LEN)
+        addr_list = util.uint8_array_to_list(
+            addr.addr, driver.BLE_GAP_ADDR_LEN
+        )
         addr_list.reverse()
-        return cls(addr_type=BLEGapAddr.Types(addr.addr_type),
-                   addr=addr_list)
+        return cls(addr_type=BLEGapAddr.Types(addr.addr_type), addr=addr_list)
 
     def to_c(self):
         addr_array = util.list_to_uint8_array(self.addr[::-1])
@@ -359,8 +476,10 @@ class BLEGapSecKeyset(object):
 
     @classmethod
     def from_c(cls, keyset):
-        return cls(keys_own=BLEGapSecKeys.from_c(keyset.keys_own),
-                   keys_peer=BLEGapSecKeys.from_c(keyset.keys_peer))
+        return cls(
+            keys_own=BLEGapSecKeys.from_c(keyset.keys_own),
+            keys_peer=BLEGapSecKeys.from_c(keyset.keys_peer),
+        )
 
     def __str__(self):
         return "keys_own({0.keys_own}) keys_peer({0.keys_peer})".format(self)
@@ -375,13 +494,21 @@ class BLEGapSecKeys(object):
 
     @classmethod
     def from_c(cls, keys):
-        return cls(enc_key=BLEGapEncKey.from_c(keys.p_enc_key),
-                   id_key=BLEGapIdKey.from_c(keys.p_id_key),
-                   sign_key=util.uint8_array_to_list(keys.p_sign_key.csrk, driver.BLE_GAP_SEC_KEY_LEN),
-                   pk=util.uint8_array_to_list(keys.p_pk.pk, driver.BLE_GAP_LESC_P256_PK_LEN))
+        return cls(
+            enc_key=BLEGapEncKey.from_c(keys.p_enc_key),
+            id_key=BLEGapIdKey.from_c(keys.p_id_key),
+            sign_key=util.uint8_array_to_list(
+                keys.p_sign_key.csrk, driver.BLE_GAP_SEC_KEY_LEN
+            ),
+            pk=util.uint8_array_to_list(
+                keys.p_pk.pk, driver.BLE_GAP_LESC_P256_PK_LEN
+            ),
+        )
 
     def __str__(self):
-        return "enc_key({0.enc_key}) id_key({0.id_key}) csrk({0.csrk}) pk({0.pk})".format(self)
+        return "enc_key({0.enc_key}) id_key({0.id_key}) csrk({0.csrk}) pk({0.pk})".format(
+            self
+        )
 
 
 class BLEGapEncKey(object):
@@ -391,8 +518,10 @@ class BLEGapEncKey(object):
 
     @classmethod
     def from_c(cls, enc_key):
-        return cls(master_id=BLEGapMasterId.from_c(enc_key.master_id),
-                   enc_info=BLEGapEncInfo.from_c(enc_key.enc_info))
+        return cls(
+            master_id=BLEGapMasterId.from_c(enc_key.master_id),
+            enc_info=BLEGapEncInfo.from_c(enc_key.enc_info),
+        )
 
     def __str__(self):
         return "master_id({0.master_id}) enc_info({0.enc_info})".format(self)
@@ -405,8 +534,12 @@ class BLEGapIdKey(object):
 
     @classmethod
     def from_c(cls, id_key):
-        return cls(id_info=util.uint8_array_to_list(id_key.id_info.irk, driver.BLE_GAP_SEC_KEY_LEN),
-                   id_addr_info=BLEGapAddr.from_c(id_key.id_addr_info))
+        return cls(
+            id_info=util.uint8_array_to_list(
+                id_key.id_info.irk, driver.BLE_GAP_SEC_KEY_LEN
+            ),
+            id_addr_info=BLEGapAddr.from_c(id_key.id_addr_info),
+        )
 
     def __str__(self):
         return "irk({0.irk}) id_addr_info({0.id_addr_info})".format(self)
@@ -421,11 +554,15 @@ class BLEGapEncInfo(object):
 
     @classmethod
     def from_c(cls, enc_info):
-        ltk_list = util.uint8_array_to_list(enc_info.ltk, driver.BLE_GAP_SEC_KEY_LEN)
-        return cls(ltk=ltk_list,
-                   auth=enc_info.auth,
-                   lesc=enc_info.lesc,
-                   ltk_len=enc_info.ltk_len)
+        ltk_list = util.uint8_array_to_list(
+            enc_info.ltk, driver.BLE_GAP_SEC_KEY_LEN
+        )
+        return cls(
+            ltk=ltk_list,
+            auth=enc_info.auth,
+            lesc=enc_info.lesc,
+            ltk_len=enc_info.ltk_len,
+        )
 
     def to_c(self):
         ltk_array = util.list_to_uint8_array(self.ltk)
@@ -437,7 +574,9 @@ class BLEGapEncInfo(object):
         return enc_info
 
     def __str__(self):
-        return "ltk({0.ltk}) auth({0.auth}) lesc({0.lesc}) ltk_len({0.ltk_len})".format(self)
+        return "ltk({0.ltk}) auth({0.auth}) lesc({0.lesc}) ltk_len({0.ltk_len})".format(
+            self
+        )
 
 
 class BLEGapMasterId(object):
@@ -447,9 +586,10 @@ class BLEGapMasterId(object):
 
     @classmethod
     def from_c(cls, master_id):
-        rand_list = util.uint8_array_to_list(master_id.rand, driver.BLE_GAP_SEC_RAND_LEN)
-        return cls(ediv=master_id.ediv,
-                   rand=rand_list)
+        rand_list = util.uint8_array_to_list(
+            master_id.rand, driver.BLE_GAP_SEC_RAND_LEN
+        )
+        return cls(ediv=master_id.ediv, rand=rand_list)
 
     def to_c(self):
         rand_array = util.list_to_uint8_array(self.rand)
@@ -471,10 +611,9 @@ class BLEGapSecKDist(object):
 
     @classmethod
     def from_c(cls, kdist):
-        return cls(enc=kdist.enc,
-                   id=kdist.id,
-                   sign=kdist.sign,
-                   link=kdist.link)
+        return cls(
+            enc=kdist.enc, id=kdist.id, sign=kdist.sign, link=kdist.link
+        )
 
     def to_c(self):
         kdist = driver.ble_gap_sec_kdist_t()
@@ -485,24 +624,28 @@ class BLEGapSecKDist(object):
         return kdist
 
     def __str__(self):
-        return "enc({0.enc}) id({0.id}) sign({0.sign}) link({0.link})".format(self)
+        return "enc({0.enc}) id({0.id}) sign({0.sign}) link({0.link})".format(
+            self
+        )
 
 
 class BLEGapSecParams(object):
-    def __init__(self,
-                 bond,
-                 mitm,
-                 lesc,
-                 keypress,
-                 io_caps,
-                 oob,
-                 min_key_size,
-                 max_key_size,
-                 kdist_own,
-                 kdist_peer):
-        assert isinstance(kdist_own, BLEGapSecKDist), 'Invalid argument type'
-        assert isinstance(kdist_peer, BLEGapSecKDist), 'Invalid argument type'
-        assert isinstance(io_caps, BLEGapIOCaps), 'Invalid argument type'
+    def __init__(
+        self,
+        bond,
+        mitm,
+        lesc,
+        keypress,
+        io_caps,
+        oob,
+        min_key_size,
+        max_key_size,
+        kdist_own,
+        kdist_peer,
+    ):
+        assert isinstance(kdist_own, BLEGapSecKDist), "Invalid argument type"
+        assert isinstance(kdist_peer, BLEGapSecKDist), "Invalid argument type"
+        assert isinstance(io_caps, BLEGapIOCaps), "Invalid argument type"
         self.bond = bond
         self.mitm = mitm
         self.lesc = lesc
@@ -516,16 +659,18 @@ class BLEGapSecParams(object):
 
     @classmethod
     def from_c(cls, params):
-        return cls(bond=params.bond,
-                   mitm=params.mitm,
-                   lesc=params.lesc,
-                   keypress=params.keypress,
-                   io_caps=BLEGapIOCaps(params.io_caps),
-                   oob=params.oob,
-                   min_key_size=params.min_key_size,
-                   max_key_size=params.max_key_size,
-                   kdist_own=BLEGapSecKDist.from_c(params.kdist_own),
-                   kdist_peer=BLEGapSecKDist.from_c(params.kdist_peer))
+        return cls(
+            bond=params.bond,
+            mitm=params.mitm,
+            lesc=params.lesc,
+            keypress=params.keypress,
+            io_caps=BLEGapIOCaps(params.io_caps),
+            oob=params.oob,
+            min_key_size=params.min_key_size,
+            max_key_size=params.max_key_size,
+            kdist_own=BLEGapSecKDist.from_c(params.kdist_own),
+            kdist_peer=BLEGapSecKDist.from_c(params.kdist_peer),
+        )
 
     def to_c(self):
         params = driver.ble_gap_sec_params_t()
@@ -542,13 +687,17 @@ class BLEGapSecParams(object):
         return params
 
     def __str__(self):
-        return ('Security Parameters bond({0.bond}) mitm({0.mitm}) lesc({0.lesc}) keypress({0.keypress}) '
-                'io_caps({0.io_caps}) oob({0.oob}) max_key_size({0.max_key_size}) '
-                'min_key_size({0.min_key_size}) kdist_own({0.kdist_own}) kdist_peer({0.kdist_peer})').format(self)
+        return (
+            "Security Parameters bond({0.bond}) mitm({0.mitm}) lesc({0.lesc}) keypress({0.keypress}) "
+            "io_caps({0.io_caps}) oob({0.oob}) max_key_size({0.max_key_size}) "
+            "min_key_size({0.min_key_size}) kdist_own({0.kdist_own}) kdist_peer({0.kdist_peer})"
+        ).format(self)
 
 
 class BLEGapPrivacyParams(object):
-    def __init__(self, privacy_mode, private_addr_type, private_addr_cycle_s, irk):
+    def __init__(
+        self, privacy_mode, private_addr_type, private_addr_cycle_s, irk
+    ):
         self.privacy_mode = privacy_mode
         self.private_addr_type = private_addr_type
         self.private_addr_cycle_s = private_addr_cycle_s
@@ -557,10 +706,12 @@ class BLEGapPrivacyParams(object):
     @classmethod
     def from_c(cls, priv_params):
         irk_list = util.uint8_array_to_list(priv_params.irk.irk, 16)
-        return cls(privacy_mode=priv_params.privacy_mode,
-                   private_addr_type=priv_params.private_addr_type,
-                   private_addr_cycle_s=priv_params.private_addr_cycle_s,
-                   irk=irk_list)
+        return cls(
+            privacy_mode=priv_params.privacy_mode,
+            private_addr_type=priv_params.private_addr_type,
+            private_addr_cycle_s=priv_params.private_addr_cycle_s,
+            irk=irk_list,
+        )
 
     def to_c(self):
         priv_params = driver.ble_gap_privacy_params_t()
@@ -576,44 +727,82 @@ class BLEGapPrivacyParams(object):
         return priv_params
 
     def __str__(self):
-        return ("privacy_mode({0.privacy_mode}) private_addr_type({0.private_addr_type}) "
-                "private_addr_cycle_s({0.private_addr_cycle_s}) irk({0.irk})").format(self)
+        return (
+            "privacy_mode({0.privacy_mode}) private_addr_type({0.private_addr_type}) "
+            "private_addr_cycle_s({0.private_addr_cycle_s}) irk({0.irk})"
+        ).format(self)
 
 
 class BLEAdvData(object):
     class Types(Enum):
         flags = driver.BLE_GAP_AD_TYPE_FLAGS
-        service_16bit_uuid_more_available = driver.BLE_GAP_AD_TYPE_16BIT_SERVICE_UUID_MORE_AVAILABLE
-        service_16bit_uuid_complete = driver.BLE_GAP_AD_TYPE_16BIT_SERVICE_UUID_COMPLETE
-        service_32bit_uuid_more_available = driver.BLE_GAP_AD_TYPE_32BIT_SERVICE_UUID_MORE_AVAILABLE
-        service_32bit_uuid_complete = driver.BLE_GAP_AD_TYPE_32BIT_SERVICE_UUID_COMPLETE
-        service_128bit_uuid_more_available = driver.BLE_GAP_AD_TYPE_128BIT_SERVICE_UUID_MORE_AVAILABLE
-        service_128bit_uuid_complete = driver.BLE_GAP_AD_TYPE_128BIT_SERVICE_UUID_COMPLETE
+        service_16bit_uuid_more_available = (
+            driver.BLE_GAP_AD_TYPE_16BIT_SERVICE_UUID_MORE_AVAILABLE
+        )
+        service_16bit_uuid_complete = (
+            driver.BLE_GAP_AD_TYPE_16BIT_SERVICE_UUID_COMPLETE
+        )
+        service_32bit_uuid_more_available = (
+            driver.BLE_GAP_AD_TYPE_32BIT_SERVICE_UUID_MORE_AVAILABLE
+        )
+        service_32bit_uuid_complete = (
+            driver.BLE_GAP_AD_TYPE_32BIT_SERVICE_UUID_COMPLETE
+        )
+        service_128bit_uuid_more_available = (
+            driver.BLE_GAP_AD_TYPE_128BIT_SERVICE_UUID_MORE_AVAILABLE
+        )
+        service_128bit_uuid_complete = (
+            driver.BLE_GAP_AD_TYPE_128BIT_SERVICE_UUID_COMPLETE
+        )
         short_local_name = driver.BLE_GAP_AD_TYPE_SHORT_LOCAL_NAME
         complete_local_name = driver.BLE_GAP_AD_TYPE_COMPLETE_LOCAL_NAME
         tx_power_level = driver.BLE_GAP_AD_TYPE_TX_POWER_LEVEL
         class_of_device = driver.BLE_GAP_AD_TYPE_CLASS_OF_DEVICE
         simple_pairing_hash_c = driver.BLE_GAP_AD_TYPE_SIMPLE_PAIRING_HASH_C
-        simple_pairing_randimizer_r = driver.BLE_GAP_AD_TYPE_SIMPLE_PAIRING_RANDOMIZER_R
-        security_manager_tk_value = driver.BLE_GAP_AD_TYPE_SECURITY_MANAGER_TK_VALUE
-        security_manager_oob_flags = driver.BLE_GAP_AD_TYPE_SECURITY_MANAGER_OOB_FLAGS
-        slave_connection_interval_range = driver.BLE_GAP_AD_TYPE_SLAVE_CONNECTION_INTERVAL_RANGE
-        solicited_sevice_uuids_16bit = driver.BLE_GAP_AD_TYPE_SOLICITED_SERVICE_UUIDS_16BIT
-        solicited_sevice_uuids_128bit = driver.BLE_GAP_AD_TYPE_SOLICITED_SERVICE_UUIDS_128BIT
+        simple_pairing_randimizer_r = (
+            driver.BLE_GAP_AD_TYPE_SIMPLE_PAIRING_RANDOMIZER_R
+        )
+        security_manager_tk_value = (
+            driver.BLE_GAP_AD_TYPE_SECURITY_MANAGER_TK_VALUE
+        )
+        security_manager_oob_flags = (
+            driver.BLE_GAP_AD_TYPE_SECURITY_MANAGER_OOB_FLAGS
+        )
+        slave_connection_interval_range = (
+            driver.BLE_GAP_AD_TYPE_SLAVE_CONNECTION_INTERVAL_RANGE
+        )
+        solicited_sevice_uuids_16bit = (
+            driver.BLE_GAP_AD_TYPE_SOLICITED_SERVICE_UUIDS_16BIT
+        )
+        solicited_sevice_uuids_128bit = (
+            driver.BLE_GAP_AD_TYPE_SOLICITED_SERVICE_UUIDS_128BIT
+        )
         service_data = driver.BLE_GAP_AD_TYPE_SERVICE_DATA
         public_target_address = driver.BLE_GAP_AD_TYPE_PUBLIC_TARGET_ADDRESS
         random_target_address = driver.BLE_GAP_AD_TYPE_RANDOM_TARGET_ADDRESS
         appearance = driver.BLE_GAP_AD_TYPE_APPEARANCE
         advertising_interval = driver.BLE_GAP_AD_TYPE_ADVERTISING_INTERVAL
-        le_bluetooth_device_address = driver.BLE_GAP_AD_TYPE_LE_BLUETOOTH_DEVICE_ADDRESS
+        le_bluetooth_device_address = (
+            driver.BLE_GAP_AD_TYPE_LE_BLUETOOTH_DEVICE_ADDRESS
+        )
         le_role = driver.BLE_GAP_AD_TYPE_LE_ROLE
-        simple_pairng_hash_c256 = driver.BLE_GAP_AD_TYPE_SIMPLE_PAIRING_HASH_C256
-        simple_pairng_randomizer_r256 = driver.BLE_GAP_AD_TYPE_SIMPLE_PAIRING_RANDOMIZER_R256
-        service_data_32bit_uuid = driver.BLE_GAP_AD_TYPE_SERVICE_DATA_32BIT_UUID
-        service_data_128bit_uuid = driver.BLE_GAP_AD_TYPE_SERVICE_DATA_128BIT_UUID
+        simple_pairng_hash_c256 = (
+            driver.BLE_GAP_AD_TYPE_SIMPLE_PAIRING_HASH_C256
+        )
+        simple_pairng_randomizer_r256 = (
+            driver.BLE_GAP_AD_TYPE_SIMPLE_PAIRING_RANDOMIZER_R256
+        )
+        service_data_32bit_uuid = (
+            driver.BLE_GAP_AD_TYPE_SERVICE_DATA_32BIT_UUID
+        )
+        service_data_128bit_uuid = (
+            driver.BLE_GAP_AD_TYPE_SERVICE_DATA_128BIT_UUID
+        )
         uri = driver.BLE_GAP_AD_TYPE_URI
         information_3d_data = driver.BLE_GAP_AD_TYPE_3D_INFORMATION_DATA
-        manufacturer_specific_data = driver.BLE_GAP_AD_TYPE_MANUFACTURER_SPECIFIC_DATA
+        manufacturer_specific_data = (
+            driver.BLE_GAP_AD_TYPE_MANUFACTURER_SPECIFIC_DATA
+        )
 
     def __init__(self, **kwargs):
         self.records = dict()
@@ -627,7 +816,9 @@ class BLEAdvData(object):
 
     def __setstate__(self, state):
         self.__dict__ = state
-        self.records = {BLEAdvData.Types(k): v for k, v in self.records.items()}
+        self.records = {
+            BLEAdvData.Types(k): v for k, v in self.records.items()
+        }
 
     def to_c(self):
         data_list = list()
@@ -641,7 +832,11 @@ class BLEAdvData(object):
                 data_list.extend(self.records[k])
 
             else:
-                raise NordicSemiException('Unsupported value type: 0x{:02X}'.format(type(self.records[k])))
+                raise NordicSemiException(
+                    "Unsupported value type: 0x{:02X}".format(
+                        type(self.records[k])
+                    )
+                )
 
         data_len = len(data_list)
         if data_len == 0:
@@ -652,7 +847,9 @@ class BLEAdvData(object):
 
     @classmethod
     def from_c(cls, adv_report_evt):
-        ad_list = util.uint8_array_to_list(adv_report_evt.data, adv_report_evt.dlen)
+        ad_list = util.uint8_array_to_list(
+            adv_report_evt.data, adv_report_evt.dlen
+        )
         ble_adv_data = cls()
         index = 0
 
@@ -665,18 +862,24 @@ class BLEAdvData(object):
                 ad_type = ad_list[index + 1]
                 offset = index + 2
                 key = BLEAdvData.Types(ad_type)
-                ble_adv_data.records[key] = ad_list[offset: offset + ad_len - 1]
+                ble_adv_data.records[key] = ad_list[
+                    offset : offset + ad_len - 1
+                ]
             except ValueError:
                 if ad_type:
-                    logger.info('Invalid advertising data type: 0x{:02X}'.format(ad_type))
+                    logger.info(
+                        "Invalid advertising data type: 0x{:02X}".format(
+                            ad_type
+                        )
+                    )
                 else:
-                    logger.info('Invalid advertising data')
+                    logger.info("Invalid advertising data")
             except IndexError:
-                logger.info('Invalid advertising data: {}'.format(ad_list))
+                logger.info("Invalid advertising data: {}".format(ad_list))
                 return ble_adv_data
 
             if ad_len:
-                index += (ad_len + 1)
+                index += ad_len + 1
 
         return ble_adv_data
 
@@ -711,7 +914,9 @@ class BLEGattStatusCode(Enum):
     attribute_not_found = driver.BLE_GATT_STATUS_ATTERR_ATTRIBUTE_NOT_FOUND
     attribute_not_long = driver.BLE_GATT_STATUS_ATTERR_ATTRIBUTE_NOT_LONG
     insuf_enc_key_size = driver.BLE_GATT_STATUS_ATTERR_INSUF_ENC_KEY_SIZE
-    invalid_att_va_length = driver.BLE_GATT_STATUS_ATTERR_INVALID_ATT_VAL_LENGTH
+    invalid_att_va_length = (
+        driver.BLE_GATT_STATUS_ATTERR_INVALID_ATT_VAL_LENGTH
+    )
     unlikely_error = driver.BLE_GATT_STATUS_ATTERR_UNLIKELY_ERROR
     insuf_encryption = driver.BLE_GATT_STATUS_ATTERR_INSUF_ENCRYPTION
     unsupp_group_type = driver.BLE_GATT_STATUS_ATTERR_UNSUPPORTED_GROUP_TYPE
@@ -726,8 +931,10 @@ class BLEGattExecWriteFlag(Enum):
 
 class BLEGattcWriteParams(object):
     def __init__(self, write_op, flags, handle, data, offset):
-        assert isinstance(write_op, BLEGattWriteOperation), 'Invalid argument type'
-        assert isinstance(flags, BLEGattExecWriteFlag), 'Invalid argument type'
+        assert isinstance(
+            write_op, BLEGattWriteOperation
+        ), "Invalid argument type"
+        assert isinstance(flags, BLEGattExecWriteFlag), "Invalid argument type"
         self.write_op = write_op
         self.flags = flags
         self.handle = handle
@@ -737,12 +944,15 @@ class BLEGattcWriteParams(object):
 
     @classmethod
     def from_c(cls, gattc_write_params):
-        return cls(write_op=BLEGattWriteOperation(gattc_write_params.write_op),
-                   flags=gattc_write_params.flags,
-                   handle=gattc_write_params.handle,
-                   data=util.uint8_array_to_list(gattc_write_params.p_value,
-                                                 gattc_write_params.len),
-                   offset=gattc_write_params.offset)
+        return cls(
+            write_op=BLEGattWriteOperation(gattc_write_params.write_op),
+            flags=gattc_write_params.flags,
+            handle=gattc_write_params.handle,
+            data=util.uint8_array_to_list(
+                gattc_write_params.p_value, gattc_write_params.len
+            ),
+            offset=gattc_write_params.offset,
+        )
 
     def to_c(self):
         self.__data_array = util.list_to_uint8_array(self.data)
@@ -759,46 +969,86 @@ class BLEGattcWriteParams(object):
     def __str__(self):
         return (
             "Write Params write_op({0.write_op}) flags({0.flags})"
-            " handle({0.handle}) offset({0.offset}) data({0.data})").format(
-            self)
+            " handle({0.handle}) offset({0.offset}) data({0.data})"
+        ).format(self)
 
 
 class BLEHci(Enum):
     success = driver.BLE_HCI_STATUS_CODE_SUCCESS
     unknown_btle_command = driver.BLE_HCI_STATUS_CODE_UNKNOWN_BTLE_COMMAND
-    unknown_connection_identifier = driver.BLE_HCI_STATUS_CODE_UNKNOWN_CONNECTION_IDENTIFIER
+    unknown_connection_identifier = (
+        driver.BLE_HCI_STATUS_CODE_UNKNOWN_CONNECTION_IDENTIFIER
+    )
     authentication_failure = driver.BLE_HCI_AUTHENTICATION_FAILURE
     pin_or_key_missing = driver.BLE_HCI_STATUS_CODE_PIN_OR_KEY_MISSING
     memory_capacity_exceeded = driver.BLE_HCI_MEMORY_CAPACITY_EXCEEDED
     connection_timeout = driver.BLE_HCI_CONNECTION_TIMEOUT
     command_disallowed = driver.BLE_HCI_STATUS_CODE_COMMAND_DISALLOWED
-    invalid_btle_command_parameters = driver.BLE_HCI_STATUS_CODE_INVALID_BTLE_COMMAND_PARAMETERS
-    remote_user_terminated_connection = driver.BLE_HCI_REMOTE_USER_TERMINATED_CONNECTION
-    remote_dev_termination_due_to_low_resources = driver.BLE_HCI_REMOTE_DEV_TERMINATION_DUE_TO_LOW_RESOURCES
-    remote_dev_termination_due_to_power_off = driver.BLE_HCI_REMOTE_DEV_TERMINATION_DUE_TO_POWER_OFF
-    local_host_terminated_connection = driver.BLE_HCI_LOCAL_HOST_TERMINATED_CONNECTION
+    invalid_btle_command_parameters = (
+        driver.BLE_HCI_STATUS_CODE_INVALID_BTLE_COMMAND_PARAMETERS
+    )
+    remote_user_terminated_connection = (
+        driver.BLE_HCI_REMOTE_USER_TERMINATED_CONNECTION
+    )
+    remote_dev_termination_due_to_low_resources = (
+        driver.BLE_HCI_REMOTE_DEV_TERMINATION_DUE_TO_LOW_RESOURCES
+    )
+    remote_dev_termination_due_to_power_off = (
+        driver.BLE_HCI_REMOTE_DEV_TERMINATION_DUE_TO_POWER_OFF
+    )
+    local_host_terminated_connection = (
+        driver.BLE_HCI_LOCAL_HOST_TERMINATED_CONNECTION
+    )
     unsupported_remote_feature = driver.BLE_HCI_UNSUPPORTED_REMOTE_FEATURE
     invalid_lmp_parameters = driver.BLE_HCI_STATUS_CODE_INVALID_LMP_PARAMETERS
     unspecified_error = driver.BLE_HCI_STATUS_CODE_UNSPECIFIED_ERROR
     lmp_response_timeout = driver.BLE_HCI_STATUS_CODE_LMP_RESPONSE_TIMEOUT
     lmp_pdu_not_allowed = driver.BLE_HCI_STATUS_CODE_LMP_PDU_NOT_ALLOWED
     instant_passed = driver.BLE_HCI_INSTANT_PASSED
-    pairintg_with_unit_key_unsupported = driver.BLE_HCI_PAIRING_WITH_UNIT_KEY_UNSUPPORTED
-    differen_transaction_collision = driver.BLE_HCI_DIFFERENT_TRANSACTION_COLLISION
+    pairintg_with_unit_key_unsupported = (
+        driver.BLE_HCI_PAIRING_WITH_UNIT_KEY_UNSUPPORTED
+    )
+    differen_transaction_collision = (
+        driver.BLE_HCI_DIFFERENT_TRANSACTION_COLLISION
+    )
     controller_busy = driver.BLE_HCI_CONTROLLER_BUSY
     conn_interval_unacceptable = driver.BLE_HCI_CONN_INTERVAL_UNACCEPTABLE
     directed_advertiser_timeout = driver.BLE_HCI_DIRECTED_ADVERTISER_TIMEOUT
-    conn_terminated_due_to_mic_failure = driver.BLE_HCI_CONN_TERMINATED_DUE_TO_MIC_FAILURE
-    conn_failed_to_be_established = driver.BLE_HCI_CONN_FAILED_TO_BE_ESTABLISHED
+    conn_terminated_due_to_mic_failure = (
+        driver.BLE_HCI_CONN_TERMINATED_DUE_TO_MIC_FAILURE
+    )
+    conn_failed_to_be_established = (
+        driver.BLE_HCI_CONN_FAILED_TO_BE_ESTABLISHED
+    )
 
 
 class BLEUUIDBase(object):
     def __init__(self, vs_uuid_base=None, uuid_type=None):
-        assert isinstance(vs_uuid_base, (list, type(None))), 'Invalid argument type'
-        assert isinstance(uuid_type, (int, type(None))), 'Invalid argument type'
+        assert isinstance(
+            vs_uuid_base, (list, type(None))
+        ), "Invalid argument type"
+        assert isinstance(
+            uuid_type, (int, type(None))
+        ), "Invalid argument type"
         if (vs_uuid_base is None) and uuid_type is None:
-            self.base = [0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x10, 0x00,
-                         0x80, 0x00, 0x00, 0x80, 0x5F, 0x9B, 0x34, 0xFB]
+            self.base = [
+                0x00,
+                0x00,
+                0x00,
+                0x00,
+                0x00,
+                0x00,
+                0x10,
+                0x00,
+                0x80,
+                0x00,
+                0x00,
+                0x80,
+                0x5F,
+                0x9B,
+                0x34,
+                0xFB,
+            ]
             self.type = driver.BLE_UUID_TYPE_BLE
 
         else:
@@ -830,41 +1080,49 @@ class BLEUUID(object):
         heart_rate = 0x2A37
 
     def __init__(self, value, base=BLEUUIDBase()):
-        assert isinstance(base, BLEUUIDBase), 'Invalid argument type'
+        assert isinstance(base, BLEUUIDBase), "Invalid argument type"
         self.base = base
         try:
-            self.value = value if isinstance(value, BLEUUID.Standard) else BLEUUID.Standard(value)
+            self.value = (
+                value
+                if isinstance(value, BLEUUID.Standard)
+                else BLEUUID.Standard(value)
+            )
         except ValueError:
             self.value = value
 
     def __setstate__(self, state):
         try:
-            self.value = BLEUUID.Standard(state['value'])
+            self.value = BLEUUID.Standard(state["value"])
         except ValueError:
-            self.value = state['value']
-        self.base = state['base']
+            self.value = state["value"]
+        self.base = state["base"]
 
     def __getstate__(self):
         if isinstance(self.value, BLEUUID.Standard):
-            return {'value': self.value.value, 'base': self.base}
-        return {'value': self.value, 'base': self.base}
+            return {"value": self.value.value, "base": self.base}
+        return {"value": self.value, "base": self.base}
 
     def __str__(self):
         if isinstance(self.value, BLEUUID.Standard):
-            return '0x{:04X} ({})'.format(self.value.value, self.value)
+            return "0x{:04X} ({})".format(self.value.value, self.value)
         else:
-            return '0x{:04X}'.format(self.value)
+            return "0x{:04X}".format(self.value)
 
     def __repr__(self):
         if isinstance(self.value, BLEUUID.Standard):
-            return "<BLEUUID obj: 0x{:04X} ({})>".format(self.value.value, self.value)
+            return "<BLEUUID obj: 0x{:04X} ({})>".format(
+                self.value.value, self.value
+            )
         else:
             return "<BLEUUID obj: 0x{:04X}>".format(self.value)
 
     def __eq__(self, other):
         if not isinstance(other, BLEUUID):
             return False
-        return (self.value == other.value) and (self.base.base == other.base.base)
+        return (self.value == other.value) and (
+            self.base.base == other.base.base
+        )
 
     def __hash__(self):
         return hash(self.value * sum(self.base.base))
@@ -874,7 +1132,9 @@ class BLEUUID(object):
         return cls(value=uuid.uuid, base=BLEUUIDBase.from_c(uuid))
 
     def to_c(self):
-        assert self.base.type is not None, 'Vendor specific UUID not registered'
+        assert (
+            self.base.type is not None
+        ), "Vendor specific UUID not registered"
         uuid = driver.ble_uuid_t()
         if isinstance(self.value, BLEUUID.Standard):
             uuid.uuid = self.value.value
@@ -891,27 +1151,32 @@ class BLEDescriptor(object):
 
     @classmethod
     def from_c(cls, gattc_desc):
-        return cls(uuid=BLEUUID.from_c(gattc_desc.uuid),
-                   handle=gattc_desc.handle)
+        return cls(
+            uuid=BLEUUID.from_c(gattc_desc.uuid), handle=gattc_desc.handle
+        )
 
     def __str__(self):
         return "Descriptor uuid({0.uuid}) handle({0.handle})".format(self)
 
 
-CharProperties = collections.namedtuple('CharProperties',
-                                        'broadcast read write_wo_resp write notify indicate auth_signed_wr')
+CharProperties = collections.namedtuple(
+    "CharProperties",
+    "broadcast read write_wo_resp write notify indicate auth_signed_wr",
+)
 
 
 class BLECharProperties(CharProperties):
     @classmethod
     def from_c(cls, char_props):
-        return cls(broadcast=char_props.broadcast,
-                   read=char_props.read,
-                   write_wo_resp=char_props.write_wo_resp,
-                   write=char_props.write,
-                   notify=char_props.notify,
-                   indicate=char_props.indicate,
-                   auth_signed_wr=char_props.auth_signed_wr)
+        return cls(
+            broadcast=char_props.broadcast,
+            read=char_props.read,
+            write_wo_resp=char_props.write_wo_resp,
+            write=char_props.write,
+            notify=char_props.notify,
+            indicate=char_props.indicate,
+            auth_signed_wr=char_props.auth_signed_wr,
+        )
 
 
 class BLECharacteristic(object):
@@ -925,17 +1190,21 @@ class BLECharacteristic(object):
 
     @classmethod
     def from_c(cls, gattc_char):
-        return cls(uuid=BLEUUID.from_c(gattc_char.uuid),
-                   char_props=BLECharProperties.from_c(gattc_char.char_props),
-                   handle_decl=gattc_char.handle_decl,
-                   handle_value=gattc_char.handle_value)
+        return cls(
+            uuid=BLEUUID.from_c(gattc_char.uuid),
+            char_props=BLECharProperties.from_c(gattc_char.char_props),
+            handle_decl=gattc_char.handle_decl,
+            handle_value=gattc_char.handle_value,
+        )
 
     def __repr__(self):
         return "<BLECharacteristic obj>"
 
     def __str__(self):
-        return ("Characteristic uuid({0.uuid}) properties({0.char_props}) declaration handle({0.handle_decl}) "
-                "value handle({0.handle_value})").format(self)
+        return (
+            "Characteristic uuid({0.uuid}) properties({0.char_props}) declaration handle({0.handle_decl}) "
+            "value handle({0.handle_value})"
+        ).format(self)
 
 
 class BLEService(object):
@@ -947,9 +1216,11 @@ class BLEService(object):
 
     @classmethod
     def from_c(cls, gattc_service):
-        return cls(uuid=BLEUUID.from_c(gattc_service.uuid),
-                   start_handle=gattc_service.handle_range.start_handle,
-                   end_handle=gattc_service.handle_range.end_handle)
+        return cls(
+            uuid=BLEUUID.from_c(gattc_service.uuid),
+            start_handle=gattc_service.handle_range.start_handle,
+            end_handle=gattc_service.handle_range.end_handle,
+        )
 
     def char_add(self, char):
         char.end_handle = self.end_handle
@@ -958,12 +1229,22 @@ class BLEService(object):
             self.chars[-2].end_handle = char.handle_decl - 1
 
     def __str__(self):
-        return "Service uuid({0.uuid}) start handle({0.start_handle}) end handle({0.end_handle})".format(self)
+        return "Service uuid({0.uuid}) start handle({0.start_handle}) end handle({0.end_handle})".format(
+            self
+        )
 
 
 class SerialPortDescriptor(object):
-    def __init__(self, port="", manufacturer="", serial_number="", pnp_id="", location_id="", vendor_id="",
-                 product_id=""):
+    def __init__(
+        self,
+        port="",
+        manufacturer="",
+        serial_number="",
+        pnp_id="",
+        location_id="",
+        vendor_id="",
+        product_id="",
+    ):
         self.port = port
         self.manufacturer = manufacturer
         self.serial_number = serial_number
@@ -976,21 +1257,23 @@ class SerialPortDescriptor(object):
     def to_string(cls, char_arr):
         s = util.char_array_to_list(char_arr, driver.SD_RPC_MAXPATHLEN)
         for i, c in enumerate(s):
-            if c == '\x00':
+            if c == "\x00":
                 break
         s = s[0:i]
-        s = ''.join(s)
+        s = "".join(s)
         return s
 
     @classmethod
     def from_c(cls, org):
-        return cls(port=org.port,
-                   manufacturer=org.manufacturer,
-                   serial_number=org.serialNumber,
-                   pnp_id=org.pnpId,
-                   location_id=org.locationId,
-                   vendor_id=org.vendorId,
-                   product_id=org.productId)
+        return cls(
+            port=org.port,
+            manufacturer=org.manufacturer,
+            serial_number=org.serialNumber,
+            pnp_id=org.pnpId,
+            location_id=org.locationId,
+            vendor_id=org.vendorId,
+            product_id=org.productId,
+        )
 
 
 class BLEConfigBase(object):
@@ -1021,7 +1304,9 @@ class BLEConfigConnGattc(BLEConfigBase):
     def to_c(self):
         ble_cfg = driver.ble_cfg_t()
         ble_cfg.conn_cfg.conn_cfg_tag = self.conn_cfg_tag
-        ble_cfg.conn_cfg.params.gattc_conn_cfg.write_cmd_tx_queue_size = self.write_cmd_tx_queue_size
+        ble_cfg.conn_cfg.params.gattc_conn_cfg.write_cmd_tx_queue_size = (
+            self.write_cmd_tx_queue_size
+        )
         return ble_cfg
 
 
@@ -1032,7 +1317,9 @@ class BLEConfigConnGatts(BLEConfigBase):
     def to_c(self):
         ble_cfg = driver.ble_cfg_t()
         ble_cfg.conn_cfg.conn_cfg_tag = self.conn_cfg_tag
-        ble_cfg.conn_cfg.params.gatts_conn_cfg.hvn_tx_queue_size = self.hvn_tx_queue_size
+        ble_cfg.conn_cfg.params.gatts_conn_cfg.hvn_tx_queue_size = (
+            self.hvn_tx_queue_size
+        )
         return ble_cfg
 
 
@@ -1048,12 +1335,14 @@ class BLEConfigConnGatt(BLEConfigBase):
 
 
 class BLEConfigConnL2cap(BLEConfigBase):
-    def __init__(self,
-                 rx_mps=23,
-                 tx_mps=23,
-                 rx_queue_size=1,
-                 tx_queue_size=1,
-                 ch_count=0):
+    def __init__(
+        self,
+        rx_mps=23,
+        tx_mps=23,
+        rx_queue_size=1,
+        tx_queue_size=1,
+        ch_count=0,
+    ):
         self.rx_mps = rx_mps
         self.tx_mps = tx_mps
         self.rx_queue_size = rx_queue_size
@@ -1065,8 +1354,12 @@ class BLEConfigConnL2cap(BLEConfigBase):
         ble_cfg.conn_cfg.conn_cfg_tag = self.conn_cfg_tag
         ble_cfg.conn_cfg.params.l2cap_conn_cfg.rx_mps = self.rx_mps
         ble_cfg.conn_cfg.params.l2cap_conn_cfg.tx_mps = self.tx_mps
-        ble_cfg.conn_cfg.params.l2cap_conn_cfg.rx_queue_size = self.rx_queue_size
-        ble_cfg.conn_cfg.params.l2cap_conn_cfg.tx_queue_size = self.tx_queue_size
+        ble_cfg.conn_cfg.params.l2cap_conn_cfg.rx_queue_size = (
+            self.rx_queue_size
+        )
+        ble_cfg.conn_cfg.params.l2cap_conn_cfg.tx_queue_size = (
+            self.tx_queue_size
+        )
         ble_cfg.conn_cfg.params.l2cap_conn_cfg.ch_count = self.ch_count
         return ble_cfg
 
@@ -1082,25 +1375,29 @@ class BLEConfigCommon(BLEConfigBase):
 
 
 class BLEConfigGapRoleCount(BLEConfigBase):
-    def __init__(self,
-                 central_role_count=1,
-                 periph_role_count=1,
-                 central_sec_count=1):
+    def __init__(
+        self, central_role_count=1, periph_role_count=1, central_sec_count=1
+    ):
         self.central_role_count = central_role_count
         self.periph_role_count = periph_role_count
         self.central_sec_count = central_sec_count
 
     def to_c(self):
         ble_cfg = driver.ble_cfg_t()
-        ble_cfg.gap_cfg.role_count_cfg.periph_role_count = self.periph_role_count
-        ble_cfg.gap_cfg.role_count_cfg.central_role_count = self.central_role_count
-        ble_cfg.gap_cfg.role_count_cfg.central_sec_count = self.central_sec_count
+        ble_cfg.gap_cfg.role_count_cfg.periph_role_count = (
+            self.periph_role_count
+        )
+        ble_cfg.gap_cfg.role_count_cfg.central_role_count = (
+            self.central_role_count
+        )
+        ble_cfg.gap_cfg.role_count_cfg.central_sec_count = (
+            self.central_sec_count
+        )
         return ble_cfg
 
+
 class BLEConfigGapDeviceName(BLEConfigBase):
-    def __init__(self,
-                 device_name="nRF5x-py",
-                 device_name_read_only=True):
+    def __init__(self, device_name="nRF5x-py", device_name_read_only=True):
         self.device_name = device_name
         self.device_name_read_only = device_name_read_only
         self.__device_name = None
@@ -1115,7 +1412,9 @@ class BLEConfigGapDeviceName(BLEConfigBase):
             ble_cfg.gap_cfg.device_name_cfg.write_perm.lv = 1
 
         ble_cfg.gap_cfg.device_name_cfg.vloc = 2
-        self.__device_name = util.list_to_uint8_array([ord(x) for x in self.device_name])
+        self.__device_name = util.list_to_uint8_array(
+            [ord(x) for x in self.device_name]
+        )
         ble_cfg.gap_cfg.device_name_cfg.p_value = self.__device_name.cast()
         ble_cfg.gap_cfg.device_name_cfg.current_len = len(self.device_name)
         ble_cfg.gap_cfg.device_name_cfg.max_len = len(self.device_name)
@@ -1129,17 +1428,21 @@ class BLEConfigGatts(BLEConfigBase):
 
     def to_c(self):
         ble_cfg = driver.ble_cfg_t()
-        ble_cfg.gatts_cfg.service_changed.service_changed = self.service_changed
+        ble_cfg.gatts_cfg.service_changed.service_changed = (
+            self.service_changed
+        )
         ble_cfg.gatts_cfg.attr_tab_size.attr_tab_size = self.attr_tab_size
         return ble_cfg
 
 
 class BLEGapDataLengthParams(object):
-    def __init__(self,
-                 max_tx_octets=251,
-                 max_rx_octets=251,
-                 max_tx_time_us=0,  # BLE_GAP_DATA_LENGTH_AUTO
-                 max_rx_time_us=0):  # BLE_GAP_DATA_LENGTH_AUTO
+    def __init__(
+        self,
+        max_tx_octets=251,
+        max_rx_octets=251,
+        max_tx_time_us=0,  # BLE_GAP_DATA_LENGTH_AUTO
+        max_rx_time_us=0,
+    ):  # BLE_GAP_DATA_LENGTH_AUTO
         self.max_tx_octets = max_tx_octets
         self.max_rx_octets = max_rx_octets
         self.max_tx_time_us = max_tx_time_us
@@ -1147,10 +1450,12 @@ class BLEGapDataLengthParams(object):
 
     @classmethod
     def from_c(cls, params):
-        return cls(max_tx_octets=params.max_tx_octets,
-                   max_rx_octets=params.max_rx_octets,
-                   max_tx_time_us=params.max_tx_time_us,
-                   max_rx_time_us=params.max_rx_time_us)
+        return cls(
+            max_tx_octets=params.max_tx_octets,
+            max_rx_octets=params.max_rx_octets,
+            max_tx_time_us=params.max_tx_time_us,
+            max_rx_time_us=params.max_rx_time_us,
+        )
 
     def to_c(self):
         dlp = driver.ble_gap_data_length_params_t()
@@ -1162,10 +1467,12 @@ class BLEGapDataLengthParams(object):
 
 
 class BLEGapDataLengthLimitation(object):
-    def __init__(self,
-                 tx_payload_limited_octets=0,
-                 rx_payload_limited_octets=0,
-                 tx_rx_time_limited_us=0):
+    def __init__(
+        self,
+        tx_payload_limited_octets=0,
+        rx_payload_limited_octets=0,
+        tx_rx_time_limited_us=0,
+    ):
         self.tx_payload_limited_octets = tx_payload_limited_octets
         self.rx_payload_limited_octets = rx_payload_limited_octets
         self.tx_rx_time_limited_us = tx_rx_time_limited_us
@@ -1179,9 +1486,11 @@ class BLEGapDataLengthLimitation(object):
 
     @classmethod
     def from_c(cls, data_length_limitation):
-        return cls(tx_payload_limited_octets=data_length_limitation.tx_payload_limited_octets,
-                   rx_payload_limited_octets=data_length_limitation.rx_payload_limited_octets,
-                   tx_rx_time_limited_us=data_length_limitation.tx_rx_time_limited_us)
+        return cls(
+            tx_payload_limited_octets=data_length_limitation.tx_payload_limited_octets,
+            rx_payload_limited_octets=data_length_limitation.rx_payload_limited_octets,
+            tx_rx_time_limited_us=data_length_limitation.tx_rx_time_limited_us,
+        )
 
 
 class RpcAppStatus(Enum):
@@ -1208,14 +1517,15 @@ class BLEDriver(object):
     observer_lock = Lock()
     api_lock = Lock()
 
-    def __init__(self,
-                 serial_port,  # type: str
-                 baud_rate=1000000,  # type: int
-                 auto_flash=False,  # type: bool
-                 retransmission_interval=300,  # type: int
-                 response_timeout=1500,  # type: int
-                 log_severity_level='info'  # type: str
-                 ):
+    def __init__(
+        self,
+        serial_port,  # type: str
+        baud_rate=1000000,  # type: int
+        auto_flash=False,  # type: bool
+        retransmission_interval=300,  # type: int
+        response_timeout=1500,  # type: int
+        log_severity_level="info",  # type: str
+    ):
         super(BLEDriver, self).__init__()
         self.observers = list()  # type: List[BLEDriverObserver]
 
@@ -1233,14 +1543,22 @@ class BLEDriver(object):
             flasher.reset()
             time.sleep(1)
 
-        phy_layer = driver.sd_rpc_physical_layer_create_uart(serial_port,
-                                                             baud_rate,
-                                                             driver.SD_RPC_FLOW_CONTROL_NONE,
-                                                             driver.SD_RPC_PARITY_NONE)
-        link_layer = driver.sd_rpc_data_link_layer_create_bt_three_wire(phy_layer, retransmission_interval)
-        transport_layer = driver.sd_rpc_transport_layer_create(link_layer, response_timeout)
+        phy_layer = driver.sd_rpc_physical_layer_create_uart(
+            serial_port,
+            baud_rate,
+            driver.SD_RPC_FLOW_CONTROL_NONE,
+            driver.SD_RPC_PARITY_NONE,
+        )
+        link_layer = driver.sd_rpc_data_link_layer_create_bt_three_wire(
+            phy_layer, retransmission_interval
+        )
+        transport_layer = driver.sd_rpc_transport_layer_create(
+            link_layer, response_timeout
+        )
         self.rpc_adapter = driver.sd_rpc_adapter_create(transport_layer)
-        log_severity_level_enum = getattr(RpcLogSeverity, log_severity_level.lower(), RpcLogSeverity.info)
+        log_severity_level_enum = getattr(
+            RpcLogSeverity, log_severity_level.lower(), RpcLogSeverity.info
+        )
         self.rpc_log_severity_filter(log_severity_level_enum)
         self._keyset = None
 
@@ -1252,7 +1570,9 @@ class BLEDriver(object):
     @wrapt.synchronized(api_lock)
     def rpc_log_severity_filter(self, severity):
         # type: (RpcLogSeverity) -> ()
-        return driver.sd_rpc_log_handler_severity_filter_set(self.rpc_adapter, severity.value)
+        return driver.sd_rpc_log_handler_severity_filter_set(
+            self.rpc_adapter, severity.value
+        )
 
     @NordicSemiErrorCheck
     @wrapt.synchronized(api_lock)
@@ -1260,13 +1580,17 @@ class BLEDriver(object):
         app_ram_base = 0
         assert isinstance(cfg, BLEConfigBase)
         assert isinstance(cfg_id, BLEConfig)
-        return driver.sd_ble_cfg_set(self.rpc_adapter, cfg_id.value, cfg.to_c(), app_ram_base)
+        return driver.sd_ble_cfg_set(
+            self.rpc_adapter, cfg_id.value, cfg.to_c(), app_ram_base
+        )
 
     @wrapt.synchronized(api_lock)
     @classmethod
     def enum_serial_ports(cls):
         MAX_SERIAL_PORTS = 64
-        c_descs = [driver.sd_rpc_serial_port_desc_t() for _ in range(MAX_SERIAL_PORTS)]
+        c_descs = [
+            driver.sd_rpc_serial_port_desc_t() for _ in range(MAX_SERIAL_PORTS)
+        ]
         c_desc_arr = util.list_to_serial_port_desc_array(c_descs)
 
         arr_len = driver.new_uint32()
@@ -1275,7 +1599,10 @@ class BLEDriver(object):
         err_code = driver.sd_rpc_serial_port_enum(c_desc_arr, arr_len)
         if err_code != driver.NRF_SUCCESS:
             raise NordicSemiException(
-                'Failed to {}. Error code: {}'.format(BLEDriver.enum_serial_ports.__name__, err_code))
+                "Failed to {}. Error code: {}".format(
+                    BLEDriver.enum_serial_ports.__name__, err_code
+                )
+            )
 
         dlen = driver.uint32_value(arr_len)
 
@@ -1287,34 +1614,42 @@ class BLEDriver(object):
     def open(self):
         self.run_workers = True
 
-        self.log_worker = Thread(target=self.log_message_handler_thread, name='LogThread')
+        self.log_worker = Thread(
+            target=self.log_message_handler_thread, name="LogThread"
+        )
         self.log_worker.daemon = True
         self.log_worker.start()
 
-        self.status_worker = Thread(target=self.status_handler_thread, name='StatusThread')
+        self.status_worker = Thread(
+            target=self.status_handler_thread, name="StatusThread"
+        )
         self.status_worker.daemon = True
         self.status_worker.start()
 
-        self.ble_event_worker = Thread(target=self.ble_event_handler_thread, name='EventThread')
+        self.ble_event_worker = Thread(
+            target=self.ble_event_handler_thread, name="EventThread"
+        )
         self.ble_event_worker.daemon = True
         self.ble_event_worker.start()
 
-        return driver.sd_rpc_open(self.rpc_adapter,
-                                  self.status_handler,
-                                  self.ble_event_handler,
-                                  self.log_message_handler)
+        return driver.sd_rpc_open(
+            self.rpc_adapter,
+            self.status_handler,
+            self.ble_event_handler,
+            self.log_message_handler,
+        )
 
     @NordicSemiErrorCheck
     @wrapt.synchronized(api_lock)
     def close(self):
         result = driver.sd_rpc_close(self.rpc_adapter)
-        logger.debug('close result %s', result)
+        logger.debug("close result %s", result)
 
         # Cleanup workers
         if self.run_workers:
             self.run_workers = False
 
-            logger.debug('Stopping workers')
+            logger.debug("Stopping workers")
 
             self.log_worker.join()
 
@@ -1343,7 +1678,7 @@ class BLEDriver(object):
             except queue.Empty as _:
                 pass
 
-            logger.debug('Workers stopped')
+            logger.debug("Workers stopped")
 
         return result
 
@@ -1357,21 +1692,20 @@ class BLEDriver(object):
 
     @staticmethod
     def adv_params_setup():
-        return BLEGapAdvParams(interval_ms=40,
-                               timeout_s=180)
+        return BLEGapAdvParams(interval_ms=40, timeout_s=180)
 
     @staticmethod
     def scan_params_setup():
-        return BLEGapScanParams(interval_ms=200,
-                                window_ms=150,
-                                timeout_s=10)
+        return BLEGapScanParams(interval_ms=200, window_ms=150, timeout_s=10)
 
     @staticmethod
     def conn_params_setup():
-        return BLEGapConnParams(min_conn_interval_ms=15,
-                                max_conn_interval_ms=30,
-                                conn_sup_timeout_ms=4000,
-                                slave_latency=0)
+        return BLEGapConnParams(
+            min_conn_interval_ms=15,
+            max_conn_interval_ms=30,
+            conn_sup_timeout_ms=4000,
+            slave_latency=0,
+        )
 
     @NordicSemiErrorCheck
     @wrapt.synchronized(api_lock)
@@ -1379,17 +1713,33 @@ class BLEDriver(object):
         app_ram_base = driver.new_uint32()
         if nrf_sd_ble_api_ver == 2:
             assert isinstance(ble_enable_params, BLEEnableParams)
-            err_code = driver.sd_ble_enable(self.rpc_adapter, ble_enable_params.to_c(), app_ram_base)
+            err_code = driver.sd_ble_enable(
+                self.rpc_adapter, ble_enable_params.to_c(), app_ram_base
+            )
         elif nrf_sd_ble_api_ver == 5:
-            assert ble_enable_params is None, "ble_enable_params not used in s132 v5 API"
+            assert (
+                ble_enable_params is None
+            ), "ble_enable_params not used in s132 v5 API"
             driver.uint32_assign(app_ram_base, 0)
             err_code = driver.sd_ble_enable(self.rpc_adapter, app_ram_base)
         return err_code
 
+    @wrapt.synchronized(api_lock)
+    def ble_version_get(self):
+        version = driver.ble_version_t()
+        err_code = driver.sd_ble_version_get(self.rpc_adapter, version)
+
+        if err_code != driver.NRF_SUCCESS:
+            raise NordicSemiException(
+                "Failed to get ble_version. Error code: {}".format(err_code)
+            )
+
+        return BLEVersion.from_c(version)
+
     @NordicSemiErrorCheck
     @wrapt.synchronized(api_lock)
     def ble_gap_addr_set(self, gap_addr):
-        assert isinstance(gap_addr, BLEGapAddr), 'Invalid argument type'
+        assert isinstance(gap_addr, BLEGapAddr), "Invalid argument type"
         if gap_addr:
             gap_addr = gap_addr.to_c()
         if nrf_sd_ble_api_ver == 2:
@@ -1406,35 +1756,46 @@ class BLEDriver(object):
         else:
             err_code = driver.sd_ble_gap_address_get(self.rpc_adapter, addr)
         if err_code != driver.NRF_SUCCESS:
-            raise NordicSemiException('Failed to get ble_gap_addr. Error code: {}'.format(err_code))
+            raise NordicSemiException(
+                "Failed to get ble_gap_addr. Error code: {}".format(err_code)
+            )
         return BLEGapAddr.from_c(addr)
 
     @NordicSemiErrorCheck
     @wrapt.synchronized(api_lock)
     def ble_gap_privacy_set(self, privacy_params):
-        assert isinstance(privacy_params, BLEGapPrivacyParams), 'Invalid argument type'
+        assert isinstance(
+            privacy_params, BLEGapPrivacyParams
+        ), "Invalid argument type"
         privacy_params = privacy_params.to_c()
-        return driver.sd_ble_gap_privacy_set(self.rpc_adapter,
-                                             privacy_params)
+        return driver.sd_ble_gap_privacy_set(self.rpc_adapter, privacy_params)
 
     @NordicSemiErrorCheck
     @wrapt.synchronized(api_lock)
     def ble_gap_adv_start(self, adv_params=None, tag=0):
         if not adv_params:
             adv_params = self.adv_params_setup()
-        assert isinstance(adv_params, BLEGapAdvParams), 'Invalid argument type'
+        assert isinstance(adv_params, BLEGapAdvParams), "Invalid argument type"
         if nrf_sd_ble_api_ver == 5:
-            return driver.sd_ble_gap_adv_start(self.rpc_adapter, adv_params.to_c(), tag)
+            return driver.sd_ble_gap_adv_start(
+                self.rpc_adapter, adv_params.to_c(), tag
+            )
         else:
-            return driver.sd_ble_gap_adv_start(self.rpc_adapter, adv_params.to_c())
+            return driver.sd_ble_gap_adv_start(
+                self.rpc_adapter, adv_params.to_c()
+            )
 
     @NordicSemiErrorCheck
     @wrapt.synchronized(api_lock)
     def ble_gap_conn_param_update(self, conn_handle, conn_params):
-        assert isinstance(conn_params, (BLEGapConnParams, type(None))), 'Invalid argument type'
+        assert isinstance(
+            conn_params, (BLEGapConnParams, type(None))
+        ), "Invalid argument type"
         if not conn_params:
             conn_params = self.conn_params_setup()
-        return driver.sd_ble_gap_conn_param_update(self.rpc_adapter, conn_handle, conn_params.to_c())
+        return driver.sd_ble_gap_conn_param_update(
+            self.rpc_adapter, conn_handle, conn_params.to_c()
+        )
 
     @NordicSemiErrorCheck
     @wrapt.synchronized(api_lock)
@@ -1446,8 +1807,12 @@ class BLEDriver(object):
     def ble_gap_scan_start(self, scan_params=None):
         if not scan_params:
             scan_params = self.scan_params_setup()
-        assert isinstance(scan_params, BLEGapScanParams), 'Invalid argument type'
-        return driver.sd_ble_gap_scan_start(self.rpc_adapter, scan_params.to_c())
+        assert isinstance(
+            scan_params, BLEGapScanParams
+        ), "Invalid argument type"
+        return driver.sd_ble_gap_scan_start(
+            self.rpc_adapter, scan_params.to_c()
+        )
 
     @NordicSemiErrorCheck
     @wrapt.synchronized(api_lock)
@@ -1456,66 +1821,92 @@ class BLEDriver(object):
 
     @NordicSemiErrorCheck
     @wrapt.synchronized(api_lock)
-    def ble_gap_connect(self, address, scan_params=None, conn_params=None, tag=0):
-        assert isinstance(address, BLEGapAddr), 'Invalid argument type'
+    def ble_gap_connect(
+        self, address, scan_params=None, conn_params=None, tag=0
+    ):
+        assert isinstance(address, BLEGapAddr), "Invalid argument type"
 
         if not scan_params:
             scan_params = self.scan_params_setup()
-        assert isinstance(scan_params, BLEGapScanParams), 'Invalid argument type'
+        assert isinstance(
+            scan_params, BLEGapScanParams
+        ), "Invalid argument type"
 
         if not conn_params:
             conn_params = self.conn_params_setup()
-        assert isinstance(conn_params, BLEGapConnParams), 'Invalid argument type'
+        assert isinstance(
+            conn_params, BLEGapConnParams
+        ), "Invalid argument type"
 
         if nrf_sd_ble_api_ver == 2:
-            return driver.sd_ble_gap_connect(self.rpc_adapter,
-                                             address.to_c(),
-                                             scan_params.to_c(),
-                                             conn_params.to_c())
+            return driver.sd_ble_gap_connect(
+                self.rpc_adapter,
+                address.to_c(),
+                scan_params.to_c(),
+                conn_params.to_c(),
+            )
         elif nrf_sd_ble_api_ver == 5:
-            return driver.sd_ble_gap_connect(self.rpc_adapter,
-                                             address.to_c(),
-                                             scan_params.to_c(),
-                                             conn_params.to_c(),
-                                             tag)
+            return driver.sd_ble_gap_connect(
+                self.rpc_adapter,
+                address.to_c(),
+                scan_params.to_c(),
+                conn_params.to_c(),
+                tag,
+            )
 
     @NordicSemiErrorCheck
     @wrapt.synchronized(api_lock)
-    def ble_gap_disconnect(self, conn_handle, hci_status_code=BLEHci.remote_user_terminated_connection):
-        assert isinstance(hci_status_code, BLEHci), 'Invalid argument type'
-        return driver.sd_ble_gap_disconnect(self.rpc_adapter,
-                                            conn_handle,
-                                            hci_status_code.value)
+    def ble_gap_disconnect(
+        self,
+        conn_handle,
+        hci_status_code=BLEHci.remote_user_terminated_connection,
+    ):
+        assert isinstance(hci_status_code, BLEHci), "Invalid argument type"
+        return driver.sd_ble_gap_disconnect(
+            self.rpc_adapter, conn_handle, hci_status_code.value
+        )
 
     @NordicSemiErrorCheck
     @wrapt.synchronized(api_lock)
-    def ble_gap_adv_data_set(self, adv_data=BLEAdvData(), scan_data=BLEAdvData()):
-        assert isinstance(adv_data, BLEAdvData), 'Invalid argument type'
-        assert isinstance(scan_data, BLEAdvData), 'Invalid argument type'
+    def ble_gap_adv_data_set(
+        self, adv_data=BLEAdvData(), scan_data=BLEAdvData()
+    ):
+        assert isinstance(adv_data, BLEAdvData), "Invalid argument type"
+        assert isinstance(scan_data, BLEAdvData), "Invalid argument type"
         (adv_data_len, p_adv_data) = adv_data.to_c()
         (scan_data_len, p_scan_data) = scan_data.to_c()
 
-        return driver.sd_ble_gap_adv_data_set(self.rpc_adapter,
-                                              p_adv_data,
-                                              adv_data_len,
-                                              p_scan_data,
-                                              scan_data_len)
+        return driver.sd_ble_gap_adv_data_set(
+            self.rpc_adapter,
+            p_adv_data,
+            adv_data_len,
+            p_scan_data,
+            scan_data_len,
+        )
 
     @NordicSemiErrorCheck
     @wrapt.synchronized(api_lock)
     def ble_gap_authenticate(self, conn_handle, sec_params):
-        assert isinstance(sec_params, (BLEGapSecParams, type(None))), 'Invalid argument type'
-        return driver.sd_ble_gap_authenticate(self.rpc_adapter,
-                                              conn_handle,
-                                              sec_params.to_c() if sec_params else None)
+        assert isinstance(
+            sec_params, (BLEGapSecParams, type(None))
+        ), "Invalid argument type"
+        return driver.sd_ble_gap_authenticate(
+            self.rpc_adapter,
+            conn_handle,
+            sec_params.to_c() if sec_params else None,
+        )
 
     @NordicSemiErrorCheck
     @wrapt.synchronized(api_lock)
-    def ble_gap_sec_params_reply(self, conn_handle, sec_status, sec_params, own_keys, peer_keys):
-        assert isinstance(sec_status, BLEGapSecStatus), 'Invalid argument type'
-        assert isinstance(sec_params, (BLEGapSecParams, type(None))), 'Invalid argument type'
-        assert isinstance(own_keys, type(None)), 'NOT IMPLEMENTED'
-        assert isinstance(peer_keys, type(None)), 'NOT IMPLEMENTED'
+    def ble_gap_sec_params_reply(
+        self, conn_handle, sec_status, sec_params, own_keys, peer_keys
+    ):
+        assert isinstance(sec_status, BLEGapSecStatus), "Invalid argument type"
+        assert isinstance(
+            sec_params, (BLEGapSecParams, type(None))
+        ), "Invalid argument type"
+        assert isinstance(own_keys, type(None)), "NOT IMPLEMENTED"
+        assert isinstance(peer_keys, type(None)), "NOT IMPLEMENTED"
 
         keyset = driver.ble_gap_sec_keyset_t()
 
@@ -1531,52 +1922,65 @@ class BLEDriver(object):
 
         self._keyset = keyset
 
-        return driver.sd_ble_gap_sec_params_reply(self.rpc_adapter,
-                                                  conn_handle,
-                                                  sec_status.value,
-                                                  sec_params.to_c() if sec_params else None,
-                                                  self._keyset)
+        return driver.sd_ble_gap_sec_params_reply(
+            self.rpc_adapter,
+            conn_handle,
+            sec_status.value,
+            sec_params.to_c() if sec_params else None,
+            self._keyset,
+        )
 
     @NordicSemiErrorCheck
     @wrapt.synchronized(api_lock)
-    def ble_gap_sec_info_reply(self, conn_handle, enc_info, id_info, sign_info):
-        return driver.sd_ble_gap_sec_info_reply(self.rpc_adapter,
-                                                conn_handle,
-                                                enc_info,
-                                                id_info,
-                                                sign_info)
+    def ble_gap_sec_info_reply(
+        self, conn_handle, enc_info, id_info, sign_info
+    ):
+        return driver.sd_ble_gap_sec_info_reply(
+            self.rpc_adapter, conn_handle, enc_info, id_info, sign_info
+        )
 
     @wrapt.synchronized(api_lock)
     def ble_gap_conn_sec_get(self, conn_handle):
         conn_sec = driver.ble_gap_conn_sec_t()
         conn_sec.sec_mode = driver.ble_gap_conn_sec_mode_t()
-        err_code = driver.sd_ble_gap_conn_sec_get(self.rpc_adapter,
-                                                  conn_handle,
-                                                  conn_sec)
+        err_code = driver.sd_ble_gap_conn_sec_get(
+            self.rpc_adapter, conn_handle, conn_sec
+        )
         if err_code != driver.NRF_SUCCESS:
-            raise NordicSemiException('Failed to get ble_gap_conn_sec. Error code: {}'.format(err_code))
+            raise NordicSemiException(
+                "Failed to get ble_gap_conn_sec. Error code: {}".format(
+                    err_code
+                )
+            )
         return conn_sec
 
     @NordicSemiErrorCheck
     @wrapt.synchronized(api_lock)
     def ble_gap_encrypt(self, conn_handle, master_id, enc_info):
-        assert isinstance(master_id, BLEGapMasterId), 'Invalid argument type'
-        assert isinstance(enc_info, BLEGapEncInfo), 'Invalid argument type'
-        return driver.sd_ble_gap_encrypt(self.rpc_adapter,
-                                         conn_handle,
-                                         master_id.to_c(),
-                                         enc_info.to_c())
+        assert isinstance(master_id, BLEGapMasterId), "Invalid argument type"
+        assert isinstance(enc_info, BLEGapEncInfo), "Invalid argument type"
+        return driver.sd_ble_gap_encrypt(
+            self.rpc_adapter, conn_handle, master_id.to_c(), enc_info.to_c()
+        )
 
     @NordicSemiErrorCheck
     @wrapt.synchronized(api_lock)
-    def ble_gap_data_length_update(self, conn_handle, data_length_params, data_length_limitation):
-        assert isinstance(data_length_params, (BLEGapDataLengthParams, type(None)))
-        assert isinstance(data_length_limitation, (BLEGapDataLengthLimitation, type(None)))
+    def ble_gap_data_length_update(
+        self, conn_handle, data_length_params, data_length_limitation
+    ):
+        assert isinstance(
+            data_length_params, (BLEGapDataLengthParams, type(None))
+        )
+        assert isinstance(
+            data_length_limitation, (BLEGapDataLengthLimitation, type(None))
+        )
         dll = driver.new_ble_gap_data_length_limitation()
-        err_code = driver.sd_ble_gap_data_length_update(self.rpc_adapter,
-                                                        conn_handle,
-                                                        data_length_params.to_c() if data_length_params else None,
-                                                        dll)
+        err_code = driver.sd_ble_gap_data_length_update(
+            self.rpc_adapter,
+            conn_handle,
+            data_length_params.to_c() if data_length_params else None,
+            dll,
+        )
         if err_code != driver.NRF_SUCCESS:
             # TODO: figure out what the purpose is with this code
             value = driver.ble_gap_data_length_limitation_value(dll)
@@ -1585,13 +1989,25 @@ class BLEDriver(object):
 
     @NordicSemiErrorCheck
     @wrapt.synchronized(api_lock)
+    def ble_gap_rssi_start(self, conn_handle, threshold_dbm, skip_count):
+        return driver.sd_ble_gap_rssi_start(
+            self.rpc_adapter, conn_handle, threshold_dbm, skip_count
+        )
+
+    @NordicSemiErrorCheck
+    @wrapt.synchronized(api_lock)
+    def ble_gap_rssi_stop(self, conn_handle):
+        return driver.sd_ble_gap_rssi_stop(self.rpc_adapter, conn_handle)
+
+    @NordicSemiErrorCheck
+    @wrapt.synchronized(api_lock)
     def ble_vs_uuid_add(self, uuid_base):
-        assert isinstance(uuid_base, BLEUUIDBase), 'Invalid argument type'
+        assert isinstance(uuid_base, BLEUUIDBase), "Invalid argument type"
         uuid_type = driver.new_uint8()
 
-        err_code = driver.sd_ble_uuid_vs_add(self.rpc_adapter,
-                                             uuid_base.to_c(),
-                                             uuid_type)
+        err_code = driver.sd_ble_uuid_vs_add(
+            self.rpc_adapter, uuid_base.to_c(), uuid_type
+        )
         if err_code == driver.NRF_SUCCESS:
             uuid_base.type = driver.uint8_value(uuid_type)
         return err_code
@@ -1599,27 +2015,32 @@ class BLEDriver(object):
     @NordicSemiErrorCheck
     @wrapt.synchronized(api_lock)
     def ble_gattc_write(self, conn_handle, write_params):
-        assert isinstance(write_params, BLEGattcWriteParams), 'Invalid argument type'
-        return driver.sd_ble_gattc_write(self.rpc_adapter,
-                                         conn_handle,
-                                         write_params.to_c())
+        assert isinstance(
+            write_params, BLEGattcWriteParams
+        ), "Invalid argument type"
+        return driver.sd_ble_gattc_write(
+            self.rpc_adapter, conn_handle, write_params.to_c()
+        )
 
     @NordicSemiErrorCheck
     @wrapt.synchronized(api_lock)
     def ble_gattc_read(self, conn_handle, handle, offset):
-        return driver.sd_ble_gattc_read(self.rpc_adapter,
-                                        conn_handle,
-                                        handle,
-                                        offset)
+        return driver.sd_ble_gattc_read(
+            self.rpc_adapter, conn_handle, handle, offset
+        )
 
     @NordicSemiErrorCheck
     @wrapt.synchronized(api_lock)
     def ble_gattc_prim_srvc_disc(self, conn_handle, srvc_uuid, start_handle):
-        assert isinstance(srvc_uuid, (BLEUUID, type(None))), 'Invalid argument type'
-        return driver.sd_ble_gattc_primary_services_discover(self.rpc_adapter,
-                                                             conn_handle,
-                                                             start_handle,
-                                                             srvc_uuid.to_c() if srvc_uuid else None)
+        assert isinstance(
+            srvc_uuid, (BLEUUID, type(None))
+        ), "Invalid argument type"
+        return driver.sd_ble_gattc_primary_services_discover(
+            self.rpc_adapter,
+            conn_handle,
+            start_handle,
+            srvc_uuid.to_c() if srvc_uuid else None,
+        )
 
     @NordicSemiErrorCheck
     @wrapt.synchronized(api_lock)
@@ -1627,9 +2048,9 @@ class BLEDriver(object):
         handle_range = driver.ble_gattc_handle_range_t()
         handle_range.start_handle = start_handle
         handle_range.end_handle = end_handle
-        return driver.sd_ble_gattc_characteristics_discover(self.rpc_adapter,
-                                                            conn_handle,
-                                                            handle_range)
+        return driver.sd_ble_gattc_characteristics_discover(
+            self.rpc_adapter, conn_handle, handle_range
+        )
 
     @NordicSemiErrorCheck
     @wrapt.synchronized(api_lock)
@@ -1637,61 +2058,69 @@ class BLEDriver(object):
         handle_range = driver.ble_gattc_handle_range_t()
         handle_range.start_handle = start_handle
         handle_range.end_handle = end_handle
-        return driver.sd_ble_gattc_descriptors_discover(self.rpc_adapter,
-                                                        conn_handle,
-                                                        handle_range)
+        return driver.sd_ble_gattc_descriptors_discover(
+            self.rpc_adapter, conn_handle, handle_range
+        )
 
     @NordicSemiErrorCheck
     @wrapt.synchronized(api_lock)
     def ble_gattc_exchange_mtu_req(self, conn_handle, mtu):
-        return driver.sd_ble_gattc_exchange_mtu_request(self.rpc_adapter,
-                                                        conn_handle,
-                                                        mtu)
+        return driver.sd_ble_gattc_exchange_mtu_request(
+            self.rpc_adapter, conn_handle, mtu
+        )
 
     @NordicSemiErrorCheck
     @wrapt.synchronized(api_lock)
     def ble_gattc_hv_confirm(self, conn_handle, attr_handle):
-        return driver.sd_ble_gattc_hv_confirm(self.rpc_adapter, conn_handle, attr_handle)
+        return driver.sd_ble_gattc_hv_confirm(
+            self.rpc_adapter, conn_handle, attr_handle
+        )
 
     @NordicSemiErrorCheck
     @wrapt.synchronized(api_lock)
     def ble_gatts_service_add(self, service_type, uuid, service_handle):
         uuid_c = uuid.to_c()
-        return driver.sd_ble_gatts_service_add(self.rpc_adapter,
-                                               service_type,
-                                               uuid_c,
-                                               service_handle)
+        return driver.sd_ble_gatts_service_add(
+            self.rpc_adapter, service_type, uuid_c, service_handle
+        )
 
     @NordicSemiErrorCheck
     @wrapt.synchronized(api_lock)
-    def ble_gatts_characteristic_add(self, service_handle, char_md, attr_char_value, char_handle):
-        return driver.sd_ble_gatts_characteristic_add(self.rpc_adapter,
-                                                      service_handle,
-                                                      char_md,
-                                                      attr_char_value,
-                                                      char_handle)
+    def ble_gatts_characteristic_add(
+        self, service_handle, char_md, attr_char_value, char_handle
+    ):
+        return driver.sd_ble_gatts_characteristic_add(
+            self.rpc_adapter,
+            service_handle,
+            char_md,
+            attr_char_value,
+            char_handle,
+        )
 
     @NordicSemiErrorCheck
     @wrapt.synchronized(api_lock)
     def ble_gatts_exchange_mtu_reply(self, conn_handle, mtu):
-        return driver.sd_ble_gatts_exchange_mtu_reply(self.rpc_adapter,
-                                                      conn_handle,
-                                                      mtu)
+        return driver.sd_ble_gatts_exchange_mtu_reply(
+            self.rpc_adapter, conn_handle, mtu
+        )
 
     @NordicSemiErrorCheck
     @wrapt.synchronized(api_lock)
     def ble_gatts_hvx(self, conn_handle, hvx_params):
-        return driver.sd_ble_gatts_hvx(self.rpc_adapter,
-                                       conn_handle,
-                                       hvx_params)
+        return driver.sd_ble_gatts_hvx(
+            self.rpc_adapter, conn_handle, hvx_params
+        )
 
     # IMPORTANT: Python annotations on callbacks make the reference count
     # IMPORTANT: for the object become zero in the binding. This makes the
     # IMPORTANT: interpreter crash since it tries to garbage collect
     # IMPORTANT: the object from the binding.
     def status_handler(self, adapter, status_code, status_message):
-        if self.status_queue:
-            self.status_queue.put([adapter, status_code, status_message])
+        if self.rpc_adapter.internal == adapter.internal:
+            if self.status_queue:
+                self.status_queue.put([adapter, status_code, status_message])
+        else:
+            logger.error("status_handler")
 
     @wrapt.synchronized(observer_lock)
     def status_handler_sync(self, adapter, status_code, status_message):
@@ -1704,20 +2133,22 @@ class BLEDriver(object):
         while self.run_workers:
             try:
                 item = self.status_queue.get(True, WORKER_QUEUE_WAIT_TIME)
-                logger.debug('status')
+                logger.debug("status")
                 self.status_handler_sync(*item)
             except queue.Empty as _:
                 pass
             except Exception as ex:
-                logger.exception('Exception in status handler: {}'.format(ex))
-
+                logger.exception("Exception in status handler: {}".format(ex))
 
     # IMPORTANT: Python annotations on callbacks make the reference count
     # IMPORTANT: for the object become zero in the binding. This makes the
     # IMPORTANT: interpreter crash since it tries to garbage collect
     # IMPORTANT: the object from the binding.
     def log_message_handler(self, adapter, severity, log_message):
-        self.log_queue.put([adapter, severity, log_message])
+        if self.rpc_adapter.internal == adapter.internal:
+            self.log_queue.put([adapter, severity, log_message])
+        else:
+            logger.error("log_message_handler")
 
     @wrapt.synchronized(observer_lock)
     def log_message_handler_sync(self, adapter, severity, log_message):
@@ -1746,7 +2177,7 @@ class BLEDriver(object):
             except queue.Empty as _:
                 pass
             except Exception as ex:
-                logger.exception('Exception in log handler: {}'.format(ex))
+                logger.exception("Exception in log handler: {}".format(ex))
 
     def ble_event_handler_thread(self):
         while self.run_workers:
@@ -1756,19 +2187,30 @@ class BLEDriver(object):
             except queue.Empty as _:
                 pass
             except Exception as ex:
-                logger.exception('Exception in event handler: {}'.format(ex))
+                logger.exception("Exception in event handler: {}".format(ex))
 
     def ble_event_handler(self, adapter, ble_event):
-        self.ble_event_queue.put([adapter, ble_event])
+        if self.rpc_adapter.internal == adapter.internal:
+            self.ble_event_queue.put([adapter, ble_event])
+        else:
+            logger.error(
+                "ble_event_handler, event for adapter %d, current adapter is %d",
+                adapter.internal,
+                self.rpc_adapter.internal,
+            )
 
     @wrapt.synchronized(observer_lock)
     def ble_event_handler_sync(self, _adapter, ble_event):
-        logger.debug('ble_evt_handler_sync')
+        logger.debug("ble_evt_handler_sync")
 
         try:
             evt_id = BLEEvtID(ble_event.header.evt_id)
         except Exception:
-            logger.error('Invalid received BLE event id: 0x{:02X}'.format(ble_event.header.evt_id))
+            logger.error(
+                "Invalid received BLE event id: 0x{:02X}".format(
+                    ble_event.header.evt_id
+                )
+            )
             return
         try:
 
@@ -1776,11 +2218,15 @@ class BLEDriver(object):
                 connected_evt = ble_event.evt.gap_evt.params.connected
 
                 for obs in self.observers:
-                    obs.on_gap_evt_connected(ble_driver=self,
-                                             conn_handle=ble_event.evt.gap_evt.conn_handle,
-                                             peer_addr=BLEGapAddr.from_c(connected_evt.peer_addr),
-                                             role=BLEGapRoles(connected_evt.role),
-                                             conn_params=BLEGapConnParams.from_c(connected_evt.conn_params))
+                    obs.on_gap_evt_connected(
+                        ble_driver=self,
+                        conn_handle=ble_event.evt.gap_evt.conn_handle,
+                        peer_addr=BLEGapAddr.from_c(connected_evt.peer_addr),
+                        role=BLEGapRoles(connected_evt.role),
+                        conn_params=BLEGapConnParams.from_c(
+                            connected_evt.conn_params
+                        ),
+                    )
 
             elif evt_id == BLEEvtID.gap_evt_disconnected:
                 disconnected_evt = ble_event.evt.gap_evt.params.disconnected
@@ -1789,41 +2235,52 @@ class BLEDriver(object):
                 except ValueError:
                     reason = disconnected_evt.reason
                 for obs in self.observers:
-                    obs.on_gap_evt_disconnected(ble_driver=self,
-                                                conn_handle=ble_event.evt.gap_evt.conn_handle,
-                                                reason=reason)
+                    obs.on_gap_evt_disconnected(
+                        ble_driver=self,
+                        conn_handle=ble_event.evt.gap_evt.conn_handle,
+                        reason=reason,
+                    )
 
             elif evt_id == BLEEvtID.gap_evt_sec_params_request:
-                sec_params_request_evt = ble_event.evt.gap_evt.params.sec_params_request
+                sec_params_request_evt = (
+                    ble_event.evt.gap_evt.params.sec_params_request
+                )
 
                 for obs in self.observers:
-                    obs.on_gap_evt_sec_params_request(ble_driver=self,
-                                                      conn_handle=ble_event.evt.gap_evt.conn_handle,
-                                                      peer_params=BLEGapSecParams.from_c(
-                                                          sec_params_request_evt.peer_params))
+                    obs.on_gap_evt_sec_params_request(
+                        ble_driver=self,
+                        conn_handle=ble_event.evt.gap_evt.conn_handle,
+                        peer_params=BLEGapSecParams.from_c(
+                            sec_params_request_evt.peer_params
+                        ),
+                    )
 
             elif evt_id == BLEEvtID.gap_evt_sec_info_request:
                 seq_info_evt = ble_event.evt.gap_evt.params.sec_info_request
 
                 for obs in self.observers:
-                    obs.on_gap_evt_sec_info_request(ble_driver=self,
-                                                    conn_handle=ble_event.evt.gap_evt.conn_handle,
-                                                    peer_addr=seq_info_evt.peer_addr,
-                                                    master_id=seq_info_evt.master_id,
-                                                    enc_info=seq_info_evt.enc_info,
-                                                    id_info=seq_info_evt.id_info,
-                                                    sign_info=seq_info_evt.sign_info)
+                    obs.on_gap_evt_sec_info_request(
+                        ble_driver=self,
+                        conn_handle=ble_event.evt.gap_evt.conn_handle,
+                        peer_addr=seq_info_evt.peer_addr,
+                        master_id=seq_info_evt.master_id,
+                        enc_info=seq_info_evt.enc_info,
+                        id_info=seq_info_evt.id_info,
+                        sign_info=seq_info_evt.sign_info,
+                    )
 
             elif evt_id == BLEEvtID.gap_evt_sec_request:
                 seq_req_evt = ble_event.evt.gap_evt.params.sec_request
 
                 for obs in self.observers:
-                    obs.on_gap_evt_sec_request(ble_driver=self,
-                                               conn_handle=ble_event.evt.gap_evt.conn_handle,
-                                               bond=seq_req_evt.bond,
-                                               mitm=seq_req_evt.mitm,
-                                               lesc=seq_req_evt.lesc,
-                                               keypress=seq_req_evt.keypress)
+                    obs.on_gap_evt_sec_request(
+                        ble_driver=self,
+                        conn_handle=ble_event.evt.gap_evt.conn_handle,
+                        bond=seq_req_evt.bond,
+                        mitm=seq_req_evt.mitm,
+                        lesc=seq_req_evt.lesc,
+                        keypress=seq_req_evt.keypress,
+                    )
 
             elif evt_id == BLEEvtID.gap_evt_timeout:
                 timeout_evt = ble_event.evt.gap_evt.params.timeout
@@ -1832,9 +2289,11 @@ class BLEDriver(object):
                 except ValueError:
                     src = timeout_evt.src
                 for obs in self.observers:
-                    obs.on_gap_evt_timeout(ble_driver=self,
-                                           conn_handle=ble_event.evt.gap_evt.conn_handle,
-                                           src=src)
+                    obs.on_gap_evt_timeout(
+                        ble_driver=self,
+                        conn_handle=ble_event.evt.gap_evt.conn_handle,
+                        src=src,
+                    )
 
             elif evt_id == BLEEvtID.gap_evt_adv_report:
                 adv_report_evt = ble_event.evt.gap_evt.params.adv_report
@@ -1843,208 +2302,316 @@ class BLEDriver(object):
                     adv_type = BLEGapAdvType(adv_report_evt.type)
 
                 for obs in self.observers:
-                    obs.on_gap_evt_adv_report(ble_driver=self,
-                                              conn_handle=ble_event.evt.gap_evt.conn_handle,
-                                              peer_addr=BLEGapAddr.from_c(adv_report_evt.peer_addr),
-                                              rssi=adv_report_evt.rssi,
-                                              adv_type=adv_type,
-                                              adv_data=BLEAdvData.from_c(adv_report_evt))
+                    obs.on_gap_evt_adv_report(
+                        ble_driver=self,
+                        conn_handle=ble_event.evt.gap_evt.conn_handle,
+                        peer_addr=BLEGapAddr.from_c(adv_report_evt.peer_addr),
+                        rssi=adv_report_evt.rssi,
+                        adv_type=adv_type,
+                        adv_data=BLEAdvData.from_c(adv_report_evt),
+                    )
 
             elif evt_id == BLEEvtID.gap_evt_conn_param_update_request:
-                conn_params = ble_event.evt.gap_evt.params.conn_param_update_request.conn_params
+                conn_params = (
+                    ble_event.evt.gap_evt.params.conn_param_update_request.conn_params
+                )
 
                 for obs in self.observers:
-                    obs.on_gap_evt_conn_param_update_request(ble_driver=self,
-                                                             conn_handle=ble_event.evt.common_evt.conn_handle,
-                                                             conn_params=BLEGapConnParams.from_c(conn_params))
+                    obs.on_gap_evt_conn_param_update_request(
+                        ble_driver=self,
+                        conn_handle=ble_event.evt.common_evt.conn_handle,
+                        conn_params=BLEGapConnParams.from_c(conn_params),
+                    )
 
             elif evt_id == BLEEvtID.gap_evt_conn_param_update:
-                conn_params = ble_event.evt.gap_evt.params.conn_param_update.conn_params
+                conn_params = (
+                    ble_event.evt.gap_evt.params.conn_param_update.conn_params
+                )
                 for obs in self.observers:
-                    obs.on_gap_evt_conn_param_update(ble_driver=self,
-                                                     conn_handle=ble_event.evt.common_evt.conn_handle,
-                                                     conn_params=BLEGapConnParams.from_c(conn_params))
+                    obs.on_gap_evt_conn_param_update(
+                        ble_driver=self,
+                        conn_handle=ble_event.evt.common_evt.conn_handle,
+                        conn_params=BLEGapConnParams.from_c(conn_params),
+                    )
 
             elif evt_id == BLEEvtID.gap_evt_auth_status:
                 auth_status_evt = ble_event.evt.gap_evt.params.auth_status
 
                 for obs in self.observers:
-                    obs.on_gap_evt_auth_status(ble_driver=self,
-                                               conn_handle=ble_event.evt.common_evt.conn_handle,
-                                               error_src=auth_status_evt.error_src,
-                                               bonded=auth_status_evt.bonded,
-                                               sm1_levels=auth_status_evt.sm1_levels,
-                                               sm2_levels=auth_status_evt.sm2_levels,
-                                               kdist_own=BLEGapSecKDist.from_c(auth_status_evt.kdist_own),
-                                               kdist_peer=BLEGapSecKDist.from_c(auth_status_evt.kdist_peer),
-                                               auth_status=BLEGapSecStatus(auth_status_evt.auth_status))
+                    obs.on_gap_evt_auth_status(
+                        ble_driver=self,
+                        conn_handle=ble_event.evt.common_evt.conn_handle,
+                        error_src=auth_status_evt.error_src,
+                        bonded=auth_status_evt.bonded,
+                        sm1_levels=auth_status_evt.sm1_levels,
+                        sm2_levels=auth_status_evt.sm2_levels,
+                        kdist_own=BLEGapSecKDist.from_c(
+                            auth_status_evt.kdist_own
+                        ),
+                        kdist_peer=BLEGapSecKDist.from_c(
+                            auth_status_evt.kdist_peer
+                        ),
+                        auth_status=BLEGapSecStatus(
+                            auth_status_evt.auth_status
+                        ),
+                    )
 
             elif evt_id == BLEEvtID.gap_evt_auth_key_request:
-                auth_key_request_evt = ble_event.evt.gap_evt.params.auth_key_request
+                auth_key_request_evt = (
+                    ble_event.evt.gap_evt.params.auth_key_request
+                )
 
                 for obs in self.observers:
-                    obs.on_gap_evt_auth_key_request(ble_driver=self,
-                                                    conn_handle=ble_event.evt.common_evt.conn_handle,
-                                                    key_type=auth_key_request_evt.key_type)
+                    obs.on_gap_evt_auth_key_request(
+                        ble_driver=self,
+                        conn_handle=ble_event.evt.common_evt.conn_handle,
+                        key_type=auth_key_request_evt.key_type,
+                    )
 
             elif evt_id == BLEEvtID.gap_evt_conn_sec_update:
-                conn_sec_update_evt = ble_event.evt.gap_evt.params.conn_sec_update
+                conn_sec_update_evt = (
+                    ble_event.evt.gap_evt.params.conn_sec_update
+                )
 
                 for obs in self.observers:
-                    obs.on_gap_evt_conn_sec_update(ble_driver=self,
-                                                   conn_handle=ble_event.evt.common_evt.conn_handle,
-                                                   conn_sec=BLEGapConnSec.from_c(conn_sec_update_evt.conn_sec))
+                    obs.on_gap_evt_conn_sec_update(
+                        ble_driver=self,
+                        conn_handle=ble_event.evt.common_evt.conn_handle,
+                        conn_sec=BLEGapConnSec.from_c(
+                            conn_sec_update_evt.conn_sec
+                        ),
+                    )
+            elif evt_id == BLEEvtID.gap_evt_rssi_changed:
+                rssi_changed_evt = ble_event.evt.gap_evt.params.rssi_changed
 
+                for obs in self.observers:
+                    obs.on_gap_evt_rssi_changed(
+                        ble_driver=self,
+                        conn_handle=ble_event.evt.common_evt.conn_handle,
+                        rssi=rssi_changed_evt.rssi,
+                    )
             elif evt_id == BLEEvtID.gattc_evt_write_rsp:
                 write_rsp_evt = ble_event.evt.gattc_evt.params.write_rsp
 
                 for obs in self.observers:
-                    obs.on_gattc_evt_write_rsp(ble_driver=self,
-                                               conn_handle=ble_event.evt.gattc_evt.conn_handle,
-                                               status=BLEGattStatusCode(ble_event.evt.gattc_evt.gatt_status),
-                                               error_handle=ble_event.evt.gattc_evt.error_handle,
-                                               attr_handle=write_rsp_evt.handle,
-                                               write_op=BLEGattWriteOperation(write_rsp_evt.write_op),
-                                               offset=write_rsp_evt.offset,
-                                               data=util.uint8_array_to_list(write_rsp_evt.data,
-                                                                             write_rsp_evt.len))
+                    obs.on_gattc_evt_write_rsp(
+                        ble_driver=self,
+                        conn_handle=ble_event.evt.gattc_evt.conn_handle,
+                        status=BLEGattStatusCode(
+                            ble_event.evt.gattc_evt.gatt_status
+                        ),
+                        error_handle=ble_event.evt.gattc_evt.error_handle,
+                        attr_handle=write_rsp_evt.handle,
+                        write_op=BLEGattWriteOperation(write_rsp_evt.write_op),
+                        offset=write_rsp_evt.offset,
+                        data=util.uint8_array_to_list(
+                            write_rsp_evt.data, write_rsp_evt.len
+                        ),
+                    )
 
             elif evt_id == BLEEvtID.gattc_evt_read_rsp:
                 read_rsp_evt = ble_event.evt.gattc_evt.params.read_rsp
-                logger.debug('GATTC: READ RSP')
+                logger.debug("GATTC: READ RSP")
                 for obs in self.observers:
-                    obs.on_gattc_evt_read_rsp(ble_driver=self,
-                                              conn_handle=ble_event.evt.gattc_evt.conn_handle,
-                                              status=BLEGattStatusCode(ble_event.evt.gattc_evt.gatt_status),
-                                              error_handle=ble_event.evt.gattc_evt.error_handle,
-                                              attr_handle=read_rsp_evt.handle,
-                                              offset=read_rsp_evt.offset,
-                                              data=util.uint8_array_to_list(read_rsp_evt.data,
-                                                                            read_rsp_evt.len))
+                    obs.on_gattc_evt_read_rsp(
+                        ble_driver=self,
+                        conn_handle=ble_event.evt.gattc_evt.conn_handle,
+                        status=BLEGattStatusCode(
+                            ble_event.evt.gattc_evt.gatt_status
+                        ),
+                        error_handle=ble_event.evt.gattc_evt.error_handle,
+                        attr_handle=read_rsp_evt.handle,
+                        offset=read_rsp_evt.offset,
+                        data=util.uint8_array_to_list(
+                            read_rsp_evt.data, read_rsp_evt.len
+                        ),
+                    )
 
             elif evt_id == BLEEvtID.gattc_evt_hvx:
                 hvx_evt = ble_event.evt.gattc_evt.params.hvx
                 logger.critical("HVX driver")
                 for obs in self.observers:
-                    obs.on_gattc_evt_hvx(ble_driver=self,
-                                         conn_handle=ble_event.evt.gattc_evt.conn_handle,
-                                         status=BLEGattStatusCode(ble_event.evt.gattc_evt.gatt_status),
-                                         error_handle=ble_event.evt.gattc_evt.error_handle,
-                                         attr_handle=hvx_evt.handle,
-                                         hvx_type=BLEGattHVXType(hvx_evt.type),
-                                         data=util.uint8_array_to_list(hvx_evt.data, hvx_evt.len))
+                    obs.on_gattc_evt_hvx(
+                        ble_driver=self,
+                        conn_handle=ble_event.evt.gattc_evt.conn_handle,
+                        status=BLEGattStatusCode(
+                            ble_event.evt.gattc_evt.gatt_status
+                        ),
+                        error_handle=ble_event.evt.gattc_evt.error_handle,
+                        attr_handle=hvx_evt.handle,
+                        hvx_type=BLEGattHVXType(hvx_evt.type),
+                        data=util.uint8_array_to_list(
+                            hvx_evt.data, hvx_evt.len
+                        ),
+                    )
 
             elif evt_id == BLEEvtID.gattc_evt_prim_srvc_disc_rsp:
-                prim_srvc_disc_rsp_evt = ble_event.evt.gattc_evt.params.prim_srvc_disc_rsp
+                prim_srvc_disc_rsp_evt = (
+                    ble_event.evt.gattc_evt.params.prim_srvc_disc_rsp
+                )
 
                 services = list()
-                for s in util.service_array_to_list(prim_srvc_disc_rsp_evt.services, prim_srvc_disc_rsp_evt.count):
+                for s in util.service_array_to_list(
+                    prim_srvc_disc_rsp_evt.services,
+                    prim_srvc_disc_rsp_evt.count,
+                ):
                     services.append(BLEService.from_c(s))
 
                 for obs in self.observers:
-                    obs.on_gattc_evt_prim_srvc_disc_rsp(ble_driver=self,
-                                                        conn_handle=ble_event.evt.gattc_evt.conn_handle,
-                                                        status=BLEGattStatusCode(ble_event.evt.gattc_evt.gatt_status),
-                                                        services=services)
+                    obs.on_gattc_evt_prim_srvc_disc_rsp(
+                        ble_driver=self,
+                        conn_handle=ble_event.evt.gattc_evt.conn_handle,
+                        status=BLEGattStatusCode(
+                            ble_event.evt.gattc_evt.gatt_status
+                        ),
+                        services=services,
+                    )
 
             elif evt_id == BLEEvtID.gattc_evt_char_disc_rsp:
-                char_disc_rsp_evt = ble_event.evt.gattc_evt.params.char_disc_rsp
+                char_disc_rsp_evt = (
+                    ble_event.evt.gattc_evt.params.char_disc_rsp
+                )
 
                 characteristics = list()
-                for ch in util.ble_gattc_char_array_to_list(char_disc_rsp_evt.chars, char_disc_rsp_evt.count):
+                for ch in util.ble_gattc_char_array_to_list(
+                    char_disc_rsp_evt.chars, char_disc_rsp_evt.count
+                ):
                     characteristics.append(BLECharacteristic.from_c(ch))
 
                 for obs in self.observers:
-                    obs.on_gattc_evt_char_disc_rsp(ble_driver=self,
-                                                   conn_handle=ble_event.evt.gattc_evt.conn_handle,
-                                                   status=BLEGattStatusCode(ble_event.evt.gattc_evt.gatt_status),
-                                                   characteristics=characteristics)
+                    obs.on_gattc_evt_char_disc_rsp(
+                        ble_driver=self,
+                        conn_handle=ble_event.evt.gattc_evt.conn_handle,
+                        status=BLEGattStatusCode(
+                            ble_event.evt.gattc_evt.gatt_status
+                        ),
+                        characteristics=characteristics,
+                    )
 
             elif evt_id == BLEEvtID.gattc_evt_desc_disc_rsp:
-                desc_disc_rsp_evt = ble_event.evt.gattc_evt.params.desc_disc_rsp
+                desc_disc_rsp_evt = (
+                    ble_event.evt.gattc_evt.params.desc_disc_rsp
+                )
 
                 descriptors = list()
-                for d in util.desc_array_to_list(desc_disc_rsp_evt.descs, desc_disc_rsp_evt.count):
+                for d in util.desc_array_to_list(
+                    desc_disc_rsp_evt.descs, desc_disc_rsp_evt.count
+                ):
                     descriptors.append(BLEDescriptor.from_c(d))
 
                 for obs in self.observers:
-                    obs.on_gattc_evt_desc_disc_rsp(ble_driver=self,
-                                                   conn_handle=ble_event.evt.gattc_evt.conn_handle,
-                                                   status=BLEGattStatusCode(ble_event.evt.gattc_evt.gatt_status),
-                                                   descriptors=descriptors)
+                    obs.on_gattc_evt_desc_disc_rsp(
+                        ble_driver=self,
+                        conn_handle=ble_event.evt.gattc_evt.conn_handle,
+                        status=BLEGattStatusCode(
+                            ble_event.evt.gattc_evt.gatt_status
+                        ),
+                        descriptors=descriptors,
+                    )
 
             elif evt_id == BLEEvtID.gatts_evt_hvc:
                 hvc_evt = ble_event.evt.gatts_evt.params.hvc
 
                 for obs in self.observers:
-                    obs.on_gatts_evt_hvc(ble_driver=self,
-                                         conn_handle=ble_event.evt.gatts_evt.conn_handle,
-                                         attr_handle=hvc_evt.handle)
+                    obs.on_gatts_evt_hvc(
+                        ble_driver=self,
+                        conn_handle=ble_event.evt.gatts_evt.conn_handle,
+                        attr_handle=hvc_evt.handle,
+                    )
 
             elif evt_id == BLEEvtID.gatts_evt_write:
                 write_evt = ble_event.evt.gatts_evt.params.write
 
                 for obs in self.observers:
-                    obs.on_gatts_evt_write(ble_driver=self,
-                                           conn_handle=ble_event.evt.gatts_evt.conn_handle,
-                                           attr_handle=write_evt.handle,
-                                           uuid=write_evt.uuid,
-                                           op=write_evt.op,
-                                           auth_required=write_evt.auth_required,
-                                           offset=write_evt.offset,
-                                           length=write_evt.len,
-                                           data=write_evt.data)
+                    obs.on_gatts_evt_write(
+                        ble_driver=self,
+                        conn_handle=ble_event.evt.gatts_evt.conn_handle,
+                        attr_handle=write_evt.handle,
+                        uuid=write_evt.uuid,
+                        op=write_evt.op,
+                        auth_required=write_evt.auth_required,
+                        offset=write_evt.offset,
+                        length=write_evt.len,
+                        data=write_evt.data,
+                    )
             elif nrf_sd_ble_api_ver == 2:
                 if evt_id == BLEEvtID.evt_tx_complete:
                     for obs in self.observers:
-                        obs.on_evt_tx_complete(ble_driver=self,
-                                               conn_handle=ble_event.evt.common_evt.conn_handle,
-                                               count=ble_event.evt.common_evt.params.tx_complete.count)
+                        obs.on_evt_tx_complete(
+                            ble_driver=self,
+                            conn_handle=ble_event.evt.common_evt.conn_handle,
+                            count=ble_event.evt.common_evt.params.tx_complete.count,
+                        )
 
             elif nrf_sd_ble_api_ver == 5:
                 if evt_id == BLEEvtID.gattc_evt_write_cmd_tx_complete:
-                    tx_complete_evt = ble_event.evt.gattc_evt.params.write_cmd_tx_complete
+                    tx_complete_evt = (
+                        ble_event.evt.gattc_evt.params.write_cmd_tx_complete
+                    )
 
                     for obs in self.observers:
-                        obs.on_gattc_evt_write_cmd_tx_complete(ble_driver=self,
-                                                               conn_handle=ble_event.evt.gattc_evt.conn_handle,
-                                                               count=tx_complete_evt.count)
+                        obs.on_gattc_evt_write_cmd_tx_complete(
+                            ble_driver=self,
+                            conn_handle=ble_event.evt.gattc_evt.conn_handle,
+                            count=tx_complete_evt.count,
+                        )
 
                 elif evt_id == BLEEvtID.gatts_evt_hvn_tx_complete:
-                    tx_complete_evt = ble_event.evt.gatts_evt.params.hvn_tx_complete
+                    tx_complete_evt = (
+                        ble_event.evt.gatts_evt.params.hvn_tx_complete
+                    )
 
                     for obs in self.observers:
-                        obs.on_gatts_evt_hvn_tx_complete(ble_driver=self,
-                                                         conn_handle=ble_event.evt.gatts_evt.conn_handle,
-                                                         count=tx_complete_evt.count)
+                        obs.on_gatts_evt_hvn_tx_complete(
+                            ble_driver=self,
+                            conn_handle=ble_event.evt.gatts_evt.conn_handle,
+                            count=tx_complete_evt.count,
+                        )
                 elif evt_id == BLEEvtID.gatts_evt_exchange_mtu_request:
                     for obs in self.observers:
-                        obs.on_gatts_evt_exchange_mtu_request(ble_driver=self,
-                                                              conn_handle=ble_event.evt.gatts_evt.conn_handle,
-                                                              client_mtu=ble_event.evt.gatts_evt.params.exchange_mtu_request.client_rx_mtu)
+                        obs.on_gatts_evt_exchange_mtu_request(
+                            ble_driver=self,
+                            conn_handle=ble_event.evt.gatts_evt.conn_handle,
+                            client_mtu=ble_event.evt.gatts_evt.params.exchange_mtu_request.client_rx_mtu,
+                        )
 
                 elif evt_id == BLEEvtID.gattc_evt_exchange_mtu_rsp:
                     mtu_evt = ble_event.evt.gattc_evt.params.exchange_mtu_rsp
                     for obs in self.observers:
-                        obs.on_gattc_evt_exchange_mtu_rsp(ble_driver=self,
-                                                          conn_handle=ble_event.evt.gattc_evt.conn_handle,
-                                                          status=BLEGattStatusCode(ble_event.evt.gattc_evt.gatt_status),
-                                                          att_mtu=mtu_evt.server_rx_mtu)
+                        obs.on_gattc_evt_exchange_mtu_rsp(
+                            ble_driver=self,
+                            conn_handle=ble_event.evt.gattc_evt.conn_handle,
+                            status=BLEGattStatusCode(
+                                ble_event.evt.gattc_evt.gatt_status
+                            ),
+                            att_mtu=mtu_evt.server_rx_mtu,
+                        )
 
                 elif evt_id == BLEEvtID.gap_evt_data_length_update:
-                    params = ble_event.evt.gap_evt.params.data_length_update.effective_params
+                    params = (
+                        ble_event.evt.gap_evt.params.data_length_update.effective_params
+                    )
                     for obs in self.observers:
-                        obs.on_gap_evt_data_length_update(ble_driver=self,
-                                                          conn_handle=ble_event.evt.gap_evt.conn_handle,
-                                                          data_length_params=BLEGapDataLengthParams.from_c(params))
+                        obs.on_gap_evt_data_length_update(
+                            ble_driver=self,
+                            conn_handle=ble_event.evt.gap_evt.conn_handle,
+                            data_length_params=BLEGapDataLengthParams.from_c(
+                                params
+                            ),
+                        )
 
                 elif evt_id == BLEEvtID.gap_evt_data_length_update_request:
-                    params = ble_event.evt.gap_evt.params.data_length_update_request.peer_params
+                    params = (
+                        ble_event.evt.gap_evt.params.data_length_update_request.peer_params
+                    )
                     for obs in self.observers:
-                        obs.on_gap_evt_data_length_update_request(ble_driver=self,
-                                                                  conn_handle=ble_event.evt.gap_evt.conn_handle,
-                                                                  data_length_params=BLEGapDataLengthParams.from_c(
-                                                                      params))
+                        obs.on_gap_evt_data_length_update_request(
+                            ble_driver=self,
+                            conn_handle=ble_event.evt.gap_evt.conn_handle,
+                            data_length_params=BLEGapDataLengthParams.from_c(
+                                params
+                            ),
+                        )
         except Exception as e:
             logger.error("Exception: {}".format(str(e)))
             for line in traceback.extract_tb(sys.exc_info()[2]):
@@ -2076,29 +2643,35 @@ class Flasher(object):
 
         return None
 
-    NRFJPROG = 'nrfjprog'
+    NRFJPROG = "nrfjprog"
     FW_STRUCT_ADDRESS = 0x30000
     FW_STRUCT_LENGTH = 24
-    FW_MAGIC_NUMBER = ['17', 'A5', 'D8', '46']
+    FW_MAGIC_NUMBER = ["17", "A5", "D8", "46"]
 
     def __init__(self, serial_port=None, snr=None):
         if serial_port is None and snr is None:
-            raise NordicSemiException('Invalid Flasher initialization')
+            raise NordicSemiException("Invalid Flasher initialization")
 
         nrfjprog = Flasher.which(Flasher.NRFJPROG)
         if nrfjprog is None:
             nrfjprog = Flasher.which("{}.exe".format(Flasher.NRFJPROG))
             if nrfjprog is None:
-                raise NordicSemiException('nrfjprog not installed')
+                raise NordicSemiException("nrfjprog not installed")
 
         serial_ports = BLEDriver.enum_serial_ports()
         try:
             if serial_port is None:
-                serial_port = [d.port for d in serial_ports if d.serial_number == snr][0]
+                serial_port = [
+                    d.port for d in serial_ports if d.serial_number == snr
+                ][0]
             elif snr is None:
-                snr = [d.serial_number for d in serial_ports if d.port == serial_port][0]
+                snr = [
+                    d.serial_number
+                    for d in serial_ports
+                    if d.port == serial_port
+                ][0]
         except IndexError:
-            raise NordicSemiException('board not found')
+            raise NordicSemiException("board not found")
 
         self.serial_port = serial_port
         self.snr = snr.lstrip("0")
@@ -2106,10 +2679,12 @@ class Flasher(object):
 
     def fw_check(self):
         fw_struct = self.read_fw_struct()
-        return (len(fw_struct) == Flasher.FW_STRUCT_LENGTH and
-                Flasher.is_valid_magic_number(fw_struct) and
-                Flasher.is_valid_version(fw_struct) and
-                Flasher.is_valid_baud_rate(fw_struct))
+        return (
+            len(fw_struct) == Flasher.FW_STRUCT_LENGTH
+            and Flasher.is_valid_magic_number(fw_struct)
+            and Flasher.is_valid_version(fw_struct)
+            and Flasher.is_valid_baud_rate(fw_struct)
+        )
 
     def fw_flash(self):
         self.erase()
@@ -2117,34 +2692,45 @@ class Flasher(object):
         self.program(hex_file)
 
     def read_fw_struct(self):
-        args = ['--memrd', str(Flasher.FW_STRUCT_ADDRESS), '--w', '8', '--n', str(Flasher.FW_STRUCT_LENGTH)]
+        args = [
+            "--memrd",
+            str(Flasher.FW_STRUCT_ADDRESS),
+            "--w",
+            "8",
+            "--n",
+            str(Flasher.FW_STRUCT_LENGTH),
+        ]
         data = self.call_cmd(args)
         result = list()
         for line in data.splitlines():
-            line = re.sub(r"(^.*:)|(\|.*$)", '', str(line))
+            line = re.sub(r"(^.*:)|(\|.*$)", "", str(line))
             result.extend(line.split())
         return result
 
     def reset(self):
-        args = ['--reset']
+        args = ["--reset"]
         self.call_cmd(args)
 
     def erase(self):
-        args = ['--eraseall']
+        args = ["--eraseall"]
         self.call_cmd(args)
 
     def program(self, path):
-        args = ['--program', path]
+        args = ["--program", path]
         self.call_cmd(args)
 
     @wrapt.synchronized(api_lock)
     def call_cmd(self, args):
-        args = [Flasher.NRFJPROG, '--snr', str(self.snr)] + args + ['--family']
+        args = [Flasher.NRFJPROG, "--snr", str(self.snr)] + args + ["--family"]
         try:
-            return subprocess.check_output(args + [self.family], stderr=subprocess.STDOUT)
+            return subprocess.check_output(
+                args + [self.family], stderr=subprocess.STDOUT
+            )
         except subprocess.CalledProcessError as e:
             if e.returncode == 18:
-                raise RuntimeError("Invalid Connectivity IC ID: {}".format(self.family))
+                raise RuntimeError(
+                    "Invalid Connectivity IC ID: {}".format(self.family)
+                )
             else:
                 raise
 
@@ -2158,10 +2744,10 @@ class Flasher(object):
         major = int(fw_struct[12], 16)
         minor = int(fw_struct[13], 16)
         patch = int(fw_struct[14], 16)
-        version = '.'.join(map(str, [major, minor, patch]))
+        version = ".".join(map(str, [major, minor, patch]))
         return config.get_connectivity_hex_version() == version
 
     @staticmethod
     def is_valid_baud_rate(fw_struct):
-        baud_rate = int(''.join(fw_struct[20:24][::-1]), 16)
+        baud_rate = int("".join(fw_struct[20:24][::-1]), 16)
         return config.get_connectivity_hex_baud_rate() == baud_rate

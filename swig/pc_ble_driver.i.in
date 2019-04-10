@@ -60,6 +60,7 @@
 
 // Requires special handling
 %ignore sd_rpc_open;
+%ignore sd_rpc_close;
 
 // Ignore L2CAP APIs that will be replaced by L2CAP CoCs
 %ignore sd_ble_l2cap_cid_register;
@@ -129,10 +130,144 @@
 %rename(sd_rpc_open) sd_rpc_open_py;
 extern PyObject* sd_rpc_open_py(PyObject *adapter, PyObject *py_status_handler, PyObject *py_evt_handler, PyObject *py_log_handler);
 
+%rename(sd_rpc_close) sd_rpc_close_py;
+extern PyObject* sd_rpc_close_py(PyObject *adapter);
+
+// adapter_context related
+%{
+#define MAX_ADAPTERS 10
+
+typedef struct
+{
+    void *adapter_internal_ptr;
+    PyObject *log_callback;
+    PyObject *status_callback;
+    PyObject *event_callback;
+} adapter_context_t;
+
+static bool adapter_contexts_initialized = false;
+
+static adapter_context_t adapter_contexts[MAX_ADAPTERS];
+
+void adapter_context_init()
+{
+    if (!adapter_contexts_initialized)
+    {
+        for(size_t idx = 0; idx < MAX_ADAPTERS; idx++)
+        {
+            adapter_contexts[idx].adapter_internal_ptr = NULL;
+            adapter_contexts[idx].log_callback = NULL;
+            adapter_contexts[idx].status_callback = NULL;
+            adapter_contexts[idx].event_callback = NULL;
+        }
+
+        adapter_contexts_initialized = true;
+    }
+}
+
+adapter_context_t *adapter_context_add(adapter_t *adapter_ptr)
+{
+    adapter_context_init();
+
+    for(size_t idx = 0; idx < MAX_ADAPTERS; idx++)
+    {
+        if (adapter_contexts[idx].adapter_internal_ptr == adapter_ptr->internal)
+        {
+#ifdef DEBUG
+            printf("adapter_context_t already exists for %p:%p\n",
+                adapter_ptr,
+                adapter_ptr->internal
+            );
+#endif
+
+            return NULL;
+        }
+    }
+
+    for(size_t idx = 0; idx < MAX_ADAPTERS; idx++)
+    {
+        if (adapter_contexts[idx].adapter_internal_ptr == NULL)
+        {
+            adapter_contexts[idx].adapter_internal_ptr = adapter_ptr->internal;
+#ifdef DEBUG
+            printf("adapter_context_t added for %p:%p, address is %p\n",
+                adapter_ptr,
+                adapter_ptr->internal,
+                &adapter_contexts[idx]
+            );
+#endif
+            return &adapter_contexts[idx];
+        }
+    }
+
+    // No adapter_context available for storing adapter_context_t
+#ifdef DEBUG
+    printf("adapter_context_t no available space in adapter_contexts for %p:%p\n", adapter_ptr, adapter_ptr->internal);
+#endif
+
+    return NULL;
+}
+
+bool adapter_context_remove(adapter_t *adapter_ptr)
+{
+    adapter_context_init();
+
+    for(size_t idx = 0; idx < MAX_ADAPTERS; idx++)
+    {
+        if (adapter_contexts[idx].adapter_internal_ptr == adapter_ptr->internal)
+        {
+            adapter_contexts[idx].adapter_internal_ptr = NULL;
+            adapter_contexts[idx].status_callback = NULL;
+            adapter_contexts[idx].log_callback = NULL;
+            adapter_contexts[idx].event_callback = NULL;
+            return true;
+        }
+    }
+
+    return false;
+}
+
+adapter_context_t *adapter_context_find(adapter_t *adapter_ptr)
+{
+    adapter_context_init();
+
+#ifdef DEBUG
+    printf("adapter_context_find: searching for adapter_ptr: %p:%p\n",
+        adapter_ptr,
+        adapter_ptr->internal);
+#endif
+
+    for(size_t idx = 0; idx < MAX_ADAPTERS; idx++)
+    {
+#ifdef DEBUG
+        printf("adapter_context_find: context adapter_internal_ptr:%p\n",
+            adapter_ptr,
+            adapter_ptr->internal,
+            adapter_contexts[idx].adapter_internal_ptr
+        );
+#endif
+
+        if (adapter_contexts[idx].adapter_internal_ptr == adapter_ptr->internal)
+        {
+#ifdef DEBUG
+            printf("adapter_context_find: context found\n");
+#endif
+            return &adapter_contexts[idx];
+        }
+    }
+
+#ifdef DEBUG
+    printf("adapter_context_find: no context found\n");
+#endif
+
+    return NULL;
+}
+
+%}
+
+
 /* Event callback handling */
 %{
-static PyObject *my_pyevtcallback = NULL;
-
 static void PythonEvtCallBack(adapter_t *adapter, ble_evt_t *ble_event)
 {
     PyObject *func;
@@ -149,12 +284,24 @@ static void PythonEvtCallBack(adapter_t *adapter, ble_evt_t *ble_event)
     printf("XXXX-XX-XX XX:XX:XX,XXX BIND tid:0x%lX\n", tr);
 #endif // DEBUG
 
-    if(my_pyevtcallback == NULL) {
-        printf("Callback not set, returning\n");
+    adapter_context_t *adapter_context = adapter_context_find(adapter);
+
+    if (adapter_context == NULL)
+    {
+#ifdef DEBUG
+        printf("event_callback: No adapter context found for adapter %p\n", adapter);
+#endif
         return;
     }
 
-    func = my_pyevtcallback;
+    if(adapter_context->event_callback == NULL) {
+#ifdef DEBUG
+        printf("event_callback not set in adapter_context for adapter %p, returning\n", adapter);
+#endif
+        return;
+    }
+
+    func = adapter_context->event_callback;
 
 #if DEBUG
     printf("sizeof(ble_evt_t): %ld\n", sizeof(ble_evt_t));
@@ -186,7 +333,6 @@ static void PythonEvtCallBack(adapter_t *adapter, ble_evt_t *ble_event)
 
     result = PyEval_CallObject(func, arglist);
     Py_XDECREF(result);
-
     Py_XDECREF(adapter_obj);
     Py_XDECREF(ble_evt_obj);
     Py_DECREF(arglist);
@@ -197,7 +343,6 @@ static void PythonEvtCallBack(adapter_t *adapter, ble_evt_t *ble_event)
 
 /* Status callback handling */
 %{
-static PyObject *my_pystatuscallback = NULL;
 
 static void PythonStatusCallBack(adapter_t *adapter, sd_rpc_app_status_t status_code, const char * status_message)
 {
@@ -209,10 +354,22 @@ static void PythonStatusCallBack(adapter_t *adapter, sd_rpc_app_status_t status_
     PyGILState_STATE gstate;
     PyObject *result;
 
-    func = my_pystatuscallback;
+    adapter_context_t *adapter_context = adapter_context_find(adapter);
 
-    if(my_pystatuscallback == NULL) {
-        printf("Callback not set, returning\n");
+    if (adapter_context == NULL)
+    {
+#ifdef DEBUG
+        printf("status_callback: No adapter context found for adapter %p\n", adapter);
+#endif
+        return;
+    }
+
+    func = adapter_context->status_callback;
+
+    if(adapter_context->status_callback == NULL) {
+#ifdef DEBUG
+        printf("status_callback not set in adapter_context for adapter %p, returning\n", adapter);
+#endif
         return;
     }
 
@@ -248,8 +405,6 @@ static void PythonStatusCallBack(adapter_t *adapter, sd_rpc_app_status_t status_
 
 /* Log callback handling */
 %{
-static PyObject *my_pylogcallback = NULL;
-
 static void PythonLogCallBack(adapter_t *adapter, sd_rpc_log_severity_t severity, const char * log_message)
 {
     PyObject *func;
@@ -260,12 +415,24 @@ static void PythonLogCallBack(adapter_t *adapter, sd_rpc_log_severity_t severity
     PyGILState_STATE gstate;
     PyObject *result;
 
-    func = my_pylogcallback;
+    adapter_context_t *adapter_context = adapter_context_find(adapter);
 
-    if(my_pylogcallback == NULL) {
-        printf("Callback not set, returning\n");
+    if (adapter_context == NULL)
+    {
+#ifdef DEBUG
+        printf("log_callback: No adapter context found for adapter %p\n", adapter);
+#endif
         return;
     }
+
+    if(adapter_context->log_callback == NULL) {
+#ifdef DEBUG
+        printf("log_callback not set in adapter_context for adapter %p, returning\n", adapter);
+#endif
+        return;
+    }
+
+    func = adapter_context->log_callback;
 
     // For information regarding GIL and copying of data, please look at
     // function PythonEvtCallBack.
@@ -307,24 +474,30 @@ PyObject* sd_rpc_open_py(PyObject *adapter, PyObject *py_status_handler, PyObjec
     void *argp1 = 0 ;
     int res1 = 0 ;
     uint32_t result;
+    adapter_context_t *ctx;
 
     res1 = SWIG_ConvertPtr(adapter, &argp1,SWIGTYPE_p_adapter_t, 0 |  0 );
     if (!SWIG_IsOK(res1)) {
-      SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "sd_rpc_open" "', argument " "1"" of type '" "adapter_t *""'"); 
+      SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "sd_rpc_open" "', argument " "1"" of type '" "adapter_t *""'");
     }
 
     arg1 = (adapter_t * ) (argp1);
 
-    Py_XDECREF(my_pystatuscallback); /* Remove any existing callback object */
-    Py_XDECREF(my_pyevtcallback); /* Remove any existing callback object */
-    Py_XDECREF(my_pylogcallback); /* Remove any existing callback object */
+    // Try to register adapter_context_t
+    ctx = adapter_context_add(arg1);
+    if (ctx == NULL)
+    {
+        SWIG_exception_fail(SWIG_ValueError, "Not able to register adapter_context_t for adapter");
+    }
+
+    Py_XINCREF(py_log_handler);
     Py_XINCREF(py_status_handler);
     Py_XINCREF(py_evt_handler);
-    Py_XINCREF(py_log_handler);
-    my_pystatuscallback = py_status_handler;
-    my_pyevtcallback = py_evt_handler;
-    my_pylogcallback = py_log_handler;
-    
+
+    ctx->log_callback = py_log_handler;
+    ctx->status_callback = py_status_handler;
+    ctx->event_callback = py_evt_handler;
+
     result = sd_rpc_open(arg1, PythonStatusCallBack, PythonEvtCallBack, PythonLogCallBack);
     resultobj = SWIG_From_unsigned_SS_int((unsigned int) (result));
     return resultobj;
@@ -332,4 +505,40 @@ PyObject* sd_rpc_open_py(PyObject *adapter, PyObject *py_status_handler, PyObjec
 fail:
     return NULL;
 }
+
+PyObject *sd_rpc_close_py(PyObject *adapter) {
+    PyObject *resultobj = 0;
+    adapter_t *arg1 = (adapter_t *)0;
+    void *argp1 = 0;
+    int res1 = 0;
+    uint32_t result;
+    adapter_context_t *ctx;
+
+    res1 = SWIG_ConvertPtr(adapter, &argp1, SWIGTYPE_p_adapter_t, 0 |  0 );
+    if (!SWIG_IsOK(res1)) {
+        SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "sd_rpc_close" "', argument " "1"" of type '" "adapter_t *""'");
+    }
+
+    arg1 = (adapter_t *)(argp1);
+    result = sd_rpc_close(arg1);
+
+    ctx = adapter_context_find(arg1);
+
+    if(ctx == NULL)
+    {
+        SWIG_exception_fail(SWIG_ValueError, "Not able to find adapter_context_t for adapter");
+    }
+
+    Py_XDECREF(ctx->event_callback);
+    Py_XDECREF(ctx->status_callback);
+    Py_XDECREF(ctx->log_callback);
+
+    adapter_context_remove(arg1);
+
+    resultobj = SWIG_From_unsigned_SS_int((unsigned int)(result));
+    return resultobj;
+fail:
+    return NULL;
+}
+
 %}
