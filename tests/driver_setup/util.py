@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2016 Nordic Semiconductor ASA
+# Copyright (c) 2019 Nordic Semiconductor ASA
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without modification,
@@ -35,77 +35,52 @@
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
-import sys
-from threading import Condition, Lock
-from pc_ble_driver_py.observers import BLEDriverObserver
+
+from pc_ble_driver_py.ble_driver import (
+    BLEDriver,
+    BLEEnableParams,
+    BLEConfig,
+    BLEConfigConnGatt,
+)
+from pc_ble_driver_py.ble_adapter import BLEAdapter
+from driver_setup import Settings
 
 
-def init(conn_ic_id):
-    # noinspection PyGlobalUndefined
-    global BLEDriver, BLEAdvData, BLEEvtID, BLEEnableParams, config, BLEAdvData
-    from pc_ble_driver_py import config
+def setup_adapter(
+    port,
+    auto_flash,
+    baud_rate,
+    retransmission_interval,
+    response_timeout,
+    driver_log_level,
+):
+    settings = Settings.current()
 
-    config.__conn_ic_id__ = conn_ic_id
-    # noinspection PyUnresolvedReferences
-    from pc_ble_driver_py.ble_driver import (
-        BLEDriver,
-        BLEAdvData,
-        BLEEvtID,
-        BLEEnableParams,
+    driver = BLEDriver(
+        serial_port=port,
+        auto_flash=auto_flash,
+        baud_rate=baud_rate,
+        retransmission_interval=retransmission_interval,
+        response_timeout=response_timeout,
+        log_severity_level=driver_log_level,
     )
 
-
-def main(serial_port):
-    print("Serial port used: {}".format(serial_port))
-    driver = BLEDriver(serial_port=serial_port, baud_rate=1000000)
-    observer = TimeoutObserver()
-    adv_data = BLEAdvData(complete_local_name="pc_ble_driver_py")
-
-    driver.observer_register(observer)
-    driver.open()
-    if config.__conn_ic_id__ == "NRF51":
-        driver.ble_enable(
+    adapter = BLEAdapter(driver)
+    adapter.open()
+    if settings.nrf_family == "NRF51":
+        adapter.driver.ble_enable(
             BLEEnableParams(
-                vs_uuid_count=0,
+                vs_uuid_count=1,
                 service_changed=0,
-                periph_conn_count=1,
-                central_conn_count=0,
+                periph_conn_count=0,
+                central_conn_count=1,
                 central_sec_count=0,
             )
         )
-    elif config.__conn_ic_id__ == "NRF52":
-        driver.ble_enable()
-    driver.ble_gap_adv_data_set(adv_data)
-    driver.ble_gap_adv_start()
-    observer.wait_for_timeout()
-
-    print("Closing")
-    driver.close()
-
-
-class TimeoutObserver(BLEDriverObserver):
-    def __init__(self, *args, **kwargs):
-        super(BLEDriverObserver, self).__init__(*args, **kwargs)
-        self.cond = Condition(Lock())
-
-    def on_gap_evt_timeout(self, ble_driver, conn_handle, src):
-        with self.cond:
-            self.cond.notify_all()
-
-    def on_gap_evt_disconnected(self, ble_driver, conn_handle, reason):
-        with self.cond:
-            self.cond.notify_all()
-
-    def wait_for_timeout(self):
-        with self.cond:
-            self.cond.wait()
-
-
-if __name__ == "__main__":
-    if len(sys.argv) == 3:
-        init(sys.argv[1])
-        main(sys.argv[2])
-    else:
-        print("Invalid arguments. Parameters: <conn_ic_id> <serial_port>")
-        print("conn_ic_id: NRF51, NRF52")
-    quit()
+    elif settings.nrf_family == "NRF52":
+        gatt_cfg = BLEConfigConnGatt()
+        gatt_cfg.att_mtu = adapter.default_mtu
+        gatt_cfg.tag = 1
+        adapter.driver.ble_cfg_set(BLEConfig.conn_gatt, gatt_cfg)
+        adapter.driver.ble_enable()
+    return adapter

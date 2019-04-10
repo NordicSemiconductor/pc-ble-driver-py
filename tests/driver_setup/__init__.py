@@ -15,8 +15,8 @@ from typing import List
 
 class Settings(object):
     """
-    This class should be in the parent package (tests), but since it is needed in this module
-    we have to have it here (parent module import not allowed)
+    This class should be in the parent package (tests), but since it is needed
+    in this module we have to have it here (parent module import not allowed)
     """
     settings = None  # type: Settings
 
@@ -34,7 +34,6 @@ class Settings(object):
         self.response_timeout = response_timeout  # type: int
         self.mtu = mtu  # type: int
         self.nrf_family = nrf_family  # type: str
-
 
     @classmethod
     def current(cls):
@@ -140,6 +139,7 @@ from pc_ble_driver_py.ble_driver import \
     BLEEvtID, BLEEnableParams,\
     BLEGapTimeoutSrc, BLEUUID, BLEConfigCommon, BLEConfig, BLEConfigConnGatt
 
+from .util import setup_adapter
 
 __all__ = [
     "config",
@@ -153,4 +153,6 @@ __all__ = [
     "BLEConfig",
     "BLEConfigConnGatt",
     "BLEAdapter",
-    "Settings"]
+    "Settings",
+    "setup_adapter"
+    ]
