@@ -2644,9 +2644,22 @@ class Flasher(object):
         return None
 
     NRFJPROG = "nrfjprog"
-    FW_STRUCT_ADDRESS = 0x30000
     FW_STRUCT_LENGTH = 24
     FW_MAGIC_NUMBER = ["17", "A5", "D8", "46"]
+
+    @staticmethod
+    def fw_struct_address():
+        # SoftDevice v2 and v5 has different
+        # flash location for info struct
+        if nrf_sd_ble_api_ver == 2:
+            return 0x39000
+        elif nrf_sd_ble_api_ver == 5:
+            return 0x50000
+        else:
+            raise NordicSemiException(
+                "Magic number for SDv{} is unknown.".format(nrf_sd_ble_api_ver)
+            )
+
 
     def __init__(self, serial_port=None, snr=None):
         if serial_port is None and snr is None:
@@ -2694,7 +2707,7 @@ class Flasher(object):
     def read_fw_struct(self):
         args = [
             "--memrd",
-            str(Flasher.FW_STRUCT_ADDRESS),
+            str(Flasher.fw_struct_address()),
             "--w",
             "8",
             "--n",

@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2016 Nordic Semiconductor ASA
+# Copyright (c) 2019 Nordic Semiconductor ASA
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without modification,
@@ -35,64 +35,77 @@
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
-# Connectivity IC identifier
-# This variable needs to be set before importing pc_ble_driver_py from external Python code
-# Currently functional variants are:
-#
-# * "NRF51"
-# * "NRF52"
-__conn_ic_id__ = None
 
-import os
+import unittest
+from queue import Queue
+from functools import reduce
+import time
+import random
+import string
+import logging
+
+from driver_setup import Settings
+
+from pc_ble_driver_py.ble_driver import (
+    BLEDriver,
+    BLEEnableParams,
+    BLEConfig,
+    BLEConfigConnGatt,
+    BLEAdvData,
+    Flasher,
+)
+
+logger = logging.getLogger(__name__)
 
 
-def sd_api_ver_get():
-    if __conn_ic_id__ is None:
-        raise RuntimeError('Connectivity IC identifier __conn_ic_id__ is not set')
+class ProgramAdapter(unittest.TestCase):
+    def setUp(self):
+        pass
 
-    if __conn_ic_id__.upper() == "NRF51":
-        _sd_api_v = 2
-    elif __conn_ic_id__.upper() == "NRF52":
-        _sd_api_v = 5
-    else:
-        raise RuntimeError('Invalid connectivity IC identifier: {}.'.format(__conn_ic_id__))
-    return _sd_api_v
+    def test_programming(self):
+        settings = Settings.current()
+
+        serial_ports = BLEDriver.enum_serial_ports()
+
+        for serial_port in serial_ports:
+            if serial_port.port in settings.serial_ports:
+                serial_number = serial_port.serial_number
+                logger.info("#%s deleting connectivity", serial_number)
+
+                flasher = Flasher(serial_port=serial_port.port)
+                flasher.erase()
+
+                self.assertFalse(
+                    flasher.fw_check(),
+                    "#{} must be programmed because it is erased".format(
+                        serial_number
+                    ),
+                )
+
+                flasher.fw_flash()
+
+                self.assertTrue(
+                    flasher.fw_check(),
+                    "#{} is programmed, shall not be programmed again".format(
+                        serial_number
+                    ),
+                )
+
+                flasher.reset()
+
+                logger.info("#%s programmed successfully", serial_number)
+
+    def tearDown(self):
+        pass
 
 
-def _get_hex_path(sd_api_type='s132', sd_api_version='5.1.0'):
-    return os.path.join(
-        os.path.dirname(__file__),
-        'hex',
-        'sd_api_v%s' % sd_api_version.split('.')[0],
-        'connectivity_%s_1m_with_%s_%s.hex' % (
-            get_connectivity_hex_version(),
-            sd_api_type,
-            sd_api_version
-        )
+def test_suite():
+    return unittest.TestLoader().loadTestsFromName(__name__)
+
+
+if __name__ == "__main__":
+    logging.basicConfig(
+        level=Settings.current().log_level,
+        format="%(asctime)s [%(thread)d/%(threadName)s] %(message)s",
     )
-
-
-def conn_ic_hex_get():
-    if __conn_ic_id__ is None:
-        raise RuntimeError('Connectivity IC identifier __conn_ic_id__ is not set')
-
-    if __conn_ic_id__.upper() == 'NRF51':
-        return _get_hex_path(
-            sd_api_type='s130',
-            sd_api_version='2.0.1'
-        )
-    elif __conn_ic_id__.upper() == 'NRF52':
-        return _get_hex_path(
-            sd_api_type='s132',
-            sd_api_version='5.1.0'
-        )
-    else:
-        raise RuntimeError('Invalid connectivity IC identifier: {}.'.format(__conn_ic_id__))
-
-
-def get_connectivity_hex_version():
-    return '4.1.0'
-
-
-def get_connectivity_hex_baud_rate():
-    return 1000000
+    unittest.main(argv=Settings.clean_args())
