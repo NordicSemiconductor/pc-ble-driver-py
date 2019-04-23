@@ -120,6 +120,21 @@ class Connection(DbConnection):
         self.peer_addr = peer_addr
         self._keyset = None
 
+    def __str__(self):
+        s = "BLE Connection:{id}:\n" \
+            "  role: {role}\n" \
+            "  peer_addr: {peer_addr}\n" \
+            "  services:\n" \
+            "    {services}"
+        return s.format(id=id(self),
+                        role=self.role,
+                        peer_addr="{} ({})".format(self.peer_addr.addr, self.peer_addr.addr_type),
+                        services="\n    ".join(str(s) for s in self.services))
+
+    def __repr__(self):
+        return self.__str__()
+
+
 
 class EvtSync(object):
     def __init__(self, events):
