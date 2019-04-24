@@ -504,10 +504,9 @@ class BLEAdapter(BLEDriverObserver):
                 )
                 return
             except NordicSemiException as e:
-                # Retry if BLE_ERROR_NO_TX_PACKETS error code.
+                # Retry if NRF_ERROR_RESOURCES error code.
                 if (
-                    "Error code: 12292" in e.message
-                    or "Error code: 12307" in e.message
+                    "Error code: 19" in str(e) # NRF_ERROR_RESOURCES
                 ):
                     self.evt_sync[conn_handle].wait(evt=tx_complete, timeout=1)
                 else:
