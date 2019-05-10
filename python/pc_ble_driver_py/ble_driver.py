@@ -129,12 +129,16 @@ def NordicSemiErrorCheck(wrapped=None, expected = driver.NRF_SUCCESS):
     return wrapper(wrapped)
 
 
-
 class BLEEvtID(Enum):
     gap_evt_connected                 = driver.BLE_GAP_EVT_CONNECTED
     gap_evt_disconnected              = driver.BLE_GAP_EVT_DISCONNECTED
     gap_evt_sec_params_request        = driver.BLE_GAP_EVT_SEC_PARAMS_REQUEST
     gap_evt_sec_info_request          = driver.BLE_GAP_EVT_SEC_INFO_REQUEST
+    gap_evt_passkey_display           = driver.BLE_GAP_EVT_PASSKEY_DISPLAY
+    gap_evt_key_pressed               = driver.BLE_GAP_EVT_KEY_PRESSED
+    gap_evt_lesc_dhkey_request        = driver.BLE_GAP_EVT_LESC_DHKEY_REQUEST
+    gap_evt_rssi_changed              = driver.BLE_GAP_EVT_RSSI_CHANGED
+    gap_evt_scan_req_report           = driver.BLE_GAP_EVT_SCAN_REQ_REPORT
     gap_evt_sec_request               = driver.BLE_GAP_EVT_SEC_REQUEST
     gap_evt_adv_report                = driver.BLE_GAP_EVT_ADV_REPORT
     gap_evt_timeout                   = driver.BLE_GAP_EVT_TIMEOUT
@@ -229,6 +233,8 @@ class BLEGapSecStatus(Enum):
     success                 = driver.BLE_GAP_SEC_STATUS_SUCCESS
     timeout                 = driver.BLE_GAP_SEC_STATUS_TIMEOUT
     pdu_invalid             = driver.BLE_GAP_SEC_STATUS_PDU_INVALID
+    rfu_range1_begin        = driver.BLE_GAP_SEC_STATUS_RFU_RANGE1_BEGIN
+    rfu_range1_end          = driver.BLE_GAP_SEC_STATUS_RFU_RANGE1_END
     passkey_entry_failed    = driver.BLE_GAP_SEC_STATUS_PASSKEY_ENTRY_FAILED
     oob_not_available       = driver.BLE_GAP_SEC_STATUS_OOB_NOT_AVAILABLE
     auth_req                = driver.BLE_GAP_SEC_STATUS_AUTH_REQ
@@ -243,6 +249,8 @@ class BLEGapSecStatus(Enum):
     num_comp_failure        = driver.BLE_GAP_SEC_STATUS_NUM_COMP_FAILURE
     br_edr_in_prog          = driver.BLE_GAP_SEC_STATUS_BR_EDR_IN_PROG
     x_trans_key_disallowed  = driver.BLE_GAP_SEC_STATUS_X_TRANS_KEY_DISALLOWED
+    rfu_range1_begin        = driver.BLE_GAP_SEC_STATUS_RFU_RANGE2_BEGIN
+    rfu_range1_end          = driver.BLE_GAP_SEC_STATUS_RFU_RANGE2_END
 
 
 
@@ -744,6 +752,7 @@ class BLEGattHVXType(Enum):
 
 class BLEGattStatusCode(Enum):
     success               = driver.BLE_GATT_STATUS_SUCCESS
+    unknown               = driver.BLE_GATT_STATUS_UNKNOWN
     invalid               = driver.BLE_GATT_STATUS_ATTERR_INVALID
     invalid_handle        = driver.BLE_GATT_STATUS_ATTERR_INVALID_HANDLE
     read_not_permitted    = driver.BLE_GATT_STATUS_ATTERR_READ_NOT_PERMITTED
@@ -762,6 +771,14 @@ class BLEGattStatusCode(Enum):
     insuf_encryption      = driver.BLE_GATT_STATUS_ATTERR_INSUF_ENCRYPTION
     unsupp_group_type     = driver.BLE_GATT_STATUS_ATTERR_UNSUPPORTED_GROUP_TYPE
     insuf_resources       = driver.BLE_GATT_STATUS_ATTERR_INSUF_RESOURCES
+    rfu_range1_begin	  = driver.BLE_GATT_STATUS_ATTERR_RFU_RANGE1_BEGIN
+    rfu_range1_end		  = driver.BLE_GATT_STATUS_ATTERR_RFU_RANGE1_END
+    app_begin	  	      = driver.BLE_GATT_STATUS_ATTERR_APP_BEGIN
+    app_end	  		      = driver.BLE_GATT_STATUS_ATTERR_APP_END
+    rfu_range2_begin	  = driver.BLE_GATT_STATUS_ATTERR_RFU_RANGE2_BEGIN
+    rfu_range2_end		  = driver.BLE_GATT_STATUS_ATTERR_RFU_RANGE2_END
+    rfu_range3_begin	  = driver.BLE_GATT_STATUS_ATTERR_RFU_RANGE3_BEGIN
+    rfu_range3_end		  = driver.BLE_GATT_STATUS_ATTERR_RFU_RANGE3_END
     cccd_config_error     = driver.BLE_GATT_STATUS_ATTERR_CPS_CCCD_CONFIG_ERROR
     procedure_in_progress = driver.BLE_GATT_STATUS_ATTERR_CPS_PROC_ALR_IN_PROG
     cps_out_of_range      = driver.BLE_GATT_STATUS_ATTERR_CPS_OUT_OF_RANGE
