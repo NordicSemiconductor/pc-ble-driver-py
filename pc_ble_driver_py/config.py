@@ -91,7 +91,7 @@ def conn_ic_hex_get():
 
 
 def get_connectivity_hex_version():
-    return '4.1.0'
+    return '4.1.1'
 
 
 def get_connectivity_hex_baud_rate():
