@@ -1265,8 +1265,18 @@ class SerialPortDescriptor(object):
 
     @classmethod
     def from_c(cls, org):
+        # Workaround to change from /dev/cu.X to /dev/tty.X
+        # tty.X is preferred because other products used that
+        # as an identifier for development kits serial ports
+        port = None
+
+        if not org.port == None and sys.platform == 'darwin':
+            port = org.port.replace("/cu", "/tty")
+        else:
+            port = org.port
+
         return cls(
-            port=org.port,
+            port=port,
             manufacturer=org.manufacturer,
             serial_number=org.serialNumber,
             pnp_id=org.pnpId,
