@@ -1266,7 +1266,7 @@ class SerialPortDescriptor(object):
     @classmethod
     def from_c(cls, org):
         # Workaround to change from /dev/cu.X to /dev/tty.X
-        # tty.X is preferred because other products used that
+        # tty.X is preferred because other products use that
         # as an identifier for development kits serial ports
         port = None
 
