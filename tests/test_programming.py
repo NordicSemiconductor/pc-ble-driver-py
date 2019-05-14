@@ -65,12 +65,19 @@ class ProgramAdapter(unittest.TestCase):
     def test_programming(self):
         settings = Settings.current()
 
-        serial_ports = BLEDriver.enum_serial_ports()
+        serial_ports = [port for port in BLEDriver.enum_serial_ports()]
+
+        # Check that from enumeration matches
+        # kits provided from settings
+        found_ports = map(lambda port: port.port, serial_ports)
+
+        for serial_port in settings.serial_ports:
+            self.assertIn(serial_port, found_ports)
 
         for serial_port in serial_ports:
             if serial_port.port in settings.serial_ports:
                 serial_number = serial_port.serial_number
-                logger.info("#%s deleting connectivity", serial_number)
+                logger.info("%s/%s deleting existing firmware", serial_port.port, serial_number)
 
                 flasher = Flasher(serial_port=serial_port.port)
                 flasher.erase()
@@ -83,6 +90,7 @@ class ProgramAdapter(unittest.TestCase):
                 )
 
                 flasher.fw_flash()
+                logger.info("%s/%s programmed", serial_port.port, serial_number)
 
                 self.assertTrue(
                     flasher.fw_check(),
@@ -93,7 +101,7 @@ class ProgramAdapter(unittest.TestCase):
 
                 flasher.reset()
 
-                logger.info("#%s programmed successfully", serial_number)
+                logger.info("%s/%s programmed successfully", serial_port.port, serial_number)
 
     def tearDown(self):
         pass
