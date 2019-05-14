@@ -72,7 +72,7 @@ class ProgramAdapter(unittest.TestCase):
         found_ports = map(lambda port: port.port, serial_ports)
 
         for serial_port in settings.serial_ports:
-            self.assertIn(serial_port, found_ports)
+            self.assertIn(serial_port.port, found_ports)
 
         for serial_port in serial_ports:
             if serial_port.port in settings.serial_ports:
