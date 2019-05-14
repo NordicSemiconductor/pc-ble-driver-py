@@ -39,4 +39,4 @@ Package marker file.
 
 """
 
-__version__ = "0.12.0a7"
+__version__ = "0.12.0a8"
