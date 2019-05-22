@@ -110,7 +110,6 @@ class BLEEvtID(Enum):
     gap_evt_passkey_display = driver.BLE_GAP_EVT_PASSKEY_DISPLAY
     gap_evt_key_pressed = driver.BLE_GAP_EVT_KEY_PRESSED
     gap_evt_lesc_dhkey_request = driver.BLE_GAP_EVT_LESC_DHKEY_REQUEST
-    gap_evt_rssi_changed = driver.BLE_GAP_EVT_RSSI_CHANGED
     gap_evt_scan_req_report = driver.BLE_GAP_EVT_SCAN_REQ_REPORT
     gap_evt_sec_request = driver.BLE_GAP_EVT_SEC_REQUEST
     gap_evt_adv_report = driver.BLE_GAP_EVT_ADV_REPORT
@@ -121,7 +120,6 @@ class BLEEvtID(Enum):
     gap_evt_auth_status = driver.BLE_GAP_EVT_AUTH_STATUS
     gap_evt_auth_key_request = driver.BLE_GAP_EVT_AUTH_KEY_REQUEST
     gap_evt_conn_sec_update = driver.BLE_GAP_EVT_CONN_SEC_UPDATE
-    evt_tx_complete = driver.BLE_EVT_TX_COMPLETE
     gattc_evt_write_rsp = driver.BLE_GATTC_EVT_WRITE_RSP
     gattc_evt_read_rsp = driver.BLE_GATTC_EVT_READ_RSP
     gattc_evt_hvx = driver.BLE_GATTC_EVT_HVX
@@ -133,9 +131,9 @@ class BLEEvtID(Enum):
 
     if nrf_sd_ble_api_ver == 2:
         evt_tx_complete = driver.BLE_EVT_TX_COMPLETE
+        evt_data_length_changed = driver.BLE_EVT_DATA_LENGTH_CHANGED
 
     if nrf_sd_ble_api_ver == 5:
-        evt_data_length_changed = driver.BLE_EVT_DATA_LENGTH_CHANGED
         gatts_evt_exchange_mtu_request = driver.BLE_GATTS_EVT_EXCHANGE_MTU_REQUEST
         gattc_evt_exchange_mtu_rsp = driver.BLE_GATTC_EVT_EXCHANGE_MTU_RSP
         gap_evt_data_length_update = driver.BLE_GAP_EVT_DATA_LENGTH_UPDATE
