@@ -121,19 +121,22 @@ class Connection(DbConnection):
         self._keyset = None
 
     def __str__(self):
-        s = "BLE Connection:{id}:\n" \
-            "  role: {role}\n" \
-            "  peer_addr: {peer_addr}\n" \
-            "  services:\n" \
+        s = (
+            "BLE Connection:{id}:\n"
+            "  role: {role}\n"
+            "  peer_addr: {peer_addr}\n"
+            "  services:\n"
             "    {services}"
-        return s.format(id=id(self),
-                        role=self.role,
-                        peer_addr="{} ({})".format(self.peer_addr.addr, self.peer_addr.addr_type),
-                        services="\n    ".join(str(s) for s in self.services))
+        )
+        return s.format(
+            id=id(self),
+            role=self.role,
+            peer_addr="{} ({})".format(self.peer_addr.addr, self.peer_addr.addr_type),
+            services="\n    ".join(str(s) for s in self.services),
+        )
 
     def __repr__(self):
         return self.__str__()
-
 
 
 class EvtSync(object):
@@ -186,9 +189,7 @@ class BLEAdapter(BLEDriverObserver):
             return
         if nrf_sd_ble_api_ver == 2:
             self.driver.ble_gap_connect(
-                address=address,
-                scan_params=scan_params,
-                conn_params=conn_params,
+                address=address, scan_params=scan_params, conn_params=conn_params
             )
         elif nrf_sd_ble_api_ver == 5:
             self.driver.ble_gap_connect(
@@ -212,9 +213,7 @@ class BLEAdapter(BLEDriverObserver):
 
     def att_mtu_exchange(self, conn_handle, mtu):
         self.driver.ble_gattc_exchange_mtu_req(conn_handle, mtu)
-        self.evt_sync[conn_handle].wait(
-            evt=BLEEvtID.gattc_evt_exchange_mtu_rsp
-        )
+        self.evt_sync[conn_handle].wait(evt=BLEEvtID.gattc_evt_exchange_mtu_rsp)
         return self.db_conns[conn_handle].att_mtu
 
     @NordicSemiErrorCheck(expected=BLEGattStatusCode.success)
@@ -248,9 +247,7 @@ class BLEAdapter(BLEDriverObserver):
         for s in vendor_services:
             # Read service handle to obtain full 128-bit UUID.
             self.driver.ble_gattc_read(conn_handle, s.start_handle, 0)
-            response = self.evt_sync[conn_handle].wait(
-                evt=BLEEvtID.gattc_evt_read_rsp
-            )
+            response = self.evt_sync[conn_handle].wait(evt=BLEEvtID.gattc_evt_read_rsp)
             if response["status"] != BLEGattStatusCode.success:
                 continue
 
@@ -265,9 +262,7 @@ class BLEAdapter(BLEDriverObserver):
             self.driver.ble_vs_uuid_add(base)
 
             # Rediscover this service.
-            self.driver.ble_gattc_prim_srvc_disc(
-                conn_handle, uuid, s.start_handle
-            )
+            self.driver.ble_gattc_prim_srvc_disc(conn_handle, uuid, s.start_handle)
             response = self.evt_sync[conn_handle].wait(
                 evt=BLEEvtID.gattc_evt_prim_srvc_disc_rsp
             )
@@ -277,14 +272,10 @@ class BLEAdapter(BLEDriverObserver):
                 #  https://github.com/NordicSemiconductor/pc-ble-driver-py/issues/38
                 for s in response["services"]:
                     s.uuid.base = base
-                self.db_conns[conn_handle].services.extend(
-                    response["services"]
-                )
+                self.db_conns[conn_handle].services.extend(response["services"])
 
         for s in self.db_conns[conn_handle].services:
-            self.driver.ble_gattc_char_disc(
-                conn_handle, s.start_handle, s.end_handle
-            )
+            self.driver.ble_gattc_char_disc(conn_handle, s.start_handle, s.end_handle)
             while True:
                 response = self.evt_sync[conn_handle].wait(
                     evt=BLEEvtID.gattc_evt_char_disc_rsp
@@ -292,9 +283,7 @@ class BLEAdapter(BLEDriverObserver):
                 if response["status"] == BLEGattStatusCode.success:
                     for char in response["characteristics"]:
                         s.char_add(char)
-                elif (
-                    response["status"] == BLEGattStatusCode.attribute_not_found
-                ):
+                elif response["status"] == BLEGattStatusCode.attribute_not_found:
                     break
                 else:
                     return response["status"]
@@ -315,10 +304,7 @@ class BLEAdapter(BLEDriverObserver):
                     )
                     if response["status"] == BLEGattStatusCode.success:
                         ch.descs.extend(response["descriptors"])
-                    elif (
-                        response["status"]
-                        == BLEGattStatusCode.attribute_not_found
-                    ):
+                    elif response["status"] == BLEGattStatusCode.attribute_not_found:
                         break
                     else:
                         return response["status"]
@@ -349,9 +335,7 @@ class BLEAdapter(BLEDriverObserver):
         )
 
         self.driver.ble_gattc_write(conn_handle, write_params)
-        result = self.evt_sync[conn_handle].wait(
-            evt=BLEEvtID.gattc_evt_write_rsp
-        )
+        result = self.evt_sync[conn_handle].wait(evt=BLEEvtID.gattc_evt_write_rsp)
         return result["status"]
 
     @NordicSemiErrorCheck(expected=BLEGattStatusCode.success)
@@ -371,9 +355,7 @@ class BLEAdapter(BLEDriverObserver):
         )
 
         self.driver.ble_gattc_write(conn_handle, write_params)
-        result = self.evt_sync[conn_handle].wait(
-            evt=BLEEvtID.gattc_evt_write_rsp
-        )
+        result = self.evt_sync[conn_handle].wait(evt=BLEEvtID.gattc_evt_write_rsp)
         return result["status"]
 
     @NordicSemiErrorCheck(expected=BLEGattStatusCode.success)
@@ -393,9 +375,7 @@ class BLEAdapter(BLEDriverObserver):
         )
 
         self.driver.ble_gattc_write(conn_handle, write_params)
-        result = self.evt_sync[conn_handle].wait(
-            evt=BLEEvtID.gattc_evt_write_rsp
-        )
+        result = self.evt_sync[conn_handle].wait(evt=BLEEvtID.gattc_evt_write_rsp)
         return result["status"]
 
     @NordicSemiErrorCheck(expected=BLEGattStatusCode.success)
@@ -405,9 +385,7 @@ class BLEAdapter(BLEDriverObserver):
     @NordicSemiErrorCheck(expected=BLEGattStatusCode.success)
     def conn_param_update(self, conn_handle, conn_params):
         self.driver.ble_gap_conn_param_update(conn_handle, conn_params)
-        result = self.evt_sync[conn_handle].wait(
-            evt=BLEEvtID.gap_evt_conn_param_update
-        )
+        result = self.evt_sync[conn_handle].wait(evt=BLEEvtID.gap_evt_conn_param_update)
         return result["status"]
 
     @NordicSemiErrorCheck(expected=BLEGattStatusCode.success)
@@ -423,9 +401,7 @@ class BLEAdapter(BLEDriverObserver):
             0,
         )
         self.driver.ble_gattc_write(conn_handle, write_params)
-        result = self.evt_sync[conn_handle].wait(
-            evt=BLEEvtID.gattc_evt_write_rsp
-        )
+        result = self.evt_sync[conn_handle].wait(evt=BLEEvtID.gattc_evt_write_rsp)
         return result["status"]
 
     @NordicSemiErrorCheck(expected=BLEGattStatusCode.success)
@@ -441,9 +417,7 @@ class BLEAdapter(BLEDriverObserver):
             offset,
         )
         self.driver.ble_gattc_write(conn_handle, write_params)
-        result = self.evt_sync[conn_handle].wait(
-            evt=BLEEvtID.gattc_evt_write_rsp
-        )
+        result = self.evt_sync[conn_handle].wait(evt=BLEEvtID.gattc_evt_write_rsp)
         return result["status"]
 
     @NordicSemiErrorCheck(expected=BLEGattStatusCode.success)
@@ -456,9 +430,7 @@ class BLEAdapter(BLEDriverObserver):
             0,
         )
         self.driver.ble_gattc_write(conn_handle, write_params)
-        result = self.evt_sync[conn_handle].wait(
-            evt=BLEEvtID.gattc_evt_write_rsp
-        )
+        result = self.evt_sync[conn_handle].wait(evt=BLEEvtID.gattc_evt_write_rsp)
         return result["status"]
 
     def read_req(self, conn_handle, uuid):
@@ -466,9 +438,7 @@ class BLEAdapter(BLEDriverObserver):
         if handle is None:
             raise NordicSemiException("Characteristic value handler not found")
         self.driver.ble_gattc_read(conn_handle, handle, 0)
-        result = self.evt_sync[conn_handle].wait(
-            evt=BLEEvtID.gattc_evt_read_rsp
-        )
+        result = self.evt_sync[conn_handle].wait(evt=BLEEvtID.gattc_evt_read_rsp)
         gatt_res = result["status"]
         if gatt_res == BLEGattStatusCode.success:
             return gatt_res, result["data"]
@@ -494,9 +464,7 @@ class BLEAdapter(BLEDriverObserver):
         # Send packet and skip waiting for TX-complete event. Try maximum 3 times.
         for _ in range(MAX_TRIES):
             try:
-                response = self.driver.ble_gattc_write(
-                    conn_handle, write_params
-                )
+                response = self.driver.ble_gattc_write(conn_handle, write_params)
                 logger.debug(
                     "Call ble_gattc_write: response({}) write_params({})".format(
                         response, write_params
@@ -505,16 +473,11 @@ class BLEAdapter(BLEDriverObserver):
                 return
             except NordicSemiException as e:
                 # Retry if BLE_ERROR_NO_TX_PACKETS error code.
-                if (
-                    "Error code: 12292" in e.message
-                    or "Error code: 12307" in e.message
-                ):
+                if "Error code: 12292" in e.message or "Error code: 12307" in e.message:
                     self.evt_sync[conn_handle].wait(evt=tx_complete, timeout=1)
                 else:
                     raise e
-        raise NordicSemiException(
-            "Unable to successfully call ble_gattc_write"
-        )
+        raise NordicSemiException("Unable to successfully call ble_gattc_write")
 
     @NordicSemiErrorCheck(expected=BLEGapSecStatus.success)
     def authenticate(
@@ -538,9 +501,7 @@ class BLEAdapter(BLEDriverObserver):
         sign_peer=False,
         link_peer=False,
     ):
-        kdist_own = BLEGapSecKDist(
-            enc=enc_own, id=id_own, sign=sign_own, link=link_own
-        )
+        kdist_own = BLEGapSecKDist(enc=enc_own, id=id_own, sign=sign_own, link=link_own)
         kdist_peer = BLEGapSecKDist(
             enc=enc_peer, id=id_peer, sign=sign_peer, link=link_peer
         )
@@ -558,9 +519,7 @@ class BLEAdapter(BLEDriverObserver):
         )
 
         self.driver.ble_gap_authenticate(conn_handle, sec_params)
-        self.evt_sync[conn_handle].wait(
-            evt=BLEEvtID.gap_evt_sec_params_request
-        )
+        self.evt_sync[conn_handle].wait(evt=BLEEvtID.gap_evt_sec_params_request)
 
         # sd_ble_gap_sec_params_reply ... In the central role, sec_params must be set to NULL,
         # as the parameters have already been provided during a previous call to
@@ -573,9 +532,7 @@ class BLEAdapter(BLEDriverObserver):
         self.driver.ble_gap_sec_params_reply(
             conn_handle, BLEGapSecStatus.success, sec_params=sec_params
         )
-        result = self.evt_sync[conn_handle].wait(
-            evt=BLEEvtID.gap_evt_auth_status
-        )
+        result = self.evt_sync[conn_handle].wait(evt=BLEEvtID.gap_evt_auth_status)
         # If success then keys are stored in self.driver._keyset.
         if result["auth_status"] == BLEGapSecStatus.success:
             self.db_conns[conn_handle]._keyset = BLEGapSecKeyset.from_c(
@@ -583,30 +540,22 @@ class BLEAdapter(BLEDriverObserver):
             )
         return result["auth_status"]
 
-    def encrypt(
-        self, conn_handle, ediv, rand, ltk, auth=0, lesc=0, ltk_len=16
-    ):
+    def encrypt(self, conn_handle, ediv, rand, ltk, auth=0, lesc=0, ltk_len=16):
         # @assert note that sd_ble_gap_encrypt results in
         # BLE_ERROR_INVALID_ROLE if not Central.
         assert (
             self.db_conns[conn_handle].role == BLEGapRoles.central
         ), "Invalid role. Encryption can only be initiated by a Central Device."
         master_id = BLEGapMasterId(ediv=ediv, rand=rand)
-        enc_info = BLEGapEncInfo(
-            ltk=ltk, auth=auth, lesc=lesc, ltk_len=ltk_len
-        )
+        enc_info = BLEGapEncInfo(ltk=ltk, auth=auth, lesc=lesc, ltk_len=ltk_len)
         self.driver.ble_gap_encrypt(conn_handle, master_id, enc_info)
-        result = self.evt_sync[conn_handle].wait(
-            evt=BLEEvtID.gap_evt_conn_sec_update
-        )
+        result = self.evt_sync[conn_handle].wait(evt=BLEEvtID.gap_evt_conn_sec_update)
         return result["conn_sec"]
 
     # ...............................................................................................
     def on_evt_data_length_changed(self, ble_driver, **kwargs):
         for i in self.evt_sync:
-            self.evt_sync[i].notify(
-                evt=BLEEvtID.evt_data_length_changed, data=kwargs
-            )
+            self.evt_sync[i].notify(evt=BLEEvtID.evt_data_length_changed, data=kwargs)
 
     def on_gap_evt_connected(
         self, ble_driver, conn_handle, peer_addr, role, conn_params
@@ -640,14 +589,10 @@ class BLEAdapter(BLEDriverObserver):
         )
 
     def on_gap_evt_sec_request(self, ble_driver, conn_handle, **kwargs):
-        self.evt_sync[conn_handle].notify(
-            evt=BLEEvtID.gap_evt_sec_request, data=kwargs
-        )
+        self.evt_sync[conn_handle].notify(evt=BLEEvtID.gap_evt_sec_request, data=kwargs)
 
     def on_gap_evt_auth_status(self, ble_driver, conn_handle, **kwargs):
-        self.evt_sync[conn_handle].notify(
-            evt=BLEEvtID.gap_evt_auth_status, data=kwargs
-        )
+        self.evt_sync[conn_handle].notify(evt=BLEEvtID.gap_evt_auth_status, data=kwargs)
 
     def on_gap_evt_conn_sec_update(self, ble_driver, conn_handle, **kwargs):
         self.evt_sync[conn_handle].notify(
@@ -660,21 +605,15 @@ class BLEAdapter(BLEDriverObserver):
         )
 
     def on_evt_tx_complete(self, ble_driver, conn_handle, **kwargs):
-        self.evt_sync[conn_handle].notify(
-            evt=BLEEvtID.evt_tx_complete, data=kwargs
-        )
+        self.evt_sync[conn_handle].notify(evt=BLEEvtID.evt_tx_complete, data=kwargs)
 
-    def on_gattc_evt_write_cmd_tx_complete(
-        self, ble_driver, conn_handle, **kwargs
-    ):
+    def on_gattc_evt_write_cmd_tx_complete(self, ble_driver, conn_handle, **kwargs):
         self.evt_sync[conn_handle].notify(
             evt=BLEEvtID.gattc_evt_write_cmd_tx_complete, data=kwargs
         )
 
     def on_gattc_evt_write_rsp(self, ble_driver, conn_handle, **kwargs):
-        self.evt_sync[conn_handle].notify(
-            evt=BLEEvtID.gattc_evt_write_rsp, data=kwargs
-        )
+        self.evt_sync[conn_handle].notify(evt=BLEEvtID.gattc_evt_write_rsp, data=kwargs)
 
     def on_gap_evt_conn_param_update(self, ble_driver, conn_handle, **kwargs):
         self.evt_sync[conn_handle].notify(
@@ -682,13 +621,9 @@ class BLEAdapter(BLEDriverObserver):
         )
 
     def on_gattc_evt_read_rsp(self, ble_driver, conn_handle, **kwargs):
-        self.evt_sync[conn_handle].notify(
-            evt=BLEEvtID.gattc_evt_read_rsp, data=kwargs
-        )
+        self.evt_sync[conn_handle].notify(evt=BLEEvtID.gattc_evt_read_rsp, data=kwargs)
 
-    def on_gattc_evt_prim_srvc_disc_rsp(
-        self, ble_driver, conn_handle, **kwargs
-    ):
+    def on_gattc_evt_prim_srvc_disc_rsp(self, ble_driver, conn_handle, **kwargs):
         self.evt_sync[conn_handle].notify(
             evt=BLEEvtID.gattc_evt_prim_srvc_disc_rsp, data=kwargs
         )
@@ -709,23 +644,17 @@ class BLEAdapter(BLEDriverObserver):
         )
 
     def on_gatts_evt_hvc(self, ble_driver, conn_handle, **kwargs):
-        self.evt_sync[conn_handle].notify(
-            evt=BLEEvtID.gatts_evt_hvc, data=kwargs
-        )
+        self.evt_sync[conn_handle].notify(evt=BLEEvtID.gatts_evt_hvc, data=kwargs)
 
     def on_gatts_evt_write(self, ble_driver, conn_handle, **kwargs):
-        self.evt_sync[conn_handle].notify(
-            evt=BLEEvtID.gatts_evt_write, data=kwargs
-        )
+        self.evt_sync[conn_handle].notify(evt=BLEEvtID.gatts_evt_write, data=kwargs)
 
     def on_gap_evt_data_length_update_request(
         self, ble_driver, conn_handle, data_length_params
     ):
         self.driver.ble_gap_data_length_update(conn_handle, None, None)
 
-    def on_gatts_evt_exchange_mtu_request(
-        self, ble_driver, conn_handle, client_mtu
-    ):
+    def on_gatts_evt_exchange_mtu_request(self, ble_driver, conn_handle, client_mtu):
         ble_driver.ble_gatts_exchange_mtu_reply(conn_handle, self.default_mtu)
 
     def on_att_mtu_exchanged(self, ble_driver, conn_handle, att_mtu):
@@ -748,27 +677,16 @@ class BLEAdapter(BLEDriverObserver):
     ):
         for obs in self.observers:
             obs.on_conn_param_update_request(
-                ble_adapter=self,
-                conn_handle=conn_handle,
-                conn_params=conn_params,
+                ble_adapter=self, conn_handle=conn_handle, conn_params=conn_params
             )
 
     @wrapt.synchronized(observer_lock)
     def on_gattc_evt_hvx(
-        self,
-        ble_driver,
-        conn_handle,
-        status,
-        error_handle,
-        attr_handle,
-        hvx_type,
-        data,
+        self, ble_driver, conn_handle, status, error_handle, attr_handle, hvx_type, data
     ):
         if status != BLEGattStatusCode.success:
             logger.error(
-                "Error. Handle value notification failed. Status {}.".format(
-                    status
-                )
+                "Error. Handle value notification failed. Status {}.".format(status)
             )
             return
 
@@ -779,10 +697,7 @@ class BLEAdapter(BLEDriverObserver):
 
             for obs in self.observers:
                 obs.on_notification(
-                    ble_adapter=self,
-                    conn_handle=conn_handle,
-                    uuid=uuid,
-                    data=data,
+                    ble_adapter=self, conn_handle=conn_handle, uuid=uuid, data=data
                 )
 
         elif hvx_type == BLEGattHVXType.indication:
@@ -792,10 +707,7 @@ class BLEAdapter(BLEDriverObserver):
 
             for obs in self.observers:
                 obs.on_indication(
-                    ble_adapter=self,
-                    conn_handle=conn_handle,
-                    uuid=uuid,
-                    data=data,
+                    ble_adapter=self, conn_handle=conn_handle, uuid=uuid, data=data
                 )
 
             self.driver.ble_gattc_hv_confirm(conn_handle, attr_handle)

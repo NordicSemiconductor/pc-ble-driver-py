@@ -117,45 +117,35 @@ def desc_array_to_list(array_pointer, length):
 
 def handle_value_array_to_list(array_pointer, length):
     """Convert ble_gattc_handle_value_array to python list."""
-    data_array = ble_driver.ble_gattc_handle_value_array.frompointer(
-        array_pointer
-    )
+    data_array = ble_driver.ble_gattc_handle_value_array.frompointer(array_pointer)
     data_list = _populate_list(data_array, length)
     return data_list
 
 
 def attr_info_array_to_list(array_pointer, length):
     """Convert ble_gattc_attr_info_array to python list."""
-    data_array = ble_driver.ble_gattc_attr_info_array.frompointer(
-        array_pointer
-    )
+    data_array = ble_driver.ble_gattc_attr_info_array.frompointer(array_pointer)
     data_list = _populate_list(data_array, length)
     return data_list
 
 
 def attr_info16_array_to_list(array_pointer, length):
     """Convert ble_gattc_attr_info16_array to python list."""
-    data_array = ble_driver.ble_gattc_attr_info16_array.frompointer(
-        array_pointer
-    )
+    data_array = ble_driver.ble_gattc_attr_info16_array.frompointer(array_pointer)
     data_list = _populate_list(data_array, length)
     return data_list
 
 
 def attr_info128_array_to_list(array_pointer, length):
     """Convert ble_gattc_attr_info128_array to python list."""
-    data_array = ble_driver.ble_gattc_attr_info128_array.frompointer(
-        array_pointer
-    )
+    data_array = ble_driver.ble_gattc_attr_info128_array.frompointer(array_pointer)
     data_list = _populate_list(data_array, length)
     return data_list
 
 
 def serial_port_desc_array_to_list(array_pointer, length):
     """Convert sd_rpc_serial_port_desc_array to python list."""
-    data_array = ble_driver.sd_rpc_serial_port_desc_array.frompointer(
-        array_pointer
-    )
+    data_array = ble_driver.sd_rpc_serial_port_desc_array.frompointer(array_pointer)
     data_list = _populate_list(data_array, length)
     return data_list
 
@@ -219,18 +209,14 @@ def list_to_desc_array(data_list):
 def list_to_handle_value_array(data_list):
     """Convert python list to ble_gattc_handle_value_array."""
 
-    data_array = _populate_array(
-        data_list, ble_driver.ble_gattc_handle_value_array
-    )
+    data_array = _populate_array(data_list, ble_driver.ble_gattc_handle_value_array)
     return data_array
 
 
 def list_to_serial_port_desc_array(data_list):
     """Convert python list to sd_rpc_serial_port_desc_array."""
 
-    data_array = _populate_array(
-        data_list, ble_driver.sd_rpc_serial_port_desc_array
-    )
+    data_array = _populate_array(data_list, ble_driver.sd_rpc_serial_port_desc_array)
     return data_array
 
 

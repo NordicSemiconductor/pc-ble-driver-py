@@ -51,6 +51,7 @@ class NotImplementedException(NordicSemiException):
     """
     Exception used when functionality has not been implemented yet.
     """
+
     pass
 
 
@@ -58,6 +59,7 @@ class InvalidArgumentException(NordicSemiException):
     """"
     Exception used when a argument is of wrong type
     """
+
     pass
 
 
@@ -65,6 +67,7 @@ class MissingArgumentException(NordicSemiException):
     """"
     Exception used when a argument is missing
     """
+
     pass
 
 
@@ -72,4 +75,5 @@ class IllegalStateException(NordicSemiException):
     """"
     Exception used when program is in an illegal state
     """
+
     pass
