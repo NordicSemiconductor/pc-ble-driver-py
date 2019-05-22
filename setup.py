@@ -45,7 +45,7 @@ from setuptools import find_packages
 py2 = sys.version_info[0] == 2
 py3 = sys.version_info[0] == 3
 
-py_version_old_message = 'pc-ble-driver-py only supports Python version 2.7 and 3.6 and newer'
+py_version_old_message = 'pc-ble-driver-py only supports Python version 2.7 and 3.7 and newer'
 requirements = []
 
 if py2:
@@ -55,7 +55,7 @@ if py2:
 
     requirements = ['enum34', 'wrapt', 'future', 'typing']
 elif py3:
-    if sys.version_info[1] < 5:
+    if sys.version_info[1] < 7:
         print(py_version_old_message)
         sys.exit(-1)
 
