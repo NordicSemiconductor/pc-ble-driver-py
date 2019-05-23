@@ -85,7 +85,7 @@ The wheel packages are found in the `dist` directory
 
 To build this project you will need the following tools:
 
-* [SWIG](http://www.swig.org/) (>= 3.10)
+* [SWIG](http://www.swig.org/) (>= 4.0)
 * [Python](https://www.python.org/) (==2.7 && >=3.7)
 * [vcpkg](https://github.com/NordicPlayground/vcpkg)
 * A C/C++ toolchain (should already have been installed to build nrf-ble-driver)
