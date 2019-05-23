@@ -1,4 +1,0 @@
-[submodule "pc-ble-driver"]
-	path = pc-ble-driver
-	url = https://github.com/NordicSemiconductor/pc-ble-driver.git
-	branch = master
