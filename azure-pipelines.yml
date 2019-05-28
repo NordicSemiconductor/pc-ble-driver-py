@@ -59,6 +59,7 @@ jobs:
       displayName: 'Install vcpkg'
     - script: |
         export PATH=$VCPKG_ROOT:$PATH
+        export VCPKG_OSX_DEPLOYMENT_TARGET=10.9
         vcpkg install nrf-ble-driver:$(python_arch)-osx
       displayName: 'Install nrf-ble-driver'
     - bash: |
