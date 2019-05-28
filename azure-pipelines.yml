@@ -6,51 +6,24 @@ trigger:
 
 jobs:
   # Linux
-  - job: Linux
+  - job: 'manylinux2010_x86_64'
     variables:
-      conda_version: 'Linux-x86_64'
-      conda_root: '$(Agent.HomeDirectory)/miniconda3'
-      VCPKG_ROOT: '$(Agent.HomeDirectory)/vcpkg'
       python_arch: 'x64'
     pool:
       vmImage: 'ubuntu-16.04'
     steps:
-    - script: |
-        sudo apt-get update
-        sudo apt-get install ninja-build swig libudev-dev
-      displayName: 'Install toolchain'
-    - script: |
-        wget https://repo.anaconda.com/miniconda/Miniconda3-latest-$(conda_version).sh -O $(Agent.HomeDirectory)/miniconda.sh
-        bash $(Agent.HomeDirectory)/miniconda.sh -b -p $(conda_root)
-      displayName: 'Install conda'
-    - script: |
-        git clone https://github.com/NordicPlayground/vcpkg.git $(VCPKG_ROOT)
-        $(VCPKG_ROOT)/bootstrap-vcpkg.sh
-      displayName: 'Install vcpkg'
-    - script: |
-        export PATH=$VCPKG_ROOT:$PATH
-        vcpkg install nrf-ble-driver:$(python_arch)-linux
-      displayName: 'Install nrf-ble-driver'
-    - script: |
-        $(conda_root)/bin/conda create -yq -n python2.7 python=2.7
-      displayName: 'Install Python 2.7'
+    - task: Docker@1
+      displayName: 'Build ManyLinux'
+      inputs:
+        command: 'Run an image'
+        containerCommand: '/data/build_many_linux.sh'
+        containerRegistry: 'DockerImage'
+        repository: 'scikitbuild'
+        imageName: manylinux2010_x86_64
+        runInBackground: false
+        volumes: '$(System.DefaultWorkingDirectory):/data'
     - bash: |
-        export PATH=$(conda_root)/envs/python2.7/bin:$PATH
-        rm -rf _skbuild
-        pip install -r requirements-dev.txt
-        python setup.py bdist_wheel --build-type RelWithDebInfo
-      displayName: 'Build for python 2.7'
-    - script: |
-        $(conda_root)/bin/conda create -yq -n python3.7 python=3.7
-      displayName: 'Install Python 3.7'
-    - bash: |
-        export PATH=$(conda_root)/envs/python3.7/bin:$PATH
-        rm -rf _skbuild
-        pip install -r requirements-dev.txt
-        python setup.py bdist_wheel --build-type RelWithDebInfo
-      displayName: 'Build for python 3.7'
-    - bash: |
-        cp -R dist/*.whl "$(Build.ArtifactStagingDirectory)"
+        cp -R wheelhouse/*.whl "$(Build.ArtifactStagingDirectory)"
       displayName: 'Copy artifacts'
     - task: GitHubRelease@0
       inputs:
@@ -63,8 +36,6 @@ jobs:
         isDraft: 'true'
         addChangeLog: 'false'
       condition: ne(variables['Build.Reason'], 'PullRequest')
-
-
   # macOS
   - job: macOS
     variables:
