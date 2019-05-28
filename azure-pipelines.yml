@@ -12,14 +12,19 @@ jobs:
     pool:
       vmImage: 'ubuntu-16.04'
     steps:
-    - task: Docker@1
+    - task: Docker@2
+      displayName: Login to Docker Hub
+      inputs:
+        command: Login
+        containerRegistry: DockerImage
+    - task: Docker@2
       displayName: 'Build ManyLinux'
       inputs:
         command: 'Run an image'
         containerCommand: '/data/build_many_linux.sh'
         containerRegistry: 'DockerImage'
-        #repository: 'scikitbuild'
-        imageName: 'scikitbuild/manylinux2010_x86_64'
+        repository: 'pypywheels'
+        imageName: 'manylinux2010-pypy_x86_64'
         runInBackground: false
         volumes: '$(System.DefaultWorkingDirectory):/data'
     - bash: |
