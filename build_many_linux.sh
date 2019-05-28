@@ -2,7 +2,7 @@
 set -e -x
 
 yes | yum update
-yes | yum install swig libudev-devel pcre-devel
+yes | yum install libudev-devel pcre-devel
 
 export TOOLS_ROOT=$HOME/tools
 export VCPKG_ROOT=$TOOLS_ROOT/vcpkg
