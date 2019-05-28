@@ -22,8 +22,8 @@ jobs:
       displayName: 'Build ManyLinux'
       inputs:
         containerRegistry: DockerImage
-        repository: 'pypywheels'
-        imageName: 'manylinux2010-pypy_x86_64'
+        #repository: 'pypywheels'
+        #imageName: 'manylinux2010-pypy_x86_64'
         command: run
         arguments: '--rm -e PLAT=$(wheel_platform) -v $(System.DefaultWorkingDirectory):/data pypywheels/manylinux2010-pypy_x86_64 /data/build_many_linux.sh'
     - bash: |
@@ -74,13 +74,13 @@ jobs:
         rm -rf _skbuild
         pypath=`which python2.7`
         ${pypath} -m pip install -r requirements-dev.txt
-        ${pypath} setup.py bdist_wheel --build-type RelWithDebInfo -- -DCMAKE_OSX_DEPLOYMENT_TARGET=10.9
+        ${pypath} setup.py bdist_wheel --build-type Release -- -DCMAKE_OSX_DEPLOYMENT_TARGET=10.9
       displayName: 'Build for python 2.7'
     - bash: |
         rm -rf _skbuild
         pypath=`which python3.7`
         ${pypath} -m pip install -r requirements-dev.txt
-        ${pypath} setup.py bdist_wheel --build-type RelWithDebInfo -- -DCMAKE_OSX_DEPLOYMENT_TARGET=10.9
+        ${pypath} setup.py bdist_wheel --build-type Release -- -DCMAKE_OSX_DEPLOYMENT_TARGET=10.9
       displayName: 'Build for python 3.7'
     - bash: |
         cp -R dist/*.whl "$(Build.ArtifactStagingDirectory)"
