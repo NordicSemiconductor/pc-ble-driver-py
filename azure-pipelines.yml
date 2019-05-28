@@ -6,7 +6,7 @@ trigger:
 
 jobs:
   # Linux
-  - job: 'manylinux2010_x86_64'
+  - job: 'Linux'
     variables:
       python_arch: 'x64'
     pool:
