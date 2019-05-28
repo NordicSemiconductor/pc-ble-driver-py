@@ -21,25 +21,30 @@ mkdir -p $TOOLS_ROOT
 curl -L -O $DOWNLOAD_CMAKE_URL
 bash $DOWNLOAD_CMAKE_FILENAME --skip-license --prefix=$TOOLS_ROOT
 
-#curl -L -O $DOWNLOAD_NINJA_URL
-#mkdir $HOME/temp
-#unzip v1.9.0.zip -d $HOME/temp
-#cd $HOME/temp/ninja-1.9.0
-#./configure.py --bootstrap
-#cp ninja $TOOLS_ROOT/bin
-#cd $HOME && rm -rf $HOME/temp
+# Build recent version of Ninja
+curl -L -O $DOWNLOAD_NINJA_URL
+mkdir $HOME/temp
+unzip v1.9.0.zip -d $HOME/temp
+cd $HOME/temp/ninja-1.9.0
+./configure.py --bootstrap
+cp ninja $TOOLS_ROOT/bin
+cd $HOME && rm -rf $HOME/temp
 
+# Build recent version of SWIG
 curl -L -O $DOWNLOAD_SWIG_URL
 mkdir $HOME/temp
 tar zxf rel-4.0.0.tar.gz --directory $HOME/temp
 cd $HOME/temp/swig-rel-4.0.0
 ./autogen.sh
-./configure --prefix=$TOOLS_ROOT
+./configure --prefix=$TOOLS_ROOT --without-tcl --without-perl5 --without-octave --without-scilab --without-java --without-javascript --without-android --without-guile --without-mzscheme --without-ruby --without-php --without-ocaml --without-csharp --without-lua --without-r --without-go --without-d
 make
 make install
 
+# Build vcpkg
 git clone https://github.com/NordicPlayground/vcpkg.git $VCPKG_ROOT
 $VCPKG_ROOT/bootstrap-vcpkg.sh
+
+# Build nrf-ble-driver
 vcpkg install nrf-ble-driver
 
 # Build the wheels
