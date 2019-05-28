@@ -16,13 +16,14 @@ jobs:
       displayName: Login to Docker Hub
       inputs:
         command: login
+        dockerRegistryEndpoint: DockerImage
         containerRegistry: DockerImage
     - task: Docker@1
       displayName: 'Build ManyLinux'
       inputs:
         command: run
         containerCommand: '/data/build_many_linux.sh'
-        containerRegistry: 'DockerImage'
+        containerRegistry: DockerImage
         repository: 'pypywheels'
         imageName: 'manylinux2010-pypy_x86_64'
         runInBackground: false
