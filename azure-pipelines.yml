@@ -18,7 +18,7 @@ jobs:
         command: 'Run an image'
         containerCommand: '/data/build_many_linux.sh'
         containerRegistry: 'DockerImage'
-        repository: 'scikitbuild'
+        #repository: 'scikitbuild'
         imageName: 'scikitbuild/manylinux2010_x86_64'
         runInBackground: false
         volumes: '$(System.DefaultWorkingDirectory):/data'
