@@ -12,7 +12,7 @@ export DOWNLOAD_CMAKE_VERSION=3.14.4
 export DOWNLOAD_CMAKE_FILENAME=cmake-$DOWNLOAD_CMAKE_VERSION-Linux-x86_64.sh
 export DOWNLOAD_CMAKE_URL=https://github.com/Kitware/CMake/releases/download/v$DOWNLOAD_CMAKE_VERSION/$DOWNLOAD_CMAKE_FILENAME
 
-#export DOWNLOAD_NINJA_URL=https://github.com/ninja-build/ninja/archive/v1.9.0.zip
+export DOWNLOAD_NINJA_URL=https://github.com/ninja-build/ninja/archive/v1.9.0.zip
 export DOWNLOAD_SWIG_URL=https://github.com/swig/swig/archive/rel-4.0.0.tar.gz
 
 rm -rf $TOOLS_ROOT
