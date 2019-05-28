@@ -8,7 +8,6 @@ jobs:
   # Linux
   - job: 'Linux'
     variables:
-      python_arch: 'x64'
       wheel_platform: 'manylinux2010_x86_64'
     pool:
       vmImage: 'ubuntu-16.04'
@@ -22,8 +21,6 @@ jobs:
       displayName: 'Build ManyLinux'
       inputs:
         containerRegistry: DockerImage
-        #repository: 'pypywheels'
-        #imageName: 'manylinux2010-pypy_x86_64'
         command: run
         arguments: '--rm -e PLAT=$(wheel_platform) -v $(System.DefaultWorkingDirectory):/data pypywheels/manylinux2010-pypy_x86_64 /data/build_many_linux.sh'
     - bash: |
