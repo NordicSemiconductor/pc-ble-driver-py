@@ -114,7 +114,14 @@ foreach(SD_API_VER ${SD_API_VERS})
         target_include_directories(${PYTHON_MODULE_${SD_API_VER}} PRIVATE ${PC_BLE_DRIVER_PY_OUTDIR})
     endif()
 
-    target_link_libraries(${PYTHON_MODULE_${SD_API_VER}} PRIVATE nrf::nrf_ble_driver_sd_api_v${SD_API_VER}_${NRF_BLE_DRIVER_LINKAGE_TYPE} ${PYTHON_LIBRARY})
+    set(LINK_LIBRARIES nrf::nrf_ble_driver_sd_api_v${SD_API_VER}_${NRF_BLE_DRIVER_LINKAGE_TYPE})
+    if (WIN32 OR APPLE)
+        set(LINK_LIBRARIES ${LINK_LIBRARIES} ${PYTHON_LIBRARY})
+    endif()
+
+    message(STATUS "LINK_LIBRARIES are not ${LINK_LIBRARIES}")
+
+    target_link_libraries(${PYTHON_MODULE_${SD_API_VER}} PRIVATE ${LINK_LIBRARIES})
 
     get_target_property(CONNECTIVITY_SD_API_V${SD_API_VER}_PATH nrf::nrf_ble_driver_sd_api_v${SD_API_VER}_${NRF_BLE_DRIVER_LINKAGE_TYPE} INTERFACE_INCLUDE_DIRECTORIES)
     set(CONNECTIVITY_SD_API_V${SD_API_VER}_PATH ${CONNECTIVITY_SD_API_V${SD_API_VER}_PATH}/../../share/nrf-ble-driver/hex/sd_api_v${SD_API_VER})

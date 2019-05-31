@@ -8,49 +8,24 @@ jobs:
   # Linux
   - job: Linux
     variables:
-      conda_version: 'Linux-x86_64'
-      conda_root: '$(Agent.HomeDirectory)/miniconda3'
-      VCPKG_ROOT: '$(Agent.HomeDirectory)/vcpkg'
-      python_arch: 'x64'
+      wheel_platform: 'manylinux2010_x86_64'
     pool:
       vmImage: 'ubuntu-16.04'
     steps:
-    - script: |
-        sudo apt-get update
-        sudo apt-get install ninja-build swig libudev-dev
-      displayName: 'Install toolchain'
-    - script: |
-        wget https://repo.anaconda.com/miniconda/Miniconda3-latest-$(conda_version).sh -O $(Agent.HomeDirectory)/miniconda.sh
-        bash $(Agent.HomeDirectory)/miniconda.sh -b -p $(conda_root)
-      displayName: 'Install conda'
-    - script: |
-        git clone https://github.com/NordicPlayground/vcpkg.git $(VCPKG_ROOT)
-        $(VCPKG_ROOT)/bootstrap-vcpkg.sh
-      displayName: 'Install vcpkg'
-    - script: |
-        export PATH=$VCPKG_ROOT:$PATH
-        vcpkg install nrf-ble-driver:$(python_arch)-linux
-      displayName: 'Install nrf-ble-driver'
-    - script: |
-        $(conda_root)/bin/conda create -yq -n python2.7 python=2.7
-      displayName: 'Install Python 2.7'
+    - task: Docker@2
+      displayName: Login to Docker Hub
+      inputs:
+        command: login
+        containerRegistry: DockerImage
+    - task: Docker@2
+      displayName: 'Build ManyLinux'
+      inputs:
+        containerRegistry: DockerImage
+        command: run
+        arguments: '--rm -e PLAT=$(wheel_platform) -v $(System.DefaultWorkingDirectory):/data pypywheels/manylinux2010-pypy_x86_64 /data/build_many_linux.sh'
     - bash: |
-        export PATH=$(conda_root)/envs/python2.7/bin:$PATH
-        rm -rf _skbuild
-        pip install -r requirements-dev.txt
-        python setup.py bdist_wheel --build-type RelWithDebInfo
-      displayName: 'Build for python 2.7'
-    - script: |
-        $(conda_root)/bin/conda create -yq -n python3.7 python=3.7
-      displayName: 'Install Python 3.7'
-    - bash: |
-        export PATH=$(conda_root)/envs/python3.7/bin:$PATH
-        rm -rf _skbuild
-        pip install -r requirements-dev.txt
-        python setup.py bdist_wheel --build-type RelWithDebInfo
-      displayName: 'Build for python 3.7'
-    - bash: |
-        cp -R dist/*.whl "$(Build.ArtifactStagingDirectory)"
+        ls -R wheelhouse
+        cp --verbose -R wheelhouse/*.whl "$(Build.ArtifactStagingDirectory)"
       displayName: 'Copy artifacts'
     - task: GitHubRelease@0
       inputs:
@@ -63,8 +38,6 @@ jobs:
         isDraft: 'true'
         addChangeLog: 'false'
       condition: ne(variables['Build.Reason'], 'PullRequest')
-
-
   # macOS
   - job: macOS
     variables:
@@ -86,6 +59,7 @@ jobs:
       displayName: 'Install vcpkg'
     - script: |
         export PATH=$VCPKG_ROOT:$PATH
+        export VCPKG_OSX_DEPLOYMENT_TARGET=10.9
         vcpkg install nrf-ble-driver:$(python_arch)-osx
       displayName: 'Install nrf-ble-driver'
     - bash: |
@@ -98,13 +72,13 @@ jobs:
         rm -rf _skbuild
         pypath=`which python2.7`
         ${pypath} -m pip install -r requirements-dev.txt
-        ${pypath} setup.py bdist_wheel --build-type RelWithDebInfo -- -DCMAKE_OSX_DEPLOYMENT_TARGET=10.9
+        ${pypath} setup.py bdist_wheel --build-type Release -- -DCMAKE_OSX_DEPLOYMENT_TARGET=10.9
       displayName: 'Build for python 2.7'
     - bash: |
         rm -rf _skbuild
         pypath=`which python3.7`
         ${pypath} -m pip install -r requirements-dev.txt
-        ${pypath} setup.py bdist_wheel --build-type RelWithDebInfo -- -DCMAKE_OSX_DEPLOYMENT_TARGET=10.9
+        ${pypath} setup.py bdist_wheel --build-type Release -- -DCMAKE_OSX_DEPLOYMENT_TARGET=10.9
       displayName: 'Build for python 3.7'
     - bash: |
         cp -R dist/*.whl "$(Build.ArtifactStagingDirectory)"
