@@ -13,14 +13,14 @@ jobs:
       vmImage: 'ubuntu-16.04'
     steps:
     - task: Docker@2
-      displayName: Login to Docker Hub
+      displayName: Login to Azure Container Registry
       inputs:
         command: login
-        containerRegistry: acr-nrfprivateeu
+        containerRegistry: nrfprivateeu
     - task: Docker@2
       displayName: 'Build ManyLinux'
       inputs:
-        containerRegistry: acr-nrfprivateeu
+        containerRegistry: nrfprivateeu
         command: run
         arguments: '--rm -e PLAT=$(wheel_platform) -v $(System.DefaultWorkingDirectory):/data nrf/projects-pc-ble-driver-py-linux:v1 /build/build_wheels.sh'
     - bash: |
