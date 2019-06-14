@@ -18,15 +18,15 @@ jobs:
         command: login
         containerRegistry: acr-nrfprivateeu
     - task: Docker@2
-      displayName: 'Build ManyLinux'
+      displayName: 'Build ManyLinux wheel'
       inputs:
         containerRegistry: acr-nrfprivateeu
         command: run
-        arguments: '--rm -e PLAT=$(wheel_platform) -v $(System.DefaultWorkingDirectory):/data nrfprivateeu.azurecr.io:nrf/projects-pc-ble-driver-py-linux:v1 /build/build_wheels.sh'
+        arguments: '--rm -e PLAT=$(wheel_platform) -v $(System.DefaultWorkingDirectory):/data nrfprivateeu/nrf/projects-pc-ble-driver-py-linux /build/build_wheels.sh'
     - bash: |
         ls -R wheelhouse
         cp --verbose -R wheelhouse/*.whl "$(Build.ArtifactStagingDirectory)"
-      displayName: 'Copy artifacts'
+      displayName: 'Copy wheels'
     - task: GitHubRelease@0
       inputs:
         gitHubConnection: 'waylandCI'
