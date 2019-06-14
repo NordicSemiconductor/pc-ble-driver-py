@@ -1453,7 +1453,8 @@ class BLEDriver(object):
                 raise
 
             if not flasher.fw_check():
-                logger.info("Flashing board with firmware")
+                logger.info("Flashing '{}' board with '{}' firmware"
+                            .format(serial_port, config.conn_ic_hex_get()))
                 flasher.fw_flash()
 
             flasher.reset()
