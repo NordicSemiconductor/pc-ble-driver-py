@@ -1784,7 +1784,7 @@ class BLEDriver(object):
     @NordicSemiErrorCheck
     @wrapt.synchronized(api_lock)
     def ble_gap_sec_params_reply(
-        self, conn_handle, sec_status, sec_params, own_keys, peer_keys
+        self, conn_handle, sec_status, sec_params, own_keys=None, peer_keys=None
     ):
         assert isinstance(sec_status, BLEGapSecStatus), "Invalid argument type"
         assert isinstance(
