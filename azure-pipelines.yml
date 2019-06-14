@@ -22,7 +22,7 @@ jobs:
       inputs:
         containerRegistry: acr-nrfprivateeu
         command: run
-        arguments: '--rm -e PLAT=$(wheel_platform) -v $(System.DefaultWorkingDirectory):/data nrfprivateeu:nrf/projects-pc-ble-driver-py-linux /build/build_wheels.sh'
+        arguments: '--rm -e PLAT=$(wheel_platform) -v $(System.DefaultWorkingDirectory):/data nrf/projects-pc-ble-driver-py-linux /build/build_wheels.sh'
     - bash: |
         ls -R wheelhouse
         cp --verbose -R wheelhouse/*.whl "$(Build.ArtifactStagingDirectory)"
