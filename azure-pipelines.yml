@@ -51,11 +51,11 @@ jobs:
         sudo xcode-select -s /Applications/Xcode_10.1.app
       displayName: 'Install XCode'
     - script: |
-        brew install gcc swig
+        brew install swig brew@6
       displayName: 'Install gcc and swig'
     - script: |
         git clone https://github.com/NordicPlayground/vcpkg.git $(VCPKG_ROOT)
-        $(VCPKG_ROOT)/bootstrap-vcpkg.sh
+        CC=gcc-6 CXX=g++-6 $(VCPKG_ROOT)/bootstrap-vcpkg.sh
       displayName: 'Install vcpkg'
     - script: |
         export PATH=$VCPKG_ROOT:$PATH
