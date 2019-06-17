@@ -2525,7 +2525,7 @@ class Flasher(object):
             elif snr is None:
                 snr = [d.serial_number for d in serial_ports if d.port == serial_port][0]
         except IndexError:
-            raise NordicSemiException("Board not found: {}".format([s for s in [serial_port, snr] if s is not None]))
+            raise NordicSemiException("Board not found: {}".format(serial_port or snr))
 
         self.serial_port = serial_port
         self.snr = snr.lstrip("0")
