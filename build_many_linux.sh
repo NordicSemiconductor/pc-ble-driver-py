@@ -48,7 +48,7 @@ $VCPKG_ROOT/bootstrap-vcpkg.sh
 vcpkg install nrf-ble-driver
 
 # Build the wheels
-for PYBIN in /opt/python/cp[23]7-cp[23]7*/bin; do
+for PYBIN in /opt/python/cp37-cp37*/bin; do
     echo "Compiling for $PYBIN"
     rm -rf /data/_skbuild
     "${PYBIN}/pip" install -r /data/requirements-dev.txt
