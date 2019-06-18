@@ -1785,7 +1785,7 @@ class BLEDriver(object):
     @NordicSemiErrorCheck
     @wrapt.synchronized(api_lock)
     def ble_gap_sec_params_reply(
-        self, conn_handle, sec_status, sec_params, own_keys, peer_keys
+        self, conn_handle, sec_status, sec_params, own_keys=None, peer_keys=None
     ):
         assert isinstance(sec_status, BLEGapSecStatus), "Invalid argument type"
         assert isinstance(
@@ -2504,6 +2504,12 @@ class Flasher(object):
         if serial_port is None and snr is None:
             raise NordicSemiException("Invalid Flasher initialization")
 
+        # cross-platform support: cast the params to string in case of unicode type coming from shell
+        if serial_port is not None:
+            serial_port = str(serial_port)
+        if snr is not None:
+            snr = str(snr)
+
         nrfjprog = Flasher.which(Flasher.NRFJPROG)
         if nrfjprog is None:
             nrfjprog = Flasher.which("{}.exe".format(Flasher.NRFJPROG))
@@ -2513,15 +2519,13 @@ class Flasher(object):
         serial_ports = BLEDriver.enum_serial_ports()
         try:
             if serial_port is None:
-                serial_port = [d.port for d in serial_ports if d.serial_number == snr][
-                    0
-                ]
+                # Depending of platform and python version, serial_number may be padded with '0' up to 12 chars
+                serial_port = [d.port for d in serial_ports if d.serial_number == snr or
+                                                               d.serial_number == snr.rjust(12, '0')][0]
             elif snr is None:
-                snr = [d.serial_number for d in serial_ports if d.port == serial_port][
-                    0
-                ]
+                snr = [d.serial_number for d in serial_ports if d.port == serial_port][0]
         except IndexError:
-            raise NordicSemiException("board not found")
+            raise NordicSemiException("Board not found: {}".format(serial_port or snr))
 
         self.serial_port = serial_port
         self.snr = snr.lstrip("0")

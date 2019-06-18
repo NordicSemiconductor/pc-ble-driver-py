@@ -99,6 +99,8 @@ class ProgramAdapter(unittest.TestCase):
                     ),
                 )
 
+                # Try to use the device with leading zeroes in serial number removed
+                flasher = Flasher(snr=serial_port.serial_number.lstrip('0'))
                 flasher.reset()
 
                 logger.info("%s/%s programmed successfully", serial_port.port, serial_number)
