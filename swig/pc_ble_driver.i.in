@@ -54,6 +54,7 @@
 #include <cstdio>
 #include <mutex>
 #include <map>
+#include <memory>
 %}
 
 // Requires special handling
