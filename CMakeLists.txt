@@ -54,30 +54,10 @@ foreach(SD_API_VER ${SD_API_VERS})
     # set_property(SOURCE ${SWIG_I_FILE_${SD_API_VER}} APPEND PROPERTY SWIG_FLAGS "-builtin")
 endforeach()
 
-set(MSFT_NON_STANDARD_COMPILER 0)
-
-if(WIN32 AND MSVC_VERSION LESS 1600)
-    # See https://cmake.org/cmake/help/v3.12/variable/MSVC_VERSION.html for more details on compiler version
-    # See https://en.cppreference.com/w/c/types/integer for more details on fixed width integer types
-    set(MSFT_NON_STANDARD_COMPILER 1)
-    message(STATUS "Detected non-standard C99 MSVC compiler, adding stdint.h")
-endif()
-
 set(NRF_BLE_DRIVER_LINKAGE_TYPE "static")
 
 if(WIN32)
     set(NRF_BLE_DRIVER_LINKAGE_TYPE "shared")
-endif()
-
-if(MSFT_NON_STANDARD_COMPILER)
-    execute_process(
-        COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_LIST_DIR}/swig/win32/vc90-compat/stdint.h ${PC_BLE_DRIVER_PY_OUTDIR}
-        RESULT_VARIABLE result
-    )
-
-    if(NOT (result EQUAL 0))
-        message(FATAL_ERROR "Not able to copy stdint.h compatibility file for Microsoft VC90")
-    endif()
 endif()
 
 foreach(SD_API_VER ${SD_API_VERS})
