@@ -50,12 +50,11 @@
 // Includes used in this transformation
 %{
 #include "sd_rpc.h"
-#include "stdio.h"
 
-#ifdef DEBUG
-#include <pthread.h>
-#endif // DEBUG
-
+#include <cstdio>
+#include <mutex>
+#include <map>
+#include <memory>
 %}
 
 // Requires special handling
@@ -122,7 +121,7 @@
 %typemap(in) PyObject *pyfunc {
     if (!PyCallable_Check($input)) {
         PyErr_SetString(PyExc_TypeError, "Need a callable object!");
-        return NULL;
+        return nullptr;
     }
     $1 = $input;
 }
@@ -143,126 +142,56 @@ typedef struct
     PyObject *log_callback;
     PyObject *status_callback;
     PyObject *event_callback;
+    std::mutex callback_mutex;
 } adapter_context_t;
 
-static bool adapter_contexts_initialized = false;
+static std::map<void*, std::shared_ptr<adapter_context_t>> adapter_contexts{};
 
-static adapter_context_t adapter_contexts[MAX_ADAPTERS];
-
-void adapter_context_init()
+std::shared_ptr<adapter_context_t> adapter_context_add(adapter_t *adapter_ptr)
 {
-    if (!adapter_contexts_initialized)
+    if (adapter_contexts.find(adapter_ptr->internal) != adapter_contexts.end())
     {
-        for(size_t idx = 0; idx < MAX_ADAPTERS; idx++)
-        {
-            adapter_contexts[idx].adapter_internal_ptr = NULL;
-            adapter_contexts[idx].log_callback = NULL;
-            adapter_contexts[idx].status_callback = NULL;
-            adapter_contexts[idx].event_callback = NULL;
-        }
-
-        adapter_contexts_initialized = true;
-    }
-}
-
-adapter_context_t *adapter_context_add(adapter_t *adapter_ptr)
-{
-    adapter_context_init();
-
-    for(size_t idx = 0; idx < MAX_ADAPTERS; idx++)
-    {
-        if (adapter_contexts[idx].adapter_internal_ptr == adapter_ptr->internal)
-        {
 #ifdef DEBUG
-            printf("adapter_context_t already exists for %p:%p\n",
-                adapter_ptr,
-                adapter_ptr->internal
-            );
+        printf("adapter_context_t already exists for %p:%p\n",
+            adapter_ptr,
+            adapter_ptr->internal
+        );
 #endif
-
-            return NULL;
-        }
+            return nullptr;
     }
 
-    for(size_t idx = 0; idx < MAX_ADAPTERS; idx++)
-    {
-        if (adapter_contexts[idx].adapter_internal_ptr == NULL)
-        {
-            adapter_contexts[idx].adapter_internal_ptr = adapter_ptr->internal;
-#ifdef DEBUG
-            printf("adapter_context_t added for %p:%p, address is %p\n",
-                adapter_ptr,
-                adapter_ptr->internal,
-                &adapter_contexts[idx]
-            );
-#endif
-            return &adapter_contexts[idx];
-        }
-    }
-
-    // No adapter_context available for storing adapter_context_t
-#ifdef DEBUG
-    printf("adapter_context_t no available space in adapter_contexts for %p:%p\n", adapter_ptr, adapter_ptr->internal);
-#endif
-
-    return NULL;
+    auto new_context = std::make_shared<adapter_context_t>();
+    new_context->adapter_internal_ptr = adapter_ptr->internal;
+    adapter_contexts[adapter_ptr->internal] = new_context;
+    return new_context;
 }
 
 bool adapter_context_remove(adapter_t *adapter_ptr)
 {
-    adapter_context_init();
-
-    for(size_t idx = 0; idx < MAX_ADAPTERS; idx++)
-    {
-        if (adapter_contexts[idx].adapter_internal_ptr == adapter_ptr->internal)
-        {
-            adapter_contexts[idx].adapter_internal_ptr = NULL;
-            adapter_contexts[idx].status_callback = NULL;
-            adapter_contexts[idx].log_callback = NULL;
-            adapter_contexts[idx].event_callback = NULL;
-            return true;
-        }
-    }
-
-    return false;
+    return adapter_contexts.erase(adapter_ptr->internal) == 1;
 }
 
-adapter_context_t *adapter_context_find(adapter_t *adapter_ptr)
+std::shared_ptr<adapter_context_t> adapter_context_find(adapter_t *adapter_ptr)
 {
-    adapter_context_init();
-
 #ifdef DEBUG
     printf("adapter_context_find: searching for adapter_ptr: %p:%p\n",
         adapter_ptr,
         adapter_ptr->internal);
 #endif
 
-    for(size_t idx = 0; idx < MAX_ADAPTERS; idx++)
-    {
-#ifdef DEBUG
-        printf("adapter_context_find: context adapter_internal_ptr:%p\n",
-            adapter_ptr,
-            adapter_ptr->internal,
-            adapter_contexts[idx].adapter_internal_ptr
-        );
-#endif
+    auto context = adapter_contexts.find(adapter_ptr->internal);
 
-        if (adapter_contexts[idx].adapter_internal_ptr == adapter_ptr->internal)
-        {
-#ifdef DEBUG
-            printf("adapter_context_find: context found\n");
-#endif
-            return &adapter_contexts[idx];
-        }
+    if (context != adapter_contexts.end())
+    {
+        return context->second;
     }
 
 #ifdef DEBUG
     printf("adapter_context_find: no context found\n");
 #endif
 
-    return NULL;
+    return nullptr;
 }
-
 %}
 
 
@@ -278,15 +207,9 @@ static void PythonEvtCallBack(adapter_t *adapter, ble_evt_t *ble_event)
     ble_evt_t* copied_ble_event;
     PyObject *result;
 
-#if DEBUG
-    unsigned long int tr;
-    tr = (unsigned long int)pthread_self();
-    printf("XXXX-XX-XX XX:XX:XX,XXX BIND tid:0x%lX\n", tr);
-#endif // DEBUG
+    auto adapter_context = adapter_context_find(adapter);
 
-    adapter_context_t *adapter_context = adapter_context_find(adapter);
-
-    if (adapter_context == NULL)
+    if (!adapter_context)
     {
 #ifdef DEBUG
         printf("event_callback: No adapter context found for adapter %p\n", adapter);
@@ -294,20 +217,22 @@ static void PythonEvtCallBack(adapter_t *adapter, ble_evt_t *ble_event)
         return;
     }
 
-    if(adapter_context->event_callback == NULL) {
+    if(adapter_context->event_callback == nullptr) {
 #ifdef DEBUG
         printf("event_callback not set in adapter_context for adapter %p, returning\n", adapter);
 #endif
         return;
     }
 
+    std::lock_guard<std::mutex> lck(adapter_context->callback_mutex);
+
     func = adapter_context->event_callback;
 
-#if DEBUG
-    printf("sizeof(ble_evt_t): %ld\n", sizeof(ble_evt_t));
+#ifdef DEBUG
+    printf("sizeof(ble_evt_t): %zd\n", sizeof(ble_evt_t));
     printf("ble_event->header.evt_len: %d\n", ble_event->header.evt_len);
     printf("ble_event->header.evt_id: %X\n", ble_event->header.evt_id);
-    printf("sizeof(ble_evt_hdr_t): %ld\n", sizeof(ble_evt_hdr_t));
+    printf("sizeof(ble_evt_hdr_t): %zd\n", sizeof(ble_evt_hdr_t));
 #endif // DEBUG
 
     // Do a copy of the event so that the Python developer is able to access the event after
@@ -332,6 +257,7 @@ static void PythonEvtCallBack(adapter_t *adapter, ble_evt_t *ble_event)
     arglist = Py_BuildValue("(OO)", adapter_obj, ble_evt_obj);
 
     result = PyEval_CallObject(func, arglist);
+
     Py_XDECREF(result);
     Py_XDECREF(adapter_obj);
     Py_XDECREF(ble_evt_obj);
@@ -354,9 +280,9 @@ static void PythonStatusCallBack(adapter_t *adapter, sd_rpc_app_status_t status_
     PyGILState_STATE gstate;
     PyObject *result;
 
-    adapter_context_t *adapter_context = adapter_context_find(adapter);
+    auto adapter_context = adapter_context_find(adapter);
 
-    if (adapter_context == NULL)
+    if (!adapter_context)
     {
 #ifdef DEBUG
         printf("status_callback: No adapter context found for adapter %p\n", adapter);
@@ -366,21 +292,17 @@ static void PythonStatusCallBack(adapter_t *adapter, sd_rpc_app_status_t status_
 
     func = adapter_context->status_callback;
 
-    if(adapter_context->status_callback == NULL) {
+    if(adapter_context->status_callback == nullptr) {
 #ifdef DEBUG
         printf("status_callback not set in adapter_context for adapter %p, returning\n", adapter);
 #endif
         return;
     }
 
+    std::lock_guard<std::mutex> lck(adapter_context->callback_mutex);
+
     // For information regarding GIL and copying of data, please look at
     // function PythonEvtCallBack.
-
-#if DEBUG
-    unsigned long int tr;
-    tr = (unsigned long int)pthread_self();
-    printf("XXXX-XX-XX XX:XX:XX,XXX BIND tid:0x%lX\n", tr);
-#endif // DEBUG
 
     gstate = PyGILState_Ensure();
 
@@ -392,8 +314,8 @@ static void PythonStatusCallBack(adapter_t *adapter, sd_rpc_app_status_t status_
     arglist = Py_BuildValue("(OOO)", adapter_obj, status_code_obj, status_message_obj);
 
     result = PyEval_CallObject(func, arglist);
-    Py_XDECREF(result);
 
+    Py_XDECREF(result);
     Py_XDECREF(adapter_obj);
     Py_XDECREF(status_code_obj);
     Py_XDECREF(status_message_obj);
@@ -415,9 +337,9 @@ static void PythonLogCallBack(adapter_t *adapter, sd_rpc_log_severity_t severity
     PyGILState_STATE gstate;
     PyObject *result;
 
-    adapter_context_t *adapter_context = adapter_context_find(adapter);
+    auto adapter_context = adapter_context_find(adapter);
 
-    if (adapter_context == NULL)
+    if (!adapter_context)
     {
 #ifdef DEBUG
         printf("log_callback: No adapter context found for adapter %p\n", adapter);
@@ -425,23 +347,19 @@ static void PythonLogCallBack(adapter_t *adapter, sd_rpc_log_severity_t severity
         return;
     }
 
-    if(adapter_context->log_callback == NULL) {
+    if(adapter_context->log_callback == nullptr) {
 #ifdef DEBUG
         printf("log_callback not set in adapter_context for adapter %p, returning\n", adapter);
 #endif
         return;
     }
 
+    std::lock_guard<std::mutex> lck(adapter_context->callback_mutex);
+
     func = adapter_context->log_callback;
 
     // For information regarding GIL and copying of data, please look at
     // function PythonEvtCallBack.
-
-#if DEBUG
-    unsigned long int tr;
-    tr = (unsigned long int)pthread_self();
-    printf("XXXX-XX-XX XX:XX:XX,XXX BIND tid:0x%lX\n", tr);
-#endif // DEBUG
 
     gstate = PyGILState_Ensure();
 
@@ -453,8 +371,8 @@ static void PythonLogCallBack(adapter_t *adapter, sd_rpc_log_severity_t severity
     arglist = Py_BuildValue("(OOO)", adapter_obj, severity_obj, message_obj);
 
     result = PyEval_CallObject(func, arglist);
-    Py_XDECREF(result);
 
+    Py_XDECREF(result);
     Py_XDECREF(adapter_obj);
     Py_XDECREF(message_obj);
     Py_XDECREF(severity_obj);
@@ -474,7 +392,7 @@ PyObject* sd_rpc_open_py(PyObject *adapter, PyObject *py_status_handler, PyObjec
     void *argp1 = 0 ;
     int res1 = 0 ;
     uint32_t result;
-    adapter_context_t *ctx;
+    std::shared_ptr<adapter_context_t> ctx{nullptr};
 
     res1 = SWIG_ConvertPtr(adapter, &argp1,SWIGTYPE_p_adapter_t, 0 |  0 );
     if (!SWIG_IsOK(res1)) {
@@ -485,7 +403,7 @@ PyObject* sd_rpc_open_py(PyObject *adapter, PyObject *py_status_handler, PyObjec
 
     // Try to register adapter_context_t
     ctx = adapter_context_add(arg1);
-    if (ctx == NULL)
+    if (!ctx)
     {
         SWIG_exception_fail(SWIG_ValueError, "Not able to register adapter_context_t for adapter");
     }
@@ -503,7 +421,7 @@ PyObject* sd_rpc_open_py(PyObject *adapter, PyObject *py_status_handler, PyObjec
     return resultobj;
 
 fail:
-    return NULL;
+    return nullptr;
 }
 
 PyObject *sd_rpc_close_py(PyObject *adapter) {
@@ -512,7 +430,8 @@ PyObject *sd_rpc_close_py(PyObject *adapter) {
     void *argp1 = 0;
     int res1 = 0;
     uint32_t result;
-    adapter_context_t *ctx;
+    std::shared_ptr<adapter_context_t> ctx{nullptr};
+    PyGILState_STATE gstate;
 
     res1 = SWIG_ConvertPtr(adapter, &argp1, SWIGTYPE_p_adapter_t, 0 |  0 );
     if (!SWIG_IsOK(res1)) {
@@ -524,21 +443,31 @@ PyObject *sd_rpc_close_py(PyObject *adapter) {
 
     ctx = adapter_context_find(arg1);
 
-    if(ctx == NULL)
+    if(!ctx)
     {
         SWIG_exception_fail(SWIG_ValueError, "Not able to find adapter_context_t for adapter");
     }
+    else
+    {
+        // Make sure that callbacks are not running before decrementing the callback reference count
+        std::lock_guard<std::mutex> lck(ctx->callback_mutex);
 
-    Py_XDECREF(ctx->event_callback);
-    Py_XDECREF(ctx->status_callback);
-    Py_XDECREF(ctx->log_callback);
+        gstate = PyGILState_Ensure();
 
-    adapter_context_remove(arg1);
+        Py_XDECREF(ctx->event_callback);
+        Py_XDECREF(ctx->status_callback);
+        Py_XDECREF(ctx->log_callback);
 
-    resultobj = SWIG_From_unsigned_SS_int((unsigned int)(result));
-    return resultobj;
+        adapter_context_remove(arg1);
+
+        PyGILState_Release(gstate);
+
+        resultobj = SWIG_From_unsigned_SS_int((unsigned int)(result));
+        return resultobj;
+    }
+
 fail:
-    return NULL;
+    return nullptr;
 }
 
 %}
