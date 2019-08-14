@@ -84,7 +84,7 @@ def find_version(*file_paths):
 
     raise RuntimeError("Unable to find version string.")
 
-packages = find_packages(exclude=["tests.*"])
+packages = find_packages(exclude=["tests*"])
 
 setup(
     name='pc_ble_driver_py',
