@@ -41,24 +41,6 @@ jobs:
         python setup.py bdist_wheel --build-type RelWithDebInfo
       displayName: 'Build for python 2.7'
     - script: |
-        $(conda_root)/bin/conda create -yq -n python3.5 python=3.5
-      displayName: 'Install Python 3.5'
-    - bash: |
-        export PATH=$(conda_root)/envs/python3.5/bin:$PATH
-        rm -rf _skbuild
-        pip install -r requirements-dev.txt
-        python setup.py bdist_wheel --build-type RelWithDebInfo
-      displayName: 'Build for python 3.5'
-    - script: |
-        $(conda_root)/bin/conda create -yq -n python3.6 python=3.6
-      displayName: 'Install Python 3.6'
-    - bash: |
-        export PATH=$(conda_root)/envs/python3.6/bin:$PATH
-        rm -rf _skbuild
-        pip install -r requirements-dev.txt
-        python setup.py bdist_wheel --build-type RelWithDebInfo
-      displayName: 'Build for python 3.6'
-    - script: |
         $(conda_root)/bin/conda create -yq -n python3.7 python=3.7
       displayName: 'Install Python 3.7'
     - bash: |
@@ -108,10 +90,8 @@ jobs:
       displayName: 'Install nrf-ble-driver'
     - bash: |
         wget https://www.python.org/ftp/python/2.7.16/python-2.7.16-macosx10.9.pkg
-        wget https://www.python.org/ftp/python/3.6.8/python-3.6.8-macosx10.9.pkg
         wget https://www.python.org/ftp/python/3.7.3/python-3.7.3-macosx10.9.pkg
         sudo installer -pkg python-2.7.16-macosx10.9.pkg -target /
-        sudo installer -pkg python-3.6.8-macosx10.9.pkg -target /
         sudo installer -pkg python-3.7.3-macosx10.9.pkg -target /
       displayName: 'Install all pythons'
     - bash: |
@@ -120,12 +100,6 @@ jobs:
         ${pypath} -m pip install -r requirements-dev.txt
         ${pypath} setup.py bdist_wheel --build-type RelWithDebInfo -- -DCMAKE_OSX_DEPLOYMENT_TARGET=10.9
       displayName: 'Build for python 2.7'
-    - bash: |
-        rm -rf _skbuild
-        pypath=`which python3.6`
-        ${pypath} -m pip install -r requirements-dev.txt
-        ${pypath} setup.py bdist_wheel --build-type RelWithDebInfo -- -DCMAKE_OSX_DEPLOYMENT_TARGET=10.9
-      displayName: 'Build for python 3.6'
     - bash: |
         rm -rf _skbuild
         pypath=`which python3.7`
@@ -188,34 +162,6 @@ jobs:
         pip install -r requirements-dev.txt
         python setup.py bdist_wheel --build-type RelWithDebInfo -- -DPYTHON_INCLUDE_DIR=${pyincldir} -DPYTHON_LIBRARY=${pylib} -G "$(generator)"
       displayName: 'Build for python 2.7'
-    - task: UsePythonVersion@0
-      inputs:
-        versionSpec: '3.5'
-        architecture: '$(python_arch)'
-    - bash: |
-        rm -rf _skbuild
-        pypath=`which python`
-        pyroot=`dirname ${pypath}`
-        pyheader=`ls ${pyroot}/include/Python.h`
-        pyincldir=`dirname ${pyheader}`
-        pylib=`ls ${pyroot}/libs/python35.lib`
-        pip install -r requirements-dev.txt
-        python setup.py bdist_wheel --build-type RelWithDebInfo -- -DPYTHON_INCLUDE_DIR=${pyincldir} -DPYTHON_LIBRARY=${pylib} -G "$(generator)"
-      displayName: 'Build for python 3.5'
-    - task: UsePythonVersion@0
-      inputs:
-        versionSpec: '3.6'
-        architecture: '$(python_arch)'
-    - bash: |
-        rm -rf _skbuild
-        pypath=`which python`
-        pyroot=`dirname ${pypath}`
-        pyheader=`ls ${pyroot}/include/Python.h`
-        pyincldir=`dirname ${pyheader}`
-        pylib=`ls ${pyroot}/libs/python36.lib`
-        pip install -r requirements-dev.txt
-        python setup.py bdist_wheel --build-type RelWithDebInfo -- -DPYTHON_INCLUDE_DIR=${pyincldir} -DPYTHON_LIBRARY=${pylib} -G "$(generator)"
-      displayName: 'Build for python 3.6'
     - task: UsePythonVersion@0
       inputs:
         versionSpec: '3.7'

@@ -85,14 +85,10 @@ class BLEDriverObserver(object):
 
     def on_gap_evt_disconnected(self, ble_driver, conn_handle, reason):
         logger.debug(
-            "evt> disconnected conn({})\n reason({})".format(
-                conn_handle, reason
-            )
+            "evt> disconnected conn({})\n reason({})".format(conn_handle, reason)
         )
 
-    def on_gap_evt_sec_params_request(
-        self, ble_driver, conn_handle, peer_params
-    ):
+    def on_gap_evt_sec_params_request(self, ble_driver, conn_handle, peer_params):
         logger.debug(
             "evt> sec_params_request conn({})\n peer_params({})".format(
                 conn_handle, peer_params
@@ -139,15 +135,11 @@ class BLEDriverObserver(object):
             )
         )
 
-    def on_gap_evt_conn_param_update(
-        self, ble_driver, conn_handle, conn_params
-    ):
+    def on_gap_evt_conn_param_update(self, ble_driver, conn_handle, conn_params):
         pass
 
     def on_gap_evt_timeout(self, ble_driver, conn_handle, src):
-        logger.debug(
-            "evt> timeout conn({})\n src({})".format(conn_handle, src)
-        )
+        logger.debug("evt> timeout conn({})\n src({})".format(conn_handle, src))
 
     def on_gap_evt_adv_report(
         self, ble_driver, conn_handle, peer_addr, rssi, adv_type, adv_data
@@ -193,20 +185,14 @@ class BLEDriverObserver(object):
 
     def on_gap_evt_conn_sec_update(self, ble_driver, conn_handle, conn_sec):
         logger.debug(
-            "evt> conn_sec_update conn({})\n conn_sec({})".format(
-                conn_handle, conn_sec
-            )
+            "evt> conn_sec_update conn({})\n conn_sec({})".format(conn_handle, conn_sec)
         )
 
     def on_gap_evt_rssi_changed(self, ble_driver, conn_handle, rssi):
-        logger.debug(
-            "evt> rssi_changed conn(%d)\n rssi(%d)", conn_handle, rssi
-        )
+        logger.debug("evt> rssi_changed conn(%d)\n rssi(%d)", conn_handle, rssi)
 
     def on_evt_tx_complete(self, ble_driver, conn_handle, count):
-        logger.debug(
-            "evt> tx_complete conn({})\n count({})".format(conn_handle, count)
-        )
+        logger.debug("evt> tx_complete conn({})\n count({})".format(conn_handle, count))
 
     def on_gattc_evt_write_rsp(
         self,
@@ -222,25 +208,12 @@ class BLEDriverObserver(object):
         logger.debug(
             "evt> on_gattc_evt_write_rsp conn({})\n status({})\n error_handle({})\n"
             " attr_handle({})\n write_op({})\n offset({})\n data({})".format(
-                conn_handle,
-                status,
-                error_handle,
-                attr_handle,
-                write_op,
-                offset,
-                data,
+                conn_handle, status, error_handle, attr_handle, write_op, offset, data
             )
         )
 
     def on_gattc_evt_hvx(
-        self,
-        ble_driver,
-        conn_handle,
-        status,
-        error_handle,
-        attr_handle,
-        hvx_type,
-        data,
+        self, ble_driver, conn_handle, status, error_handle, attr_handle, hvx_type, data
     ):
         logger.debug(
             "evt> on_gattc_evt_hvx status({}) conn({})\n error_handle({})\n attr_handle({})\n"
@@ -250,14 +223,7 @@ class BLEDriverObserver(object):
         )
 
     def on_gattc_evt_read_rsp(
-        self,
-        ble_driver,
-        conn_handle,
-        status,
-        error_handle,
-        attr_handle,
-        offset,
-        data,
+        self, ble_driver, conn_handle, status, error_handle, attr_handle, offset, data
     ):
         logger.debug(
             "evt> on_gattc_evt_read_rsp status({}) conn({})\n error_handle({})\n"
@@ -286,9 +252,7 @@ class BLEDriverObserver(object):
             )
         )
 
-    def on_gattc_evt_desc_disc_rsp(
-        self, ble_driver, conn_handle, status, descriptors
-    ):
+    def on_gattc_evt_desc_disc_rsp(self, ble_driver, conn_handle, status, descriptors):
         descs_str = "\n ".join(str(d) for d in descriptors)
         logger.debug(
             "evt> on_gattc_evt_desc_disc_rsp status({}) conn({})\n {}".format(
@@ -321,27 +285,16 @@ class BLEDriverObserver(object):
         logger.debug(
             "evt> on_gatts_evt_write conn({})\n attr_handle({})\n uuid({})\n"
             " op({})\n auth_required({})\n offset({})\n length({})\n data({})".format(
-                conn_handle,
-                attr_handle,
-                uuid,
-                op,
-                auth_required,
-                offset,
-                length,
-                data,
+                conn_handle, attr_handle, uuid, op, auth_required, offset, length, data
             )
         )
 
-    def on_gatts_evt_exchange_mtu_request(
-        self, ble_driver, conn_handle, client_mtu
-    ):
+    def on_gatts_evt_exchange_mtu_request(self, ble_driver, conn_handle, client_mtu):
         pass
 
     def on_att_mtu_exchanged(self, ble_driver, conn_handle, att_mtu):
         logger.debug(
-            "evt> att_mtu_exchanged conn({})\n att_mtu({})".format(
-                conn_handle, att_mtu
-            )
+            "evt> att_mtu_exchanged conn({})\n att_mtu({})".format(conn_handle, att_mtu)
         )
 
     def on_rpc_status(self, ble_driver, code, message):
@@ -365,9 +318,7 @@ class BLEAdapterObserver(object):
     def on_notification(self, ble_adapter, conn_handle, uuid, data):
         pass
 
-    def on_conn_param_update_request(
-        self, ble_adapter, conn_handle, conn_params
-    ):
+    def on_conn_param_update_request(self, ble_adapter, conn_handle, conn_params):
         logger.debug(
             "evt> conn_param_update_request conn({})\n conn_params({})".format(
                 conn_handle, gen_conn_params_str(conn_params)

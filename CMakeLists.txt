@@ -26,7 +26,7 @@ find_package(SWIG REQUIRED)
 include(${SWIG_USE_FILE})
 
 # nrf-ble-driver
-find_package(nrf-ble-driver 4.1.0 CONFIG REQUIRED)
+find_package(nrf-ble-driver 4.1.1 CONFIG REQUIRED)
 
 # PYTHON_INCLUDE_DIR provided by scikit-build
 include_directories(${PYTHON_INCLUDE_DIR})

@@ -35,4 +35,3 @@
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 # .hex files to run on the nRF5x ICs.
-

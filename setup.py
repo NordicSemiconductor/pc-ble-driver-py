@@ -45,7 +45,7 @@ from setuptools import find_packages
 py2 = sys.version_info[0] == 2
 py3 = sys.version_info[0] == 3
 
-py_version_old_message = 'pc-ble-driver-py only supports Python version 2.7 and 3.6 and newer'
+py_version_old_message = 'pc-ble-driver-py only supports Python version 2.7 and 3.7 and newer'
 requirements = []
 
 if py2:
@@ -55,7 +55,7 @@ if py2:
 
     requirements = ['enum34', 'wrapt', 'future', 'typing']
 elif py3:
-    if sys.version_info[1] < 5:
+    if sys.version_info[1] < 7:
         print(py_version_old_message)
         sys.exit(-1)
 
@@ -118,12 +118,11 @@ setup(
         'Programming Language :: Python :: 2',
         'Programming Language :: Python :: 2.7',
         'Programming Language :: Python :: 3',
-        'Programming Language :: Python :: 3.6',
         'Programming Language :: Python :: 3.7'
     ],
     keywords='nordic nrf51 nrf52 ble bluetooth softdevice serialization bindings pc-ble-driver pc-ble-driver-py '
              'pc_ble_driver pc_ble_driver_py',
-    python_requires=">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, !=3.4.*, <4",
+    python_requires=">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, !=3.4.*, !=3.5.*, !=3.6.*, <4",
     install_requires=requirements,
     packages=packages,
     package_data={
