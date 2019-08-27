@@ -553,10 +553,6 @@ class BLEAdapter(BLEDriverObserver):
         return result["conn_sec"]
 
     # ...............................................................................................
-    def on_evt_data_length_changed(self, ble_driver, **kwargs):
-        for i in self.evt_sync:
-            self.evt_sync[i].notify(evt=BLEEvtID.evt_data_length_changed, data=kwargs)
-
     def on_gap_evt_connected(
         self, ble_driver, conn_handle, peer_addr, role, conn_params
     ):
