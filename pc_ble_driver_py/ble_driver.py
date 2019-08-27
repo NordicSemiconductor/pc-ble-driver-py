@@ -131,7 +131,6 @@ class BLEEvtID(Enum):
 
     if nrf_sd_ble_api_ver == 2:
         evt_tx_complete = driver.BLE_EVT_TX_COMPLETE
-        evt_data_length_changed = driver.BLE_EVT_DATA_LENGTH_CHANGED
 
     if nrf_sd_ble_api_ver == 5:
         gatts_evt_exchange_mtu_request = driver.BLE_GATTS_EVT_EXCHANGE_MTU_REQUEST
