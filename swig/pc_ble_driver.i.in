@@ -239,7 +239,7 @@ static void PythonEvtCallBack(adapter_t *adapter, ble_evt_t *ble_event)
     // this callback is complete. The event that is received in this function is allocated
     // on the stack of the function calling this function.
 
-#if SD_BLE_API_VERSION == 2
+#if NRF_SD_BLE_API_VERSION == 2
     copied_ble_event = (ble_evt_t*)malloc(sizeof(ble_evt_t));
     memcpy(copied_ble_event, ble_event, sizeof(ble_evt_t));
 #else
