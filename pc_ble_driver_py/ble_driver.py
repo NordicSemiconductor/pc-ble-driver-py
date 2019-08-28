@@ -2264,7 +2264,6 @@ class BLEDriver(object):
 
             elif evt_id == BLEEvtID.gattc_evt_read_rsp:
                 read_rsp_evt = ble_event.evt.gattc_evt.params.read_rsp
-                logger.debug("GATTC: READ RSP")
                 for obs in self.observers:
                     obs.on_gattc_evt_read_rsp(
                         ble_driver=self,
