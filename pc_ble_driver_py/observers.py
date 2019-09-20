@@ -194,6 +194,9 @@ class BLEDriverObserver(object):
     def on_evt_tx_complete(self, ble_driver, conn_handle, count):
         logger.debug("evt> tx_complete conn({})\n count({})".format(conn_handle, count))
 
+    def on_gattc_evt_write_cmd_tx_complete(self, ble_driver, conn_handle, count):
+        logger.debug(f"evt> gattc_evt_write_cmd_tx_complete conn({conn_handle})\n count({count})")
+
     def on_gattc_evt_write_rsp(
         self,
         ble_driver,
