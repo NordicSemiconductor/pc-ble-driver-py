@@ -1938,11 +1938,7 @@ class BLEDriver(object):
     @NordicSemiErrorCheck
     @wrapt.synchronized(api_lock)
     def ble_gattc_exchange_mtu_req(self, conn_handle, mtu):
-        logger.debug(
-            "Sending GATTC MTU exchange request: {}".format(
-                self.ble_enable_params.att_mtu
-            )
-        )
+        logger.debug(f"Sending GATTC MTU exchange request: {mtu}")
         return driver.sd_ble_gattc_exchange_mtu_request(
             self.rpc_adapter, conn_handle, mtu
         )
@@ -2417,8 +2413,7 @@ class BLEDriver(object):
                     else:
                         _server_rx_mtu = ATT_MTU_DEFAULT
 
-                    _att_mtu = min(_server_rx_mtu, self.ble_enable_params.att_mtu)
-                    logger.debug("GATTC: ATT MTU: {}".format(_att_mtu))
+                    logger.debug(f"GATTC: ATT MTU: {_server_rx_mtu}")
 
                     for obs in self.observers:
                         obs.on_gattc_evt_exchange_mtu_rsp(
@@ -2427,7 +2422,7 @@ class BLEDriver(object):
                             status=BLEGattStatusCode(
                                 ble_event.evt.gattc_evt.gatt_status
                             ),
-                            att_mtu=_att_mtu,
+                            att_mtu=_server_rx_mtu,
                         )
 
                 elif evt_id == BLEEvtID.gap_evt_data_length_update:
