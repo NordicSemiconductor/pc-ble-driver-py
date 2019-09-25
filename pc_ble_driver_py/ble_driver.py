@@ -102,6 +102,23 @@ def NordicSemiErrorCheck(wrapped=None, expected=driver.NRF_SUCCESS):
     return wrapper(wrapped)
 
 
+class EnumWithOffsets(Enum):
+    """An extesion of Enum allowing lookup of intermediary values. The
+    intermediary values must directly follow a member with a name that ends with
+    "_begin". Names of intermediate members will be rendred like
+    "name_of_previous_member+0x4"."""
+    @classmethod
+    def _missing_(cls, value):
+        members = cls.__members__.values()
+        preceding_member = max(filter(lambda x: x.value < value, members),
+                               key=lambda x: x.value, default=None)
+        if preceding_member and preceding_member.name.endswith('_begin'):
+            inst = super(Enum, cls).__new__(cls)
+            inst._name_ = preceding_member.name + "+" + hex(value - preceding_member.value)
+            inst._value_ = value
+            return inst
+
+
 class BLEEvtID(Enum):
     gap_evt_connected = driver.BLE_GAP_EVT_CONNECTED
     gap_evt_disconnected = driver.BLE_GAP_EVT_DISCONNECTED
@@ -266,7 +283,7 @@ class BLEGapIOCaps(Enum):
     keyboard_display = driver.BLE_GAP_IO_CAPS_KEYBOARD_DISPLAY
 
 
-class BLEGapSecStatus(Enum):
+class BLEGapSecStatus(EnumWithOffsets):
     success = driver.BLE_GAP_SEC_STATUS_SUCCESS
     timeout = driver.BLE_GAP_SEC_STATUS_TIMEOUT
     pdu_invalid = driver.BLE_GAP_SEC_STATUS_PDU_INVALID
@@ -835,7 +852,7 @@ class BLEGattHVXType(Enum):
     indication = driver.BLE_GATT_HVX_INDICATION
 
 
-class BLEGattStatusCode(Enum):
+class BLEGattStatusCode(EnumWithOffsets):
     success = driver.BLE_GATT_STATUS_SUCCESS
     unknown = driver.BLE_GATT_STATUS_UNKNOWN
     invalid = driver.BLE_GATT_STATUS_ATTERR_INVALID
