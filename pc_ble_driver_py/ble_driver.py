@@ -1538,7 +1538,7 @@ class BLEDriver(object):
         dlen = driver.uint32_value(arr_len)
 
         descs = util.serial_port_desc_array_to_list(c_desc_arr, dlen)
-        return map(SerialPortDescriptor.from_c, descs)
+        return list(map(SerialPortDescriptor.from_c, descs))
 
     @NordicSemiErrorCheck
     @wrapt.synchronized(api_lock)
