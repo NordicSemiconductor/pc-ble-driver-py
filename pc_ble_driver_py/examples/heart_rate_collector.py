@@ -37,7 +37,7 @@
 
 import sys
 import time
-from queue import Queue
+from queue import Queue, Empty
 from pc_ble_driver_py.observers import *
 
 TARGET_DEV_NAME = "Nordic_HRM"
@@ -47,7 +47,7 @@ CFG_TAG = 1
 
 def init(conn_ic_id):
     # noinspection PyGlobalUndefined
-    global config, BLEDriver, BLEAdvData, BLEEvtID, BLEAdapter, BLEEnableParams, BLEGapTimeoutSrc, BLEUUID, BLEConfigCommon, BLEConfig, BLEConfigConnGatt
+    global config, BLEDriver, BLEAdvData, BLEEvtID, BLEAdapter, BLEEnableParams, BLEGapTimeoutSrc, BLEUUID, BLEConfigCommon, BLEConfig, BLEConfigConnGatt, BLEGapScanParams
     from pc_ble_driver_py import config
 
     config.__conn_ic_id__ = conn_ic_id
@@ -59,6 +59,7 @@ def init(conn_ic_id):
         BLEEnableParams,
         BLEGapTimeoutSrc,
         BLEUUID,
+        BLEGapScanParams,
         BLEConfigCommon,
         BLEConfig,
         BLEConfigConnGatt,
@@ -104,16 +105,24 @@ class HRCollector(BLEDriverObserver, BLEAdapterObserver):
         self.adapter.driver.close()
 
     def connect_and_discover(self):
-        self.adapter.driver.ble_gap_scan_start()
-        new_conn = self.conn_q.get(timeout=5)
-        self.adapter.service_discovery(new_conn)
+        scan_duration = 5
+        params = BLEGapScanParams(interval_ms=200, window_ms=150, timeout_s=scan_duration)
 
-        self.adapter.enable_notification(
-            new_conn, BLEUUID(BLEUUID.Standard.battery_level)
-        )
-        self.adapter.enable_notification(new_conn, BLEUUID(BLEUUID.Standard.heart_rate))
+        self.adapter.driver.ble_gap_scan_start(scan_params=params)
+        
+        try:
+            new_conn = self.conn_q.get(timeout=scan_duration)
+            self.adapter.service_discovery(new_conn)
 
-        return new_conn
+            self.adapter.enable_notification(
+                new_conn, BLEUUID(BLEUUID.Standard.battery_level)
+            )
+
+            self.adapter.enable_notification(new_conn, BLEUUID(BLEUUID.Standard.heart_rate))
+            return new_conn
+        except Empty:
+            print(f"No heart rate collector advertising with name {TARGET_DEV_NAME} found.")
+            return None
 
     def on_gap_evt_connected(
         self, ble_driver, conn_handle, peer_addr, role, conn_params
@@ -123,10 +132,6 @@ class HRCollector(BLEDriverObserver, BLEAdapterObserver):
 
     def on_gap_evt_disconnected(self, ble_driver, conn_handle, reason):
         print("Disconnected: {} {}".format(conn_handle, reason))
-
-    def on_gap_evt_timeout(self, ble_driver, conn_handle, src):
-        if src == BLEGapTimeoutSrc.scan:
-            ble_driver.ble_gap_scan_start()
 
     def on_gap_evt_adv_report(
         self, ble_driver, conn_handle, peer_addr, rssi, adv_type, adv_data
@@ -162,13 +167,15 @@ def main(selected_serial_port):
     driver = BLEDriver(
         serial_port=selected_serial_port, auto_flash=False, baud_rate=1000000
     )
+
     adapter = BLEAdapter(driver)
     collector = HRCollector(adapter)
     collector.open()
-    for i in range(CONNECTIONS):
-        collector.connect_and_discover()
-    time.sleep(10)
-    print("Closing")
+    conn = collector.connect_and_discover()
+
+    if conn:
+        time.sleep(10)
+
     collector.close()
 
 
@@ -179,7 +186,7 @@ def item_choose(item_list):
 
     while True:
         try:
-            choice = int(raw_input("Enter your choice: "))
+            choice = int(input("Enter your choice: "))
             if (choice >= 0) and (choice < len(item_list)):
                 break
         except Exception:
