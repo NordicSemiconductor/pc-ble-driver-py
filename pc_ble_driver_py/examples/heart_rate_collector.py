@@ -59,6 +59,7 @@ def init(conn_ic_id):
         BLEEnableParams,
         BLEGapTimeoutSrc,
         BLEUUID,
+        BLEGapScanParams,
         BLEConfigCommon,
         BLEConfig,
         BLEConfigConnGatt,
