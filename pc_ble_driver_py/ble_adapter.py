@@ -535,6 +535,11 @@ class BLEAdapter(BLEDriverObserver):
 
         result = self.evt_sync[conn_handle].wait(evt=BLEEvtID.gap_evt_auth_status)
 
+        # TODO: The result returned is sometimes of a different type than
+        # TODO: gap_evt_auth_status. This is a bug that needs further investigation.
+        if not "auth_status" in result:
+            return None
+
         # If success then keys are stored in self.driver._keyset.
         if result["auth_status"] == BLEGapSecStatus.success:
             self.db_conns[conn_handle]._keyset = BLEGapSecKeyset.from_c(
