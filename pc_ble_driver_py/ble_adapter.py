@@ -519,7 +519,7 @@ class BLEAdapter(BLEDriverObserver):
         )
 
         self.driver.ble_gap_authenticate(conn_handle, sec_params)
-        self.evt_sync[conn_handle].wait(evt=BLEEvtID.gap_evt_sec_params_request)
+        self.evt_sync[conn_handle].wait(evt=BLEEvtID.gap_evt_sec_params_request, timeout=10)
 
         # sd_ble_gap_sec_params_reply ... In the central role, sec_params must be set to NULL,
         # as the parameters have already been provided during a previous call to
@@ -532,7 +532,9 @@ class BLEAdapter(BLEDriverObserver):
         self.driver.ble_gap_sec_params_reply(
             conn_handle, BLEGapSecStatus.success, sec_params=sec_params
         )
+
         result = self.evt_sync[conn_handle].wait(evt=BLEEvtID.gap_evt_auth_status)
+
         # If success then keys are stored in self.driver._keyset.
         if result["auth_status"] == BLEGapSecStatus.success:
             self.db_conns[conn_handle]._keyset = BLEGapSecKeyset.from_c(
@@ -593,6 +595,11 @@ class BLEAdapter(BLEDriverObserver):
     def on_gap_evt_conn_sec_update(self, ble_driver, conn_handle, **kwargs):
         self.evt_sync[conn_handle].notify(
             evt=BLEEvtID.gap_evt_conn_sec_update, data=kwargs
+        )
+
+    def on_gap_evt_passkey_display(self, ble_driver, conn_handle, **kwargs):
+        self.evt_sync[conn_handle].notify(
+            evt=BLEEvtID.gap_evt_passkey_display, data=kwargs
         )
 
     def on_gap_evt_auth_key_request(self, ble_driver, conn_handle, **kwargs):
