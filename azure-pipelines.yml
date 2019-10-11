@@ -101,7 +101,7 @@ jobs:
         choco install -y --x86 swig
       displayName: 'Install toolchain on Windows'
     - script: |
-        git clone https://github.com/NordicPlayground/vcpkg.git $(VCPKG_ROOT)
+        git clone https://github.com/Microsoft/vcpkg.git $(VCPKG_ROOT)
         $(VCPKG_ROOT)\bootstrap-vcpkg.bat
       displayName: 'Install vcpkg'
     - script: |
