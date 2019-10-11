@@ -826,6 +826,10 @@ class BLEAdvData(object):
         while index < len(ad_list):
             try:
                 ad_len = ad_list[index]
+                if ad_len == 0:
+                    logger.info(f"ad_len is zero, discarding rest of ad_list")
+                    return ble_adv_data
+
                 ad_type = ad_list[index + 1]
                 offset = index + 2
                 key = BLEAdvData.Types(ad_type)
