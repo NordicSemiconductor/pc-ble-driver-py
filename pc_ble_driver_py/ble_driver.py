@@ -715,6 +715,16 @@ class BLEGapPrivacyParams(object):
             "private_addr_cycle_s({0.private_addr_cycle_s}) irk({0.irk})"
         ).format(self)
 
+class BLEGapPasskeyDisplay(object):
+    def __init__(self, passkey):
+        self.passkey = passkey
+
+    @classmethod
+    def from_c(cls, params):
+        return cls(
+            passkey=util.uint8_array_to_list(params.passkey, 6)
+        )
+
 
 class BLEAdvData(object):
     class Types(Enum):
@@ -2167,7 +2177,15 @@ class BLEDriver(object):
                         lesc=seq_req_evt.lesc,
                         keypress=seq_req_evt.keypress,
                     )
+            elif evt_id == BLEEvtID.gap_evt_passkey_display:
+                for obs in self.observers:
+                    passkey = BLEGapPasskeyDisplay.from_c(ble_event.evt.gap_evt.params.passkey_display)
 
+                    obs.on_gap_evt_passkey_display(
+                        ble_driver=self,
+                        conn_handle=ble_event.evt.gap_evt.conn_handle,
+                        passkey=passkey.passkey
+                    )
             elif evt_id == BLEEvtID.gap_evt_timeout:
                 timeout_evt = ble_event.evt.gap_evt.params.timeout
                 try:
