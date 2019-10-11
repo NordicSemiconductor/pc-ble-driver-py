@@ -2566,6 +2566,7 @@ class Flasher(object):
             and Flasher.is_valid_magic_number(fw_struct)
             and Flasher.is_valid_version(fw_struct)
             and Flasher.is_valid_baud_rate(fw_struct)
+            and Flasher.is_valid_api_version(fw_struct)
         )
 
     def fw_flash(self):
@@ -2631,3 +2632,9 @@ class Flasher(object):
     def is_valid_baud_rate(fw_struct):
         baud_rate = int("".join(fw_struct[20:24][::-1]), 16)
         return config.get_connectivity_hex_baud_rate() == baud_rate
+
+    @staticmethod
+    def is_valid_api_version(fw_struct):
+        api_version = int(fw_struct[16], 16)
+        return api_version in (2, 5)
+
