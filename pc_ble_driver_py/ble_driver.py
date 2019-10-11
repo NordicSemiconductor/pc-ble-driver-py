@@ -2562,11 +2562,11 @@ class Flasher(object):
     def fw_check(self):
         fw_struct = self.read_fw_struct()
         return (
-            len(fw_struct) == Flasher.FW_STRUCT_LENGTH
-            and Flasher.is_valid_magic_number(fw_struct)
-            and Flasher.is_valid_version(fw_struct)
-            and Flasher.is_valid_baud_rate(fw_struct)
-            and Flasher.is_valid_api_version(fw_struct)
+            Flasher.FW_STRUCT_LENGTH == fw_struct['len']
+            and Flasher.is_valid_magic_number(fw_struct['magic_number'])
+            and Flasher.is_valid_version(fw_struct['version'])
+            and Flasher.is_valid_baud_rate(fw_struct['baud_rate'])
+            and Flasher.is_valid_api_version(fw_struct['api_version'])
         )
 
     def fw_flash(self):
@@ -2584,11 +2584,17 @@ class Flasher(object):
             str(Flasher.FW_STRUCT_LENGTH),
         ]
         data = self.call_cmd(args)
-        result = list()
+        raw_data = list()
         for line in data.splitlines():
             line = re.sub(r"(^.*:)|(\|.*$)", "", str(line))
-            result.extend(line.split())
-        return result
+            raw_data.extend(line.split())
+        return {
+            'len': len(raw_data),
+            'magic_number': raw_data[:4],
+            'version': '.'.join(str(int(raw_data[i], 16)) for i in (12, 13, 14)),
+            'baud_rate': int("".join(raw_data[20:24][::-1]), 16),
+            'api_version': int(raw_data[16], 16),
+        }
 
     def reset(self):
         args = ["--reset"]
@@ -2616,25 +2622,18 @@ class Flasher(object):
                 raise
 
     @staticmethod
-    def is_valid_magic_number(fw_struct):
-        magic_number = fw_struct[:4]
+    def is_valid_magic_number(magic_number):
         return magic_number == Flasher.FW_MAGIC_NUMBER
 
     @staticmethod
-    def is_valid_version(fw_struct):
-        major = int(fw_struct[12], 16)
-        minor = int(fw_struct[13], 16)
-        patch = int(fw_struct[14], 16)
-        version = ".".join(map(str, [major, minor, patch]))
+    def is_valid_version(version):
         return config.get_connectivity_hex_version() == version
 
     @staticmethod
-    def is_valid_baud_rate(fw_struct):
-        baud_rate = int("".join(fw_struct[20:24][::-1]), 16)
+    def is_valid_baud_rate(baud_rate):
         return config.get_connectivity_hex_baud_rate() == baud_rate
 
     @staticmethod
-    def is_valid_api_version(fw_struct):
-        api_version = int(fw_struct[16], 16)
+    def is_valid_api_version(api_version):
         return api_version == nrf_sd_ble_api_ver
 
