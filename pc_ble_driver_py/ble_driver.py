@@ -2636,5 +2636,5 @@ class Flasher(object):
     @staticmethod
     def is_valid_api_version(fw_struct):
         api_version = int(fw_struct[16], 16)
-        return api_version in (2, 5)
+        return api_version == nrf_sd_ble_api_ver
 
