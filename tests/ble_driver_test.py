@@ -6,7 +6,7 @@ from pc_ble_driver_py.ble_driver import Flasher
 
 class FlasherParserTestCase(unittest.TestCase):
 
-    FW_STRUCT = Flasher.parse_fw_struct([
+    raw_data = [
         '17', 'A5', 'D8', '46',  # magic number
         '02',  # struct version
         'FF', 'FF', 'FF',  # (reserved for future use)
@@ -17,23 +17,15 @@ class FlasherParserTestCase(unittest.TestCase):
         '01',  # transport type
         'FF', 'FF',  # (reserved for future use)
         '40', '42', '0F', '00'  # baud rate
-    ])
+    ]
+    raw_data_wrong_format = raw_data[::2]
 
     def test_invalid_parse(self):
-        self.assertNotEqual(
-            FlasherParserTestCase.FW_STRUCT,
-            {
-                'len': 25,
-                'magic_number': ['17', 'A5', 'D8', '45'],
-                'version': '4.0.1',
-                'baud_rate': 1000001,
-                'api_version': 3
-            }
-        )
+        with self.assertRaises(IndexError): Flasher.parse_fw_struct(self.raw_data_wrong_format)
 
     def test_valid_parse(self):
         self.assertEqual(
-            FlasherParserTestCase.FW_STRUCT,
+            Flasher.parse_fw_struct(self.raw_data),
             {
                 'len': 24,
                 'magic_number': ['17', 'A5', 'D8', '46'],
