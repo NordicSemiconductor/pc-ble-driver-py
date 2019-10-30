@@ -37,6 +37,7 @@
 
 import sys
 import time
+import logging
 from queue import Queue, Empty
 from pc_ble_driver_py.observers import *
 
@@ -109,7 +110,7 @@ class HRCollector(BLEDriverObserver, BLEAdapterObserver):
         params = BLEGapScanParams(interval_ms=200, window_ms=150, timeout_s=scan_duration)
 
         self.adapter.driver.ble_gap_scan_start(scan_params=params)
-        
+
         try:
             new_conn = self.conn_q.get(timeout=scan_duration)
             self.adapter.service_discovery(new_conn)
@@ -165,7 +166,7 @@ class HRCollector(BLEDriverObserver, BLEAdapterObserver):
 def main(selected_serial_port):
     print("Serial port used: {}".format(selected_serial_port))
     driver = BLEDriver(
-        serial_port=selected_serial_port, auto_flash=False, baud_rate=1000000
+        serial_port=selected_serial_port, auto_flash=False, baud_rate=1000000, log_severity_level="info"
     )
 
     adapter = BLEAdapter(driver)
@@ -173,7 +174,7 @@ def main(selected_serial_port):
     collector.open()
     conn = collector.connect_and_discover()
 
-    if conn:
+    if conn is not None:
         time.sleep(10)
 
     collector.close()
@@ -196,6 +197,10 @@ def item_choose(item_list):
 
 
 if __name__ == "__main__":
+    logging.basicConfig(
+        level="DEBUG",
+        format="%(asctime)s [%(thread)d/%(threadName)s] %(message)s",
+    )
     serial_port = None
     if len(sys.argv) < 2:
         print("Please specify connectivity IC identifier (NRF51, NRF52)")
