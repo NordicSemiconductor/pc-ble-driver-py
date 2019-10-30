@@ -2540,6 +2540,16 @@ class Flasher(object):
                 "Magic number for SDv{} is unknown.".format(nrf_sd_ble_api_ver)
             )
 
+    @staticmethod
+    def parse_fw_struct(raw_data):
+        return {
+            'len': len(raw_data),
+            'magic_number': raw_data[:4],
+            'version': '.'.join(str(int(raw_data[i], 16)) for i in (12, 13, 14)),
+            'baud_rate': int("".join(raw_data[20:24][::-1]), 16),
+            'api_version': int(raw_data[16], 16),
+        }
+
     def __init__(self, serial_port=None, snr=None):
         if serial_port is None and snr is None:
             raise NordicSemiException("Invalid Flasher initialization")
@@ -2572,7 +2582,7 @@ class Flasher(object):
         self.family = config.__conn_ic_id__
 
     def fw_check(self):
-        fw_struct = self.read_fw_struct()
+        fw_struct = Flasher.parse_fw_struct(self.read_fw_struct())
         return (
             Flasher.FW_STRUCT_LENGTH == fw_struct['len']
             and Flasher.is_valid_magic_number(fw_struct['magic_number'])
@@ -2596,17 +2606,11 @@ class Flasher(object):
             str(Flasher.FW_STRUCT_LENGTH),
         ]
         data = self.call_cmd(args)
-        raw_data = list()
+        raw_data = []
         for line in data.splitlines():
             line = re.sub(r"(^.*:)|(\|.*$)", "", str(line))
             raw_data.extend(line.split())
-        return {
-            'len': len(raw_data),
-            'magic_number': raw_data[:4],
-            'version': '.'.join(str(int(raw_data[i], 16)) for i in (12, 13, 14)),
-            'baud_rate': int("".join(raw_data[20:24][::-1]), 16),
-            'api_version': int(raw_data[16], 16),
-        }
+        return raw_data
 
     def reset(self):
         args = ["--reset"]
@@ -2635,7 +2639,7 @@ class Flasher(object):
 
     @staticmethod
     def is_valid_magic_number(magic_number):
-        return magic_number == Flasher.FW_MAGIC_NUMBER
+        return Flasher.FW_MAGIC_NUMBER == magic_number
 
     @staticmethod
     def is_valid_version(version):
@@ -2647,5 +2651,4 @@ class Flasher(object):
 
     @staticmethod
     def is_valid_api_version(api_version):
-        return api_version == nrf_sd_ble_api_ver
-
+        return nrf_sd_ble_api_ver == api_version
