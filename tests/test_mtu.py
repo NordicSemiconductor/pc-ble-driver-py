@@ -38,21 +38,15 @@
 
 import unittest
 from queue import Queue
-import time
 import random
 import string
 import logging
 
 from pc_ble_driver_py.observers import BLEDriverObserver, BLEAdapterObserver
 from driver_setup import Settings, setup_adapter
+from pc_ble_driver_py.ble_driver import BLEAdvData
+from pc_ble_driver_py.exceptions import NordicSemiException
 
-from pc_ble_driver_py.ble_driver import (
-    BLEDriver,
-    BLEEnableParams,
-    BLEConfig,
-    BLEConfigConnGatt,
-    BLEAdvData,
-)
 
 logger = logging.getLogger(__name__)
 
@@ -64,17 +58,19 @@ class Central(BLEDriverObserver, BLEAdapterObserver):
             "Central adapter is %d", self.adapter.driver.rpc_adapter.internal
         )
         self.conn_q = Queue()
-        self.mtu_q = Queue()
         self.adapter.observer_register(self)
         self.adapter.driver.observer_register(self)
         self.conn_handle = None
+        self.mtu_rsp = None
+        self.new_mtu = None
 
     def start(self, connect_with, requested_mtu):
         self.connect_with = connect_with
         logger.info("scan_start, trying to find %s", self.connect_with)
         self.adapter.driver.ble_gap_scan_start()
         self.conn_handle = self.conn_q.get(timeout=5)
-    
+        self.new_mtu = self.adapter.att_mtu_exchange(self.conn_handle, requested_mtu)
+
     def stop(self):
         if self.conn_handle:
             self.adapter.driver.ble_gap_disconnect(self.conn_handle)
@@ -104,12 +100,16 @@ class Central(BLEDriverObserver, BLEAdapterObserver):
                 address_string,
             )
 
-            self.adapter.connect(peer_addr, tag=1)
+            self.adapter.connect(peer_addr, tag=Settings.CFG_TAG)
 
     def on_gap_evt_connected(
         self, ble_driver, conn_handle, peer_addr, role, conn_params
     ):
         self.conn_q.put(conn_handle)
+
+    # This event is handled by BLEAdapter. Included here for test inspection only.
+    def on_gattc_evt_exchange_mtu_rsp(self, ble_driver, conn_handle, **kwargs):
+        self.mtu_rsp = kwargs["att_mtu"]
 
 
 class Peripheral(BLEDriverObserver, BLEAdapterObserver):
@@ -122,21 +122,28 @@ class Peripheral(BLEDriverObserver, BLEAdapterObserver):
         self.conn_q = Queue()
         self.adapter.observer_register(self)
         self.adapter.driver.observer_register(self)
+        self.mtu_req = None
 
     def start(self, adv_name):
         adv_data = BLEAdvData(complete_local_name=adv_name)
         self.adapter.driver.ble_gap_adv_data_set(adv_data)
-        self.adapter.driver.ble_gap_adv_start()
+        self.adapter.driver.ble_gap_adv_start(tag=Settings.CFG_TAG)
 
     def on_gap_evt_connected(
         self, ble_driver, conn_handle, peer_addr, role, conn_params
     ):
         self.conn_q.put(conn_handle)
 
+    # This event is handled by BLEAdapter. Included here for test inspection only.
+    def on_gatts_evt_exchange_mtu_request(self, ble_driver, conn_handle, client_mtu):
+        self.mtu_req = client_mtu
+
 
 class Mtu(unittest.TestCase):
     def setUp(self):
         settings = Settings.current()
+
+        settings.mtu = 200
 
         central = setup_adapter(
             settings.serial_ports[0],
@@ -168,10 +175,30 @@ class Mtu(unittest.TestCase):
 
     def test_mtu(self):
         requested_mtu = 150
+        max_supported_mtu = Settings.current().mtu
+
+        self.assertTrue(Settings.current().mtu >= requested_mtu)
+
         self.peripheral.start(self.adv_name)
         self.central.start(self.adv_name, requested_mtu)
 
-        self.assertTrue(self.central.mtu == requested_mtu)
+        self.assertEqual(self.peripheral.mtu_req, requested_mtu)
+        self.assertEqual(self.central.mtu_rsp, max_supported_mtu)
+
+        common_supported_mtu = min(max_supported_mtu, requested_mtu)
+        self.assertEqual(self.central.new_mtu, common_supported_mtu)
+
+        self.central.stop()
+
+    def test_mtu_invalid(self):
+        requested_mtu = 250
+
+        self.assertTrue(Settings.current().mtu < requested_mtu)
+
+        self.peripheral.start(self.adv_name)
+        with self.assertRaises(NordicSemiException):
+            self.central.start(self.adv_name, requested_mtu)
+
         self.central.stop()
 
     def tearDown(self):

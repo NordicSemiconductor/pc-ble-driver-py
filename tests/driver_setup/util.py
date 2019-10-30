@@ -66,7 +66,7 @@ def setup_adapter(
     )
 
     adapter = BLEAdapter(driver)
-    adapter.default_mtu = 150
+    adapter.default_mtu = settings.mtu
     adapter.open()
     if settings.nrf_family == "NRF51":
         adapter.driver.ble_enable(
@@ -81,7 +81,8 @@ def setup_adapter(
     elif settings.nrf_family == "NRF52":
         gatt_cfg = BLEConfigConnGatt()
         gatt_cfg.att_mtu = adapter.default_mtu
-        gatt_cfg.tag = 1
+        gatt_cfg.tag = Settings.CFG_TAG
         adapter.driver.ble_cfg_set(BLEConfig.conn_gatt, gatt_cfg)
         adapter.driver.ble_enable()
+
     return adapter

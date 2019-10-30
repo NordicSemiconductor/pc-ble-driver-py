@@ -273,7 +273,7 @@ class BLEDriverObserver(object):
 
     def on_gattc_evt_exchange_mtu_rsp(self, ble_driver, conn_handle, status, att_mtu):
         logger.debug(
-            "evt> on_gattc_evt_exchange_mtu_rsp conn({}) status({}) att_mtu({})".format(
+            "evt> on_gattc_evt_exchange_mtu_rsp conn({}) status({}) server_mtu({})".format(
                 conn_handle, status, att_mtu
             )
         )
