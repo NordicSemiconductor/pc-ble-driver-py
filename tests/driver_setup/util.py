@@ -66,6 +66,7 @@ def setup_adapter(
     )
 
     adapter = BLEAdapter(driver)
+    adapter.default_mtu = 150
     adapter.open()
     if settings.nrf_family == "NRF51":
         adapter.driver.ble_enable(

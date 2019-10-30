@@ -213,7 +213,9 @@ class BLEAdapter(BLEDriverObserver):
 
     def att_mtu_exchange(self, conn_handle, mtu):
         self.driver.ble_gattc_exchange_mtu_req(conn_handle, mtu)
-        self.evt_sync[conn_handle].wait(evt=BLEEvtID.gattc_evt_exchange_mtu_rsp)
+        response = self.evt_sync[conn_handle].wait(evt=BLEEvtID.gattc_evt_exchange_mtu_rsp)
+        # Use minimum of client and server mtu to ensure both sides support the value
+        self.db_conns[conn_handle].att_mtu = min(mtu, response["att_mtu"])
         return self.db_conns[conn_handle].att_mtu
 
     @NordicSemiErrorCheck(expected=BLEGattStatusCode.success)
@@ -664,9 +666,6 @@ class BLEAdapter(BLEDriverObserver):
 
     def on_gatts_evt_exchange_mtu_request(self, ble_driver, conn_handle, client_mtu):
         ble_driver.ble_gatts_exchange_mtu_reply(conn_handle, self.default_mtu)
-
-    def on_att_mtu_exchanged(self, ble_driver, conn_handle, att_mtu):
-        self.db_conns[conn_handle].att_mtu = att_mtu
 
     def on_gattc_evt_exchange_mtu_rsp(self, ble_driver, conn_handle, **kwargs):
         self.evt_sync[conn_handle].notify(
