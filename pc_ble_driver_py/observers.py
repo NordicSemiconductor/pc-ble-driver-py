@@ -308,7 +308,9 @@ class BLEDriverObserver(object):
         )
 
     def on_gatts_evt_exchange_mtu_request(self, ble_driver, conn_handle, client_mtu):
-        pass
+        logger.debug(
+            f"evt> on_gatts_evt_exchange_mtu_request conn({conn_handle} client_mtu({client_mtu})"
+        )
 
     def on_rpc_status(self, ble_driver, code, message):
         logger.debug("evt> status code({}) message({})".format(code, message))

@@ -1977,7 +1977,6 @@ class BLEDriver(object):
     @NordicSemiErrorCheck
     @wrapt.synchronized(api_lock)
     def ble_gattc_exchange_mtu_req(self, conn_handle, mtu):
-        logger.debug(f"Sending GATTC MTU exchange request: conn({conn_handle}) client_mtu({mtu})")
         return driver.sd_ble_gattc_exchange_mtu_request(
             self.rpc_adapter, conn_handle, mtu
         )
@@ -1985,7 +1984,6 @@ class BLEDriver(object):
     @NordicSemiErrorCheck
     @wrapt.synchronized(api_lock)
     def ble_gattc_hv_confirm(self, conn_handle, attr_handle):
-        logger.debug("Sending GATTC Handle value confirmation")
         return driver.sd_ble_gattc_hv_confirm(
             self.rpc_adapter, conn_handle, attr_handle
         )
@@ -2041,9 +2039,8 @@ class BLEDriver(object):
         while self.run_workers:
             try:
                 item = self.status_queue.get(True, WORKER_QUEUE_WAIT_TIME)
-                logger.debug("status")
                 self.status_handler_sync(*item)
-            except queue.Empty as _:
+            except queue.Empty:
                 pass
             except Exception as ex:
                 logger.exception("Exception in status handler: {}".format(ex))
@@ -2109,7 +2106,6 @@ class BLEDriver(object):
 
     @wrapt.synchronized(observer_lock)
     def ble_event_handler_sync(self, _adapter, ble_event):
-        logger.debug("ble_evt_handler_sync")
 
         try:
             evt_id = BLEEvtID(ble_event.header.evt_id)

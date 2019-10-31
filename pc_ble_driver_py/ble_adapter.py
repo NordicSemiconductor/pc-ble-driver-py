@@ -227,7 +227,7 @@ class BLEAdapter(BLEDriverObserver):
 
         # Use minimum of client and server mtu to ensure both sides support the value
         new_mtu = min(mtu, response["att_mtu"])
-        logger.info(f"New ATT MTU is {new_mtu}")
+        logger.debug(f"New ATT MTU is {new_mtu}")
         self.db_conns[conn_handle].att_mtu = new_mtu
         return new_mtu
 
