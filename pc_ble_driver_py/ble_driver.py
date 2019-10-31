@@ -86,6 +86,12 @@ import pc_ble_driver_py.ble_driver_types as util
 from pc_ble_driver_py.exceptions import NordicSemiException
 
 
+NRF_ERRORS = { 
+    getattr(driver, name): name 
+    for name in dir(driver) if name.startswith('NRF_ERROR_')
+}
+
+
 def NordicSemiErrorCheck(wrapped=None, expected=driver.NRF_SUCCESS):
     if wrapped is None:
         return functools.partial(NordicSemiErrorCheck, expected=expected)
@@ -95,7 +101,9 @@ def NordicSemiErrorCheck(wrapped=None, expected=driver.NRF_SUCCESS):
         err_code = wrapped(*args, **kwargs)
         if err_code != expected:
             raise NordicSemiException(
-                "Failed to {}. Error code: {}".format(wrapped.__name__, err_code),
+                "Failed to {}. Error code: {}".format(
+                    wrapped.__name__, NRF_ERRORS.get(err_code, err_code)
+                ),
                 error_code=err_code,
             )
 
