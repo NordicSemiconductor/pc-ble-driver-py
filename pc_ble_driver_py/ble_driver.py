@@ -1100,6 +1100,84 @@ class BLEUUID(object):
         uuid.type = self.base.type
         return uuid
 
+class BLEGATTCHARPROPS(object):
+    def __init__(self, broadcast, read, write_wo_resp, write, notify, indicate, auth_signed_wr):
+        pass
+
+class BLEGATTSATTRMD(object):
+    def __init__(self, vloc=driver.BLE_GATTS_VLOC_STACK, rd_auth=0, wr_auth=0, vlen=1):
+        self.vloc = vloc
+        self.rd_auth = rd_auth
+        self.wr_auth = wr_auth
+        self.vlen = vlen
+
+    def to_c(self):
+        attr_md = driver.ble_gatts_attr_md_t()
+        attr_md.vloc = self.vloc
+        attr_md.rd_auth = self.rd_auth
+        attr_md.wr_auth = self.wr_auth
+        attr_md.vlen = self.vlen
+        return attr_md
+
+class BLEGATTSATTR(object):
+    def __init__(self, uuid, attr_md, init_len, init_offs, max_len, value):
+        self.uuid = uuid
+        self.attr_md = attr_md
+        self.init_len = init_len
+        self.init_offs = init_offs
+        self.max_len = max_len
+        self.value = value
+
+    def to_c(self):
+        attr = driver.ble_gatts_attr_t()
+        attr.p_uuid = self.uuid
+        attr.p_attr_md = self.attr_md
+        attr.init_len = self.init_len
+        attr.max_len = self.max_len
+        attr.value = self.value
+        return attr
+
+class BLEGATTSHVXPARAMS(object):
+    #length ???
+    def __init__(self, _type=driver.BLE_GATT_HVX_NOTIFICATION, offset=0, length=5, data=5):
+        self.type = _type
+        self.offset = offset
+        self.length = length
+        self.data = data
+
+    def to_c(self):
+        hvx_params = driver.ble_gatts_hvx_params_t()
+        hvx_params.type = self.type
+        hvx_params.offset = self.offset
+        hvx_params.p_len = self.length
+        hvx_params.p_data = self.data
+
+class BLEGATTSCHARHANDLES(object):
+    def to_c(self):
+        char_handles = driver.ble_gatts_char_handles_t()
+        return char_handles
+
+class BLEGATTSCHARMD(object):
+    def __init__(self, notify=1, user_desc=None, pf=None, desc_md=None, cccd_md=None, sccd_md=None):
+        self.notify = notify
+        self.user_desc = user_desc
+        self.pf = pf
+        self.desc_md = desc_md
+        self.cccd_md = cccd_md
+        self.sccd_md = sccd_md
+
+    def __str__(self):
+        return str(self.__dict__)
+
+    def to_c(self):
+        char_md = driver.ble_gatts_char_md_t()
+        char_md.char_props.notify = self.notify
+        char_md.p_char_user_desc = self.user_desc
+        char_md.p_char_pf = self.pf
+        char_md.user_desc_md = self.desc_md
+        char_md.p_cccd_md = self.cccd_md
+        char_md.p_sccd_md = self.sccd_md
+        return char_md
 
 class BLEDescriptor(object):
     def __init__(self, uuid, handle):
