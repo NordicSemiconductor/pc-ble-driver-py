@@ -212,9 +212,24 @@ class BLEAdapter(BLEDriverObserver):
         self.observers.remove(observer)
 
     def att_mtu_exchange(self, conn_handle, mtu):
-        self.driver.ble_gattc_exchange_mtu_req(conn_handle, mtu)
-        self.evt_sync[conn_handle].wait(evt=BLEEvtID.gattc_evt_exchange_mtu_rsp)
-        return self.db_conns[conn_handle].att_mtu
+        try:
+            self.driver.ble_gattc_exchange_mtu_req(conn_handle, mtu)
+        except NordicSemiException as ex:
+            raise NordicSemiException(
+                "MTU exchange request failed. Common causes are: "
+                "missing att_mtu setting in ble_cfg_set, "
+                "different config tags used in ble_cfg_set and connect.") from ex
+
+        response = self.evt_sync[conn_handle].wait(evt=BLEEvtID.gattc_evt_exchange_mtu_rsp)
+
+        if response is None:
+            return self.db_conns[conn_handle].att_mtu
+
+        # Use minimum of client and server mtu to ensure both sides support the value
+        new_mtu = min(mtu, response["att_mtu"])
+        logger.debug(f"New ATT MTU is {new_mtu}")
+        self.db_conns[conn_handle].att_mtu = new_mtu
+        return new_mtu
 
     @NordicSemiErrorCheck(expected=BLEGattStatusCode.success)
     def service_discovery(self, conn_handle, uuid=None):
@@ -663,10 +678,13 @@ class BLEAdapter(BLEDriverObserver):
         self.driver.ble_gap_data_length_update(conn_handle, None, None)
 
     def on_gatts_evt_exchange_mtu_request(self, ble_driver, conn_handle, client_mtu):
-        ble_driver.ble_gatts_exchange_mtu_reply(conn_handle, self.default_mtu)
-
-    def on_att_mtu_exchanged(self, ble_driver, conn_handle, att_mtu):
-        self.db_conns[conn_handle].att_mtu = att_mtu
+        try:
+            ble_driver.ble_gatts_exchange_mtu_reply(conn_handle, self.default_mtu)
+        except NordicSemiException as ex:
+            raise NordicSemiException(
+                "MTU exchange reply failed. Common causes are: "
+                "missing att_mtu setting in ble_cfg_set, "
+                "different config tags used in ble_cfg_set and adv_start.") from ex
 
     def on_gattc_evt_exchange_mtu_rsp(self, ble_driver, conn_handle, **kwargs):
         self.evt_sync[conn_handle].notify(
