@@ -1154,7 +1154,7 @@ class BLEGattsAttrMD(object):
 
 
 class BLEGattsAttr(object):
-    def __init__(self, uuid, attr_md, max_len, value=""):
+    def __init__(self, uuid, attr_md, max_len, value=[]):
         self.uuid = uuid
         self.attr_md = attr_md
         self.max_len = max_len
