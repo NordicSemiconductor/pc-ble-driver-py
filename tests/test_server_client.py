@@ -178,7 +178,7 @@ class Peripheral(BLEDriverObserver, BLEAdapterObserver):
     def new_heart_rate(self):
         self.heart_rate = random.randint(60,200)
 
-    def sendHeartRate(self):
+    def send_heart_rate(self):
         length = driver.new_uint16()
         driver.uint16_assign(length, 1)
         data = driver.new_uint8()
@@ -224,7 +224,7 @@ class ServerClient(unittest.TestCase):
         self.peripheral.start(self.adv_name)
         self.central.start(self.adv_name)
 
-        self.peripheral.sendHeartRate()
+        self.peripheral.send_heart_rate()
         notification = self.central.notification_q.get(timeout=5)
         self.assertTrue(notification == self.peripheral.heart_rate)
         self.central.stop()
