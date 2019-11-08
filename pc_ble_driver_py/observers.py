@@ -271,6 +271,13 @@ class BLEDriverObserver(object):
             )
         )
 
+    def on_gattc_evt_exchange_mtu_rsp(self, ble_driver, conn_handle, status, att_mtu):
+        logger.debug(
+            "evt> on_gattc_evt_exchange_mtu_rsp conn({}) status({}) server_mtu({})".format(
+                conn_handle, status, att_mtu
+            )
+        )
+
     def on_gatts_evt_hvn_tx_complete(self, ble_driver, conn_handle, count):
         pass
 
@@ -301,11 +308,8 @@ class BLEDriverObserver(object):
         )
 
     def on_gatts_evt_exchange_mtu_request(self, ble_driver, conn_handle, client_mtu):
-        pass
-
-    def on_att_mtu_exchanged(self, ble_driver, conn_handle, att_mtu):
         logger.debug(
-            "evt> att_mtu_exchanged conn({})\n att_mtu({})".format(conn_handle, att_mtu)
+            f"evt> on_gatts_evt_exchange_mtu_request conn({conn_handle} client_mtu({client_mtu})"
         )
 
     def on_rpc_status(self, ble_driver, code, message):

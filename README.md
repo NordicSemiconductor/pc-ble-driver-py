@@ -33,10 +33,10 @@ Before building pc-ble-driver-py you will need to install nrf-ble-driver as a CM
 
     vcpkg install nrf-ble-driver
 
-To use a different triplet than the default one, see documentation in vcpkg:
+To use a different triplet than [the default one](https://github.com/microsoft/vcpkg/blob/master/docs/users/triplets.md#additional-remarks), see documentation in vcpkg:
 
-    vcpkg install --help
-    vcpkg triplet --help
+    vcpkg help triplet
+    vcpkg help install
 
 Triplet must match the version of python you are building the binding for.
 

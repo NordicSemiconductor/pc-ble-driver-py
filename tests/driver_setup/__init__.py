@@ -20,6 +20,7 @@ class Settings(object):
     """
 
     settings = None  # type: Settings
+    CFG_TAG = 1
 
     def __init__(
         self,
