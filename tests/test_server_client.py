@@ -53,17 +53,22 @@ from pc_ble_driver_py.ble_driver import (
     BLEConfigConnGatt,
     BLEAdvData,
     BLEUUID,
-    BLEGATTSCHARMD,
-    BLEGATTSATTRMD,
-    BLEGATTSATTR,
-    BLEGATTSCHARHANDLES,
-    BLEGATTSHVXPARAMS,
+    BLEGattsCharMD,
+    BLEGattCharProps,
+    BLEGattsAttrMD,
+    BLEGattsAttr,
+    BLEGattsCharHandles,
+    BLEGattHandle,
+    BLEGattsHVXParams,
     BLEGapScanParams,
     driver,
     util,
 )
 
 logger = logging.getLogger(__name__)
+
+HeartRateService = 0x180D
+HeartRateCharacterstic = 0x2A37
 
 class Central(BLEDriverObserver, BLEAdapterObserver):
     def __init__(self, adapter):
@@ -72,17 +77,10 @@ class Central(BLEDriverObserver, BLEAdapterObserver):
             "Central adapter is %d", self.adapter.driver.rpc_adapter.internal
         )
         self.conn_q = Queue()
+        self.notification_q = Queue()
         self.adapter.observer_register(self)
         self.adapter.driver.observer_register(self)
         self.conn_handle = None
-
-    def open(self):
-        self.adapter.driver.open()
-        gatt_cfg = BLEConfigConnGatt()
-        gatt_cfg.att_mtu = self.adapter.default_mtu
-        gatt_cfg.tag = 1
-        self.adapter.driver.ble_cfg_set(BLEConfig.conn_gatt, gatt_cfg)
-        self.adapter.driver.ble_enable()
     
     def stop(self):
         if self.conn_handle:
@@ -92,18 +90,12 @@ class Central(BLEDriverObserver, BLEAdapterObserver):
         self.connect_with = connect_with
         logger.info(f"scan_start, trying to find {self.connect_with}")
         scan_duration = 5
-        #params = BLEGapScanParams(interval_ms=200, window_ms=150, timeout_s=scan_duration)
         self.adapter.driver.ble_gap_scan_start()#scan_params=params) 
         try:
             self.conn_handle = self.conn_q.get(timeout=scan_duration)
             self.adapter.service_discovery(self.conn_handle)
-
-            #self.adapter.enable_notification(
-            #    self.conn_handle, BLEUUID(BLEUUID.Standard.battery_level)
-            #)
-
-            self.adapter.enable_notification(self.conn_handle, BLEUUID(BLEUUID.Standard.heart_rate))
-            logger.info(f"Found new handle: {self.conn_handle}")
+            self.adapter.enable_notification(self.conn_handle, BLEUUID(HeartRateCharacterstic))
+            logger.info(f"Notification enabled.")
         except Empty:
             logger.info(f"No heart rate collector advertising with name {self.connect_with} found.")
 
@@ -111,10 +103,10 @@ class Central(BLEDriverObserver, BLEAdapterObserver):
         self, ble_driver, conn_handle, peer_addr, role, conn_params
     ):
         self.conn_q.put(conn_handle)
-        logger.info(f"New connection: {conn_handle}")
+        logger.info(f"(Central) New connection: {conn_handle}.")
 
     def on_gap_evt_disconnected(self, ble_driver, conn_handle, reason):
-        logger.info(f"Disconnected: {conn_handle} {reason}")
+        logger.info(f"Disconnected: {conn_handle} {reason}.")
 
     def on_gap_evt_adv_report(
         self, ble_driver, conn_handle, peer_addr, rssi, adv_type, adv_data
@@ -143,9 +135,9 @@ class Central(BLEDriverObserver, BLEAdapterObserver):
             self.adapter.connect(peer_addr, tag=1)
 
     def on_notification(self, ble_adapter, conn_handle, uuid, data):
-        if len(data) > 32:
-            data = f"({data[0:10]}...)"
-        logger.info(f"Connection: {conn_handle}, {uuid} = {data}")
+        data = data[0]
+        logger.info(f"Connection: {conn_handle}, {uuid} = {data}.")
+        self.notification_q.put(data)
 
 class Peripheral(BLEDriverObserver, BLEAdapterObserver):
     def __init__(self, adapter):
@@ -157,45 +149,45 @@ class Peripheral(BLEDriverObserver, BLEAdapterObserver):
         self.conn_q = Queue()
         self.adapter.observer_register(self)
         self.adapter.driver.observer_register(self)
-
+        self.heart_rate = random.randint(60, 200)
+        self.char_handles = None
 
     def start(self, adv_name):
         adv_data = BLEAdvData(complete_local_name=adv_name)
         self.adapter.driver.ble_gap_adv_data_set(adv_data)
-        handle_buffer = driver.new_uint16()
-        serv_uuid = BLEUUID(0x180D)
-        char_uuid = BLEUUID(BLEUUID.Standard.heart_rate)
-        char_md = BLEGATTSCHARMD()
-        attr_md = BLEGATTSATTRMD()
-        char_handles = BLEGATTSCHARHANDLES()
-        #init_len, max_len, value ???
-        attr = BLEGATTSATTR(uuid=char_uuid.to_c(), attr_md=attr_md.to_c(), init_len=2, init_offs=0, max_len=8, value=5)
-        self.adapter.driver.ble_gatts_service_add(driver.BLE_GATTS_SRVC_TYPE_PRIMARY, serv_uuid, handle_buffer)
-        self.adapter.driver.ble_gatts_characteristic_add(driver.uint16_value(handle_buffer), char_md.to_c(), attr.to_c(), char_handles.to_c())
+        self.char_handles = BLEGattsCharHandles()
+        serv_handle = BLEGattHandle()
+        serv_uuid = BLEUUID(HeartRateService)
+        char_uuid = BLEUUID(HeartRateCharacterstic)
+
+        props = BLEGattCharProps(notify=True)
+        char_md = BLEGattsCharMD(char_props=props)
+        attr_md = BLEGattsAttrMD()
+        attr = BLEGattsAttr(uuid=char_uuid, attr_md=attr_md, max_len=8, value=[5])
+
+        self.adapter.driver.ble_gatts_service_add(driver.BLE_GATTS_SRVC_TYPE_PRIMARY, serv_uuid, serv_handle)
+        self.adapter.driver.ble_gatts_characteristic_add(serv_handle.handle, char_md, attr, self.char_handles)
         self.adapter.driver.ble_gap_adv_start()
 
     def on_gap_evt_connected(
         self, ble_driver, conn_handle, peer_addr, role, conn_params
     ):
         self.conn_q.put(conn_handle)
-        print('New per handle', conn_handle)
+        logger.info(f"(Peripheral) New connection: {conn_handle}.")
 
-    def get_heart_rate(self):
-        return random.randint(60,200)
+    def new_heart_rate(self):
+        self.heart_rate = random.randint(60,200)
 
     def sendHeartRate(self):
         length = driver.new_uint16()
         driver.uint16_assign(length, 1)
-        data = driver.new_uint8()#util.list_to_uint8_array([1, 0, 1, 0, 0, 0, 1, 0])#
-        driver.uint8_assign(data, 1)
-        hvx_params = BLEGATTSHVXPARAMS(length=length, data=data)
-        print("got params")
-        breakpoint()
-        res = self.adapter.driver.ble_gatts_hvx(self.conn_q.get(timeout=2), hvx_params.to_c())
-        print('res', res)
+        data = driver.new_uint8()
+        driver.uint8_assign(data, self.heart_rate)
+        hvx_params = BLEGattsHVXParams(handle=self.char_handles, hvx_type=driver.BLE_GATT_HVX_NOTIFICATION, length=length, data=data, offset=0)
+        self.adapter.driver.ble_gatts_hvx(self.conn_q.get(timeout=2), hvx_params)
 
 
-class HeartRate(unittest.TestCase):
+class ServerClient(unittest.TestCase):
 
     def setUp(self):
         settings = Settings.current()
@@ -228,16 +220,13 @@ class HeartRate(unittest.TestCase):
         )
         self.peripheral = Peripheral(peripheral)
 
-    def test_rssi(self):
+    def test_server_client(self):
         self.peripheral.start(self.adv_name)
         self.central.start(self.adv_name)
 
-        print("Send heartrate")
-        try:
-            self.peripheral.sendHeartRate()
-        except:
-            print('Exception')
-        print("Sent")
+        self.peripheral.sendHeartRate()
+        notification = self.central.notification_q.get(timeout=5)
+        self.assertTrue(notification == self.peripheral.heart_rate)
         self.central.stop()
 
     def tearDown(self):
