@@ -1154,10 +1154,11 @@ class BLEGattsAttrMD(object):
 
 
 class BLEGattsAttr(object):
-    def __init__(self, uuid, attr_md, max_len, value=""):
+    def __init__(self, uuid, attr_md, max_len, init_offs=0, value=[]):
         self.uuid = uuid
         self.attr_md = attr_md
         self.max_len = max_len
+        self.init_offs = init_offs
         self.value = value
 
     def to_c(self):
@@ -1168,26 +1169,32 @@ class BLEGattsAttr(object):
         attr.max_len = self.max_len
         if self.value:
             attr.init_len = len(self.value)
-            attr.init_offs = 0
+            attr.init_offs = self.init_offs
             attr.p_value = self.__data_array.cast()
         return attr
 
 
 class BLEGattsHVXParams(object):
-    def __init__(self, handle, hvx_type, length, data, offset):
+    def __init__(self, handle, hvx_type, data, offset=0):
         self.handle = handle
         self.type = hvx_type
         self.offset = offset
-        self.length = length
         self.data = data
 
     def to_c(self):
         hvx_params = driver.ble_gatts_hvx_params_t()
+
+        self._len_ptr = driver.new_uint16()
+        if self.data:
+            self.__data_array = util.list_to_uint8_array(self.data)
+            hvx_params.p_data = self.__data_array.cast()
+            driver.uint16_assign(self._len_ptr, len(self.data))
+        else:
+            driver.uint16_assign(self._len_ptr, 0)
         hvx_params.handle = self.handle.value_handle
         hvx_params.type = self.type
         hvx_params.offset = self.offset
-        hvx_params.p_len = self.length
-        hvx_params.p_data = self.data
+        hvx_params.p_len = self._len_ptr
         return hvx_params
 
 
