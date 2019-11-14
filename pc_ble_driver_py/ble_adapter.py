@@ -488,7 +488,7 @@ class BLEAdapter(BLEDriverObserver):
                 return
             except NordicSemiException as e:
                 # Retry if NRF_ERROR_RESOURCES error code.
-                if "Error code: 19" in str(e):
+                if ("Error code: 19" in str(e)) or ("NRF_ERROR_RESOURCES" in str(e)):
                     self.evt_sync[conn_handle].wait(evt=tx_complete, timeout=1)
                 else:
                     raise e
