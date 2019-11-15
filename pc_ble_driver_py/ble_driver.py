@@ -1164,7 +1164,7 @@ class BLEGattsAttr(object):
         self.value = value
 
     def to_c(self):
-        self.__data_array = util.list_to_uint8_array(self.value)
+        self.data_array = util.list_to_uint8_array(self.value)
         attr = driver.ble_gatts_attr_t()
         attr.p_uuid = self.uuid.to_c()
         attr.p_attr_md = self.attr_md.to_c()
@@ -1172,7 +1172,7 @@ class BLEGattsAttr(object):
         if self.value:
             attr.init_len = len(self.value)
             attr.init_offs = self.init_offs
-            attr.p_value = self.__data_array.cast()
+            attr.p_value = self.data_array.cast()
         return attr
 
 
