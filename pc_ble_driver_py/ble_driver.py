@@ -1115,7 +1115,8 @@ class BLEGattHandle(object):
 
 
 class BLEGattCharProps(object):
-    def __init__(self, broadcast=False, read=False, write_wo_resp=False, write=False, 
+    def __init__(self, broadcast=False, read=False,
+                 write_wo_resp=False, write=False,
                  notify=False, indicate=False, auth_signed_wr=False):
         self.broadcast = broadcast
         self.read = read
@@ -1138,7 +1139,8 @@ class BLEGattCharProps(object):
 
 
 class BLEGattsAttrMD(object):
-    def __init__(self, vloc=driver.BLE_GATTS_VLOC_STACK, rd_auth=False, wr_auth=False, vlen=1):
+    def __init__(self, vloc=driver.BLE_GATTS_VLOC_STACK,
+                 rd_auth=False, wr_auth=False, vlen=1):
         self.vloc = vloc
         self.rd_auth = rd_auth
         self.wr_auth = wr_auth
@@ -1199,7 +1201,8 @@ class BLEGattsHVXParams(object):
 
 
 class BLEGattsCharHandles(object):
-    def __init__(self, value_handle=0, user_desc_handle=0, cccd_handle=0, sccd_handle=0):
+    def __init__(self, value_handle=0, user_desc_handle=0,
+                 cccd_handle=0, sccd_handle=0):
         self.value_handle = value_handle
         self.user_desc_handle = user_desc_handle
         self.cccd_handle = cccd_handle
@@ -1215,7 +1218,8 @@ class BLEGattsCharHandles(object):
 
 
 class BLEGattsCharMD(object):
-    def __init__(self, char_props, user_desc=None, pf=None, desc_md=None, cccd_md=None, sccd_md=None):
+    def __init__(self, char_props, user_desc=None, pf=None,
+                 desc_md=None, cccd_md=None, sccd_md=None):
         self.char_props = char_props
         self.user_desc = user_desc
         self.pf = pf
