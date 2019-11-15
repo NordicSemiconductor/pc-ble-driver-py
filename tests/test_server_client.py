@@ -47,10 +47,6 @@ from pc_ble_driver_py.observers import BLEDriverObserver, BLEAdapterObserver
 from driver_setup import Settings, setup_adapter
 
 from pc_ble_driver_py.ble_driver import (
-    BLEDriver,
-    BLEEnableParams,
-    BLEConfig,
-    BLEConfigConnGatt,
     BLEAdvData,
     BLEUUID,
     BLEGattsCharMD,
@@ -67,11 +63,12 @@ from pc_ble_driver_py.ble_driver import (
 
 logger = logging.getLogger(__name__)
 
-SERVICE = 0x180D # Heart Rate service UUID
-CHARACTERSTIC = 0x2A37 # Heart Rate Measurement characteristic UUID
-DATA = [100] # Heart Rate list
-ATTR_VALUE = [10] # Initial Heart Rate Measurement Packet list
-ATTR_MAX_LEN = 8 # Heart Rate Measurement Packet maximum size
+SERVICE = 0x180D  # Heart Rate service UUID
+CHARACTERSTIC = 0x2A37  # Heart Rate Measurement characteristic UUID
+DATA = [100]  # Heart Rate list
+ATTR_VALUE = [10]  # Initial Heart Rate Measurement Packet list
+ATTR_MAX_LEN = 8  # Heart Rate Measurement Packet maximum size
+
 
 class Central(BLEDriverObserver, BLEAdapterObserver):
     def __init__(self, adapter):
@@ -97,10 +94,12 @@ class Central(BLEDriverObserver, BLEAdapterObserver):
         try:
             self.conn_handle = self.conn_q.get(timeout=scan_duration)
             self.adapter.service_discovery(self.conn_handle)
-            self.adapter.enable_notification(self.conn_handle, BLEUUID(CHARACTERSTIC))
+            self.adapter.enable_notification(self.conn_handle,
+                                             BLEUUID(CHARACTERSTIC))
             logger.info(f"Notification enabled.")
         except Empty:
-            logger.info(f"No heart rate collector advertising with name {self.connect_with} found.")
+            logger.info(f"No heart rate collector advertising with name"
+                        f"{self.connect_with} found.")
 
     def on_gap_evt_connected(
         self, ble_driver, conn_handle, peer_addr, role, conn_params
@@ -131,15 +130,15 @@ class Central(BLEDriverObserver, BLEAdapterObserver):
                 "{0:02X}".format(b) for b in peer_addr.addr
             )
             logger.info(
-                "Trying to connect to peripheral advertising as %s, address: 0x%s",
-                dev_name,
-                address_string,
+                f"Trying to connect to peripheral advertising as {dev_name},"
+                f" address: 0x{address_string}"
             )
             self.adapter.connect(peer_addr, tag=1)
 
     def on_notification(self, ble_adapter, conn_handle, uuid, data):
         logger.info(f"Connection: {conn_handle}, {uuid} = {data}.")
         self.notification_q.put(data)
+
 
 class Peripheral(BLEDriverObserver, BLEAdapterObserver):
     def __init__(self, adapter):
@@ -162,12 +161,13 @@ class Peripheral(BLEDriverObserver, BLEAdapterObserver):
         props = BLEGattCharProps(notify=True)
         char_md = BLEGattsCharMD(char_props=props)
         attr_md = BLEGattsAttrMD()
-        attr = BLEGattsAttr(uuid=char_uuid, attr_md=attr_md, max_len=ATTR_MAX_LEN, value=ATTR_VALUE)
+        attr = BLEGattsAttr(uuid=char_uuid, attr_md=attr_md,
+                            max_len=ATTR_MAX_LEN, value=ATTR_VALUE)
 
-        self.adapter.driver.ble_gatts_service_add(driver.BLE_GATTS_SRVC_TYPE_PRIMARY,
-                                                  serv_uuid, serv_handle)
-        self.adapter.driver.ble_gatts_characteristic_add(serv_handle.handle, char_md,
-                                                         attr, self.char_handles)
+        self.adapter.driver.ble_gatts_service_add(
+            driver.BLE_GATTS_SRVC_TYPE_PRIMARY, serv_uuid, serv_handle)
+        self.adapter.driver.ble_gatts_characteristic_add(
+            serv_handle.handle, char_md, attr, self.char_handles)
 
     def start(self, adv_name):
         adv_data = BLEAdvData(complete_local_name=adv_name)
@@ -181,9 +181,12 @@ class Peripheral(BLEDriverObserver, BLEAdapterObserver):
         logger.info(f"(Peripheral) New connection: {conn_handle}.")
 
     def send_data(self, data):
-        hvx_params = BLEGattsHVXParams(handle=self.char_handles,
-                                       hvx_type=driver.BLE_GATT_HVX_NOTIFICATION, data=data)
-        self.adapter.driver.ble_gatts_hvx(self.conn_q.get(timeout=2), hvx_params)
+        hvx_params = BLEGattsHVXParams(
+            handle=self.char_handles,
+            hvx_type=driver.BLE_GATT_HVX_NOTIFICATION,
+            data=data)
+        self.adapter.driver.ble_gatts_hvx(self.conn_q.get(timeout=2),
+                                          hvx_params)
 
 
 class ServerClient(unittest.TestCase):
