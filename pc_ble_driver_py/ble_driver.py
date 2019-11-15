@@ -1109,6 +1109,149 @@ class BLEUUID(object):
         return uuid
 
 
+class BLEGattHandle(object):
+    def __init__(self, handle=driver.BLE_GATT_HANDLE_INVALID):
+        self.handle = handle
+
+
+class BLEGattCharProps(object):
+    def __init__(self, broadcast=False, read=False,
+                 write_wo_resp=False, write=False,
+                 notify=False, indicate=False,
+                 auth_signed_wr=False):
+        self.broadcast = broadcast
+        self.read = read
+        self.write_wo_resp = write_wo_resp
+        self.write = write
+        self.notify = notify
+        self.indicate = indicate
+        self.auth_signed_wr = auth_signed_wr
+
+    def to_c(self):
+        params = driver.ble_gatt_char_props_t()
+        params.broadcast = int(self.broadcast)
+        params.read = int(self.read)
+        params.write_wo_resp = int(self.write_wo_resp)
+        params.write = int(self.write)
+        params.notify = int(self.notify)
+        params.indicate = int(self.indicate)
+        params.auth_signed_wr = int(self.auth_signed_wr)
+        return params
+
+
+class BLEGattsAttrMD(object):
+    def __init__(self, vloc=driver.BLE_GATTS_VLOC_STACK,
+                 rd_auth=False, wr_auth=False, vlen=1):
+        self.vloc = vloc
+        self.rd_auth = rd_auth
+        self.wr_auth = wr_auth
+        self.vlen = vlen
+
+    def to_c(self):
+        attr_md = driver.ble_gatts_attr_md_t()
+        attr_md.vloc = self.vloc
+        attr_md.rd_auth = int(self.rd_auth)
+        attr_md.wr_auth = int(self.wr_auth)
+        attr_md.vlen = self.vlen
+        return attr_md
+
+
+class BLEGattsAttr(object):
+    def __init__(self, uuid, attr_md, max_len, init_offs=0, value=[]):
+        assert isinstance(uuid, BLEUUID)
+        assert isinstance(attr_md, BLEGattsAttrMD)
+        self.uuid = uuid
+        self.attr_md = attr_md
+        self.max_len = max_len
+        self.init_offs = init_offs
+        self.value = value
+
+    def to_c(self):
+        self.data_array = util.list_to_uint8_array(self.value)
+        attr = driver.ble_gatts_attr_t()
+        attr.p_uuid = self.uuid.to_c()
+        attr.p_attr_md = self.attr_md.to_c()
+        attr.max_len = self.max_len
+        if self.value:
+            attr.init_len = len(self.value)
+            attr.init_offs = self.init_offs
+            attr.p_value = self.data_array.cast()
+        return attr
+
+
+class BLEGattsHVXParams(object):
+    def __init__(self, handle, hvx_type, data, offset=0):
+        assert isinstance(handle, BLEGattsCharHandles)
+        self.handle = handle
+        self.type = hvx_type
+        self.offset = offset
+        self.data = data
+
+    def to_c(self):
+        hvx_params = driver.ble_gatts_hvx_params_t()
+
+        self._len_ptr = driver.new_uint16()
+        if self.data:
+            self.data_array = util.list_to_uint8_array(self.data)
+            hvx_params.p_data = self.data_array.cast()
+            driver.uint16_assign(self._len_ptr, len(self.data))
+        else:
+            driver.uint16_assign(self._len_ptr, 0)
+        hvx_params.handle = self.handle.value_handle
+        hvx_params.type = self.type
+        hvx_params.offset = self.offset
+        hvx_params.p_len = self._len_ptr
+        return hvx_params
+
+
+class BLEGattsCharHandles(object):
+    def __init__(self, value_handle=0, user_desc_handle=0,
+                 cccd_handle=0, sccd_handle=0):
+        self.value_handle = value_handle
+        self.user_desc_handle = user_desc_handle
+        self.cccd_handle = cccd_handle
+        self.sccd_handle = sccd_handle
+
+    def to_c(self):
+        char_handles = driver.ble_gatts_char_handles_t()
+        char_handles.value_handle = self.value_handle
+        char_handles.user_desc_handle = self.user_desc_handle
+        char_handles.cccd_handle = self.cccd_handle
+        char_handles.sccd_handle = self.sccd_handle
+        return char_handles
+
+
+class BLEGattsCharMD(object):
+    def __init__(self, char_props, user_desc=None, pf=None,
+                 desc_md=None, cccd_md=None, sccd_md=None):
+        assert isinstance(char_props, BLEGattCharProps)
+        self.char_props = char_props
+        self.user_desc = user_desc
+        self.pf = pf
+        self.desc_md = desc_md
+        self.cccd_md = cccd_md
+        self.sccd_md = sccd_md
+
+    def __str__(self):
+        return str(self.__dict__)
+
+    def to_c(self):
+        char_md = driver.ble_gatts_char_md_t()
+        char_md.char_props = self.char_props.to_c()
+        if self.user_desc:
+            char_md.p_char_user_desc = util.list_to_char_array(self.user_desc)
+            char_md.char_user_desc_size = len(self.user_desc)
+        if self.pf:
+            char_md.p_char_pf = self.pf.to_c()
+        if self.desc_md:
+            char_md.user_desc_md = self.desc_md.to_c()
+        if self.cccd_md:
+            char_md.p_cccd_md = self.cccd_md.to_c()
+        if self.sccd_md:
+            char_md.p_sccd_md = self.sccd_md.to_c()
+        return char_md
+
+
 class BLEDescriptor(object):
     def __init__(self, uuid, handle):
         self.handle = handle
@@ -1991,19 +2134,35 @@ class BLEDriver(object):
     @NordicSemiErrorCheck
     @wrapt.synchronized(api_lock)
     def ble_gatts_service_add(self, service_type, uuid, service_handle):
+        assert isinstance(service_handle, BLEGattHandle)
+        assert isinstance(uuid, BLEUUID)
+        handle = driver.new_uint16()
         uuid_c = uuid.to_c()
-        return driver.sd_ble_gatts_service_add(
-            self.rpc_adapter, service_type, uuid_c, service_handle
+        err_code = driver.sd_ble_gatts_service_add(
+            self.rpc_adapter, service_type, uuid_c, handle
         )
+        if err_code == driver.NRF_SUCCESS:
+            service_handle.handle = driver.uint16_value(handle)
+        return err_code
 
     @NordicSemiErrorCheck
     @wrapt.synchronized(api_lock)
     def ble_gatts_characteristic_add(
         self, service_handle, char_md, attr_char_value, char_handle
     ):
-        return driver.sd_ble_gatts_characteristic_add(
-            self.rpc_adapter, service_handle, char_md, attr_char_value, char_handle
+        assert isinstance(char_handle, BLEGattsCharHandles), "Invalid argument type"
+        handles = driver.ble_gatts_char_handles_t()
+        char_md = char_md.to_c()
+        attr_char_value = attr_char_value.to_c()
+        err_code = driver.sd_ble_gatts_characteristic_add(
+            self.rpc_adapter, service_handle, char_md, attr_char_value, handles
         )
+        if err_code == driver.NRF_SUCCESS:
+            char_handle.value_handle = handles.value_handle
+            char_handle.user_desc_handle = handles.user_desc_handle
+            char_handle.cccd_handle = handles.cccd_handle
+            char_handle.sccd_handle = handles.sccd_handle
+        return err_code
 
     @NordicSemiErrorCheck
     @wrapt.synchronized(api_lock)
@@ -2015,6 +2174,8 @@ class BLEDriver(object):
     @NordicSemiErrorCheck
     @wrapt.synchronized(api_lock)
     def ble_gatts_hvx(self, conn_handle, hvx_params):
+        assert isinstance(hvx_params, BLEGattsHVXParams), "Invalid argument type"
+        hvx_params = hvx_params.to_c()
         return driver.sd_ble_gatts_hvx(self.rpc_adapter, conn_handle, hvx_params)
 
     # IMPORTANT: Python annotations on callbacks make the reference count
