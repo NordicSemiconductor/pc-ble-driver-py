@@ -1158,6 +1158,8 @@ class BLEGattsAttrMD(object):
 
 class BLEGattsAttr(object):
     def __init__(self, uuid, attr_md, max_len, init_offs=0, value=[]):
+        assert isinstance(uuid, BLEUUID)
+        assert isinstance(attr_md, BLEGattsAttrMD)
         self.uuid = uuid
         self.attr_md = attr_md
         self.max_len = max_len
@@ -1179,6 +1181,7 @@ class BLEGattsAttr(object):
 
 class BLEGattsHVXParams(object):
     def __init__(self, handle, hvx_type, data, offset=0):
+        assert isinstance(handle, BLEGattsCharHandles)
         self.handle = handle
         self.type = hvx_type
         self.offset = offset
@@ -1221,6 +1224,7 @@ class BLEGattsCharHandles(object):
 class BLEGattsCharMD(object):
     def __init__(self, char_props, user_desc=None, pf=None,
                  desc_md=None, cccd_md=None, sccd_md=None):
+        assert isinstance(char_props, BLEGattCharProps)
         self.char_props = char_props
         self.user_desc = user_desc
         self.pf = pf
@@ -2130,6 +2134,8 @@ class BLEDriver(object):
     @NordicSemiErrorCheck
     @wrapt.synchronized(api_lock)
     def ble_gatts_service_add(self, service_type, uuid, service_handle):
+        assert isinstance(service_handle, BLEGattHandle)
+        assert isinstance(uuid, BLEUUID)
         handle = driver.new_uint16()
         uuid_c = uuid.to_c()
         err_code = driver.sd_ble_gatts_service_add(
@@ -2144,8 +2150,9 @@ class BLEDriver(object):
     def ble_gatts_characteristic_add(
         self, service_handle, char_md, attr_char_value, char_handle
     ):
+        assert isinstance(char_handle, BLEGattsCharHandles), "Invalid argument type"
         handles = driver.ble_gatts_char_handles_t()
-        char_md = char_md.to_c() 
+        char_md = char_md.to_c()
         attr_char_value = attr_char_value.to_c()
         err_code = driver.sd_ble_gatts_characteristic_add(
             self.rpc_adapter, service_handle, char_md, attr_char_value, handles
