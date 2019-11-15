@@ -100,7 +100,7 @@ class Central(BLEDriverObserver, BLEAdapterObserver):
             self.adapter.enable_notification(self.conn_handle, BLEUUID(CHARACTERSTIC))
             logger.info(f"Notification enabled.")
         except Empty:
-            logger.info(f"No heart rate collector advertising with name {self.connect_with} found.")
+            logger.info(f"No peripherial advertising with name {self.connect_with} found.")
 
     def on_gap_evt_connected(
         self, ble_driver, conn_handle, peer_addr, role, conn_params
