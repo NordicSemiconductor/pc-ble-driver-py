@@ -1117,7 +1117,8 @@ class BLEGattHandle(object):
 class BLEGattCharProps(object):
     def __init__(self, broadcast=False, read=False,
                  write_wo_resp=False, write=False,
-                 notify=False, indicate=False, auth_signed_wr=False):
+                 notify=False, indicate=False,
+                 auth_signed_wr=False):
         self.broadcast = broadcast
         self.read = read
         self.write_wo_resp = write_wo_resp
@@ -1188,8 +1189,8 @@ class BLEGattsHVXParams(object):
 
         self._len_ptr = driver.new_uint16()
         if self.data:
-            self.__data_array = util.list_to_uint8_array(self.data)
-            hvx_params.p_data = self.__data_array.cast()
+            self.data_array = util.list_to_uint8_array(self.data)
+            hvx_params.p_data = self.data_array.cast()
             driver.uint16_assign(self._len_ptr, len(self.data))
         else:
             driver.uint16_assign(self._len_ptr, 0)
