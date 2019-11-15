@@ -38,7 +38,6 @@
 
 import unittest
 from queue import Queue, Empty
-import time
 import random
 import string
 import logging
@@ -56,9 +55,7 @@ from pc_ble_driver_py.ble_driver import (
     BLEGattsCharHandles,
     BLEGattHandle,
     BLEGattsHVXParams,
-    BLEGapScanParams,
     driver,
-    util,
 )
 
 logger = logging.getLogger(__name__)
@@ -98,7 +95,7 @@ class Central(BLEDriverObserver, BLEAdapterObserver):
                                              BLEUUID(CHARACTERSTIC))
             logger.info(f"Notification enabled.")
         except Empty:
-            logger.info(f"No heart rate collector advertising with name"
+            logger.info(f"No peripherial advertising with name"
                         f"{self.connect_with} found.")
 
     def on_gap_evt_connected(
