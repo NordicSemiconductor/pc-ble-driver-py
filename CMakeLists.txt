@@ -1,197 +1,144 @@
-cmake_minimum_required(VERSION 3.3)
+cmake_minimum_required(VERSION 3.13)
+
+if(DEFINED ENV{VCPKG_ROOT} AND NOT DEFINED CMAKE_TOOLCHAIN_FILE)
+    set(CMAKE_TOOLCHAIN_FILE "$ENV{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake"
+        CACHE STRING "")
+endif()
 
 # Name of the project
 project (pc-ble-driver-py)
 
+find_package(PythonExtensions REQUIRED)
+
+if(WIN32)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -D_hypot=hypot")
+endif()
+
 set(PC_BLE_DRIVER_PY_OUTDIR ${CMAKE_BINARY_DIR}/outdir)
 
-set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${PC_BLE_DRIVER_PY_OUTDIR})
-set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${PC_BLE_DRIVER_PY_OUTDIR})
-set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PC_BLE_DRIVER_PY_OUTDIR})
-set(CMAKE_SWIG_OUTDIR ${PC_BLE_DRIVER_PY_OUTDIR})
-foreach( OUTPUTCONFIG ${CMAKE_CONFIGURATION_TYPES} )
-    string( TOUPPER ${OUTPUTCONFIG} OUTPUTCONFIG )
-    set( CMAKE_RUNTIME_OUTPUT_DIRECTORY_${OUTPUTCONFIG} ${PC_BLE_DRIVER_PY_OUTDIR} )
-    set( CMAKE_LIBRARY_OUTPUT_DIRECTORY_${OUTPUTCONFIG} ${PC_BLE_DRIVER_PY_OUTDIR} )
-    set( CMAKE_ARCHIVE_OUTPUT_DIRECTORY_${OUTPUTCONFIG} ${PC_BLE_DRIVER_PY_OUTDIR} )
-endforeach( OUTPUTCONFIG CMAKE_CONFIGURATION_TYPES )
-
-# All projects depending on pc-ble-driver need to include this first
-include(pc-ble-driver/cmake/pc-ble-driver.cmake)
-add_subdirectory(pc-ble-driver)
-
-# Include folders
-include_directories(${PC_BLE_DRIVER_INCLUDE_DIR})
+# There is no reason to compile more than two SoftDevice API versions
+# The Python module only supports one SoftDevice API
+# version for NRF51 and one for NRF52
+set(SD_API_VERS "2;5")
 
 # SWIG
 find_package(SWIG REQUIRED)
 include(${SWIG_USE_FILE})
 
-find_package(PythonLibs 2.7 REQUIRED)
-include_directories(${PYTHON_INCLUDE_PATH})
+# nrf-ble-driver
+find_package(nrf-ble-driver 4.1.1 CONFIG REQUIRED)
 
-foreach(SD_API_VER ${SD_API_VERS})
-    set(PYTHON_MODULE_${SD_API_VER} ${PC_BLE_DRIVER_${SD_API_VER}_PROJECT_NAME})
-endforeach(SD_API_VER)
+# PYTHON_INCLUDE_DIR provided by scikit-build
+include_directories(${PYTHON_INCLUDE_DIR})
 
 set(SWIG_I_FILE ${CMAKE_CURRENT_LIST_DIR}/swig/pc_ble_driver.i.in)
 
 # Use release lib of Python even when building with DEBUG
-add_definitions( -DSWIG_PYTHON_INTERPRETER_NO_DEBUG -DHAVE_ROUND=1)
+add_definitions(-DSWIG_PYTHON_INTERPRETER_NO_DEBUG)
 
 # Avoid warning on Windows
 if(WIN32)
-    add_definitions( -DHAVE_ROUND )
+    add_definitions(-DHAVE_ROUND)
 endif()
 
 # Copy .i file into N variant files
 foreach(SD_API_VER ${SD_API_VERS})
+    set(PYTHON_MODULE_${SD_API_VER} nrf_ble_driver_sd_api_v${SD_API_VER})
     # Copy SWIG-generated wrapper
     set(SWIG_I_FILE_${SD_API_VER} ${PC_BLE_DRIVER_PY_OUTDIR}/${PYTHON_MODULE_${SD_API_VER}}.i)
-    #MESSAGE( STATUS "swig i: " "${SWIG_I_FILE_${SD_API_VER}}")
     set(SWIG_MODULE_NAME ${PYTHON_MODULE_${SD_API_VER}})
     configure_file(${SWIG_I_FILE} ${SWIG_I_FILE_${SD_API_VER}})
-    #add_custom_command(OUTPUT ${SWIG_I_FILE_${SD_API_VER}}
-    #    COMMAND ${CMAKE_COMMAND} -E copy ${SWIG_I_FILE} ${SWIG_I_FILE_${SD_API_VER}} 
-    #)
-    set_property(SOURCE ${SWIG_I_FILE_${SD_API_VER}} PROPERTY CPLUSPLUS OFF)
-    set_property(SOURCE  ${SWIG_I_FILE_${SD_API_VER}} APPEND PROPERTY SWIG_FLAGS "-threads")
-    set_property(SOURCE  ${SWIG_I_FILE_${SD_API_VER}} APPEND PROPERTY SWIG_FLAGS "-DPC_BLE_DRIVER_STATIC")
-endforeach(SD_API_VER)
+    set_property(SOURCE ${SWIG_I_FILE_${SD_API_VER}} APPEND PROPERTY SWIG_FLAGS "-threads")
+    set_property(SOURCE ${SWIG_I_FILE_${SD_API_VER}} APPEND PROPERTY SWIG_FLAGS "-Wall")
+    # Builtin is not supported in the customized wrappers for callbacks yet
+    # set_property(SOURCE ${SWIG_I_FILE_${SD_API_VER}} APPEND PROPERTY SWIG_FLAGS "-builtin")
+endforeach()
 
-
-foreach(SD_API_VER ${SD_API_VERS})
-    set(SWIG_C_SRC_FILES_${SD_API_VER} ${PC_BLE_DRIVER_PY_OUTDIR}/${PYTHON_MODULE_${SD_API_VER}}PYTHON_wrap.c)
-    set_source_files_properties(SWIG_C_SRC_FILES_${SD_API_VER} PROPERTIES LANGUAGE CXX)
-
-    set(CMAKE_SWIG_FLAGS)
-    foreach(it ${PC_BLE_DRIVER_${SD_API_VER}_PUBLIC_INCLUDE_DIRS})
-        #MESSAGE( STATUS "${SD_API_VER} it: " "${it}" )
-      set(CMAKE_SWIG_FLAGS ${CMAKE_SWIG_FLAGS} "-I${it}")
-    endforeach()
-
-    string(REGEX MATCH "[0-9]+$" _SD_API_VER_NUM "${SD_API_VER}")
-    set(SD_API_VER_COMPILER_DEF_NUM "-D${SD_API_VER_COMPILER_DEF}=${_SD_API_VER_NUM}")
-    set(CMAKE_SWIG_FLAGS ${CMAKE_SWIG_FLAGS} "${SD_API_VER_COMPILER_DEF_NUM}")
-
-    swig_add_module(${PYTHON_MODULE_${SD_API_VER}} python ${SWIG_I_FILE_${SD_API_VER}})
-    target_include_directories(${SWIG_MODULE_${PYTHON_MODULE_${SD_API_VER}}_REAL_NAME} PRIVATE ${PC_BLE_DRIVER_${SD_API_VER}_PUBLIC_INCLUDE_DIRS})
-endforeach(SD_API_VER)
-
-# These are the files required for the pc_ble_driver Python module:
-
-# Windows
-# pc_ble_driver_<variant>.py
-# _pc_ble_driver_<variant>.pyd
-# pc_ble_driver_<variant>_shared.dll
-
-# Linux
-# pc_ble_driver_<variant>.py
-# _pc_ble_driver_<variant>.so
-# libpc_ble_driver_<variant>_shared.so
-
-# macOS / OS X
-# pc_ble_driver_<variant>.py
-# _pc_ble_driver_<variant>.so
-# libpc_ble_driver_<variant>_shared.dylib
-
-foreach(SD_API_VER ${SD_API_VERS})
-    swig_link_libraries(${PYTHON_MODULE_${SD_API_VER}} ${PYTHON_LIBRARIES} ${PC_BLE_DRIVER_${SD_API_VER}_SHARED_LIB})
-endforeach(SD_API_VER)
-
-set(PY_PACKAGE_DIR ${CMAKE_CURRENT_LIST_DIR}/python)
-set(PY_MODULE_DIR ${PY_PACKAGE_DIR}/pc_ble_driver_py)
-set(PY_MODULE_HEX_DIR ${PY_MODULE_DIR}/hex)
+set(NRF_BLE_DRIVER_LINKAGE_TYPE "static")
 
 if(WIN32)
-    set(PY_MODULE_SHARED_LIB_DIR ${PY_MODULE_DIR}/lib/win/x86_${ARCH_BITS})
-    set(SWIG_WRAPPER_SHARED_LIB_EXT pyd)
-elseif(APPLE)
-    set(PY_MODULE_SHARED_LIB_DIR ${PY_MODULE_DIR}/lib/macos_osx)
-    set(SWIG_WRAPPER_SHARED_LIB_EXT so)
-else()
-    set(PY_MODULE_SHARED_LIB_DIR ${PY_MODULE_DIR}/lib/linux/x86_${ARCH_BITS})
-    set(SWIG_WRAPPER_SHARED_LIB_EXT so)
+    set(NRF_BLE_DRIVER_LINKAGE_TYPE "shared")
 endif()
 
-set(PY_MODULE_BUILD_INFO build_info.txt)
-set(PY_MODULE_BUILD_INFO_PRE_PATH ${PC_BLE_DRIVER_PY_OUTDIR}/${PY_MODULE_BUILD_INFO})
-set(PY_MODULE_BUILD_INFO_POST_PATH ${PY_MODULE_SHARED_LIB_DIR}/${PY_MODULE_BUILD_INFO})
-
 foreach(SD_API_VER ${SD_API_VERS})
-
-    set(SWIG_WRAPPER_${SD_API_VER}_PY_FILE ${PYTHON_MODULE_${SD_API_VER}}.py)
-    set(SWIG_WRAPPER_${SD_API_VER}_PY_PATH ${PC_BLE_DRIVER_PY_OUTDIR}/${SWIG_WRAPPER_${SD_API_VER}_PY_FILE})
-
-    set(SWIG_WRAPPER_${SD_API_VER}_SHARED_LIB_FILE _${PYTHON_MODULE_${SD_API_VER}}.${SWIG_WRAPPER_SHARED_LIB_EXT})
-    set(SWIG_WRAPPER_${SD_API_VER}_SHARED_LIB_PATH ${PC_BLE_DRIVER_PY_OUTDIR}/${SWIG_WRAPPER_${SD_API_VER}_SHARED_LIB_FILE})
-
-    set(PC_BLE_DRIVER_${SD_API_VER}_SHARED_LIB_FILE ${CMAKE_SHARED_LIBRARY_PREFIX}${PC_BLE_DRIVER_${SD_API_VER}_SHARED_LIB}${CMAKE_SHARED_LIBRARY_SUFFIX})
-    set(PC_BLE_DRIVER_${SD_API_VER}_SHARED_LIB_PATH ${PC_BLE_DRIVER_PY_OUTDIR}/${PC_BLE_DRIVER_${SD_API_VER}_SHARED_LIB_FILE})
-
-    # Copy SWIG-generated .py wrapper
-    add_custom_command(TARGET ${SWIG_MODULE_${PYTHON_MODULE_${SD_API_VER}}_REAL_NAME} POST_BUILD
-        COMMAND ${CMAKE_COMMAND} -E copy ${SWIG_WRAPPER_${SD_API_VER}_PY_PATH} ${PY_MODULE_SHARED_LIB_DIR}
+    set_property(
+        SOURCE ${SWIG_I_FILE_${SD_API_VER}}
+        # C++ must be off since SWIG C++ parser does not handle nested structs/classes
+        # Warning 312. Unnamed nested class not currently supported (ignored)
+        PROPERTY CPLUSPLUS OFF
     )
 
-    # Copy SWIG wrapper lib
-    add_custom_command(TARGET ${SWIG_MODULE_${PYTHON_MODULE_${SD_API_VER}}_REAL_NAME} POST_BUILD
-        COMMAND ${CMAKE_COMMAND} -E copy ${SWIG_WRAPPER_${SD_API_VER}_SHARED_LIB_PATH} ${PY_MODULE_SHARED_LIB_DIR}
+    set_property(
+        SOURCE ${SWIG_I_FILE_${SD_API_VER}}
+        PROPERTY INCLUDE_DIRECTORIES ${nrf-ble-driver_SD_API_V${SD_API_VER}_INCLUDE_DIR} ${PC_BLE_DRIVER_PY_OUTDIR}
     )
 
-    # Copy DLL
-    add_custom_command(TARGET ${SWIG_MODULE_${PYTHON_MODULE_${SD_API_VER}}_REAL_NAME} POST_BUILD
-        COMMAND ${CMAKE_COMMAND} -E copy ${PC_BLE_DRIVER_${SD_API_VER}_SHARED_LIB_PATH} ${PY_MODULE_SHARED_LIB_DIR}
+    set_property(
+        SOURCE ${SWIG_I_FILE_${SD_API_VER}}
+        PROPERTY COMPILE_DEFINITIONS "NRF_SD_BLE_API_VERSION=${SD_API_VER}" "SUPPRESS_INLINE_IMPLEMENTATION" "PC_BLE_DRIVER_STATIC"
     )
 
-    # Copy .hex files
-    add_custom_command(TARGET ${SWIG_MODULE_${PYTHON_MODULE_${SD_API_VER}}_REAL_NAME} POST_BUILD
-        COMMAND ${CMAKE_COMMAND} -E copy_directory ${PC_BLE_DRIVER_HEX_DIR}/${SD_API_VER} ${PY_MODULE_HEX_DIR}/${SD_API_VER}
+    swig_add_library(
+        ${PYTHON_MODULE_${SD_API_VER}}
+        TYPE SHARED
+        LANGUAGE python
+        SOURCES ${SWIG_I_FILE_${SD_API_VER}}
+        OUTPUT_DIR ${PC_BLE_DRIVER_PY_OUTDIR}
     )
-endforeach(SD_API_VER)
 
-# Generate build information file
-set(BUILD_INFO "Build information:\n")
+    set_property(TARGET ${PYTHON_MODULE_${SD_API_VER}} PROPERTY CXX_STANDARD 14)
+    set_property(TARGET ${PYTHON_MODULE_${SD_API_VER}} PROPERTY CXX_STANDARD_REQUIRED TRUE)
 
-build_metadata(${CMAKE_CURRENT_LIST_DIR} BUILD_MD_STRING)
-string(CONCAT BUILD_INFO ${BUILD_INFO} ${BUILD_MD_STRING} ) 
-string(CONCAT BUILD_INFO ${BUILD_INFO} "* SWIG version: " ${SWIG_VERSION} "\n") 
-string(CONCAT BUILD_INFO ${BUILD_INFO} "* Pyhon version: " ${PYTHONLIBS_VERSION_STRING} "\n") 
-string(CONCAT BUILD_INFO ${BUILD_INFO} "* Pyhon libs: " ${PYTHON_LIBRARIES} "\n") 
-git_repo_metadata(${CMAKE_CURRENT_LIST_DIR} PY_GIT_COMMIT PY_GIT_BRANCH PY_GIT_REMOTES)
-string(CONCAT BUILD_INFO ${BUILD_INFO} "* Git repo: " ${PROJECT_NAME} "\n") 
-string(CONCAT BUILD_INFO ${BUILD_INFO} "** Git revision: " ${PY_GIT_COMMIT} "\n") 
-string(CONCAT BUILD_INFO ${BUILD_INFO} "** Git branch: " ${PY_GIT_BRANCH} "\n") 
-git_repo_metadata(${PC_BLE_DRIVER_ROOT_DIR} DRIVER_GIT_COMMIT DRIVER_GIT_BRANCH DRIVER_GIT_REMOTES)
-string(CONCAT BUILD_INFO ${BUILD_INFO} "* Git repo: " "pc-ble-driver" "\n") 
-string(CONCAT BUILD_INFO ${BUILD_INFO} "** Git revision: " ${DRIVER_GIT_COMMIT} "\n") 
-string(CONCAT BUILD_INFO ${BUILD_INFO} "** Git branch: " ${DRIVER_GIT_BRANCH} "\n") 
+    set_source_files_properties(${PC_BLE_DRIVER_PY_OUTDIR}/${PYTHON_MODULE_${SD_API_VER}}PYTHON_wrap.c PROPERTIES LANGUAGE CXX)
 
-file(WRITE ${PY_MODULE_BUILD_INFO_PRE_PATH} ${BUILD_INFO})
-
-# iterate to count-1
-math(EXPR _COUNT "${SD_API_VER_COUNT} - 1")
-# Post-build build info
-foreach(i RANGE ${_COUNT})
-    list(GET SD_API_VERS ${i} SD_API_VER)
-
-    # copy the build info only once, on the first iteration
-    if(${i} EQUAL 0)
-        add_custom_command(TARGET ${SWIG_MODULE_${PYTHON_MODULE_${SD_API_VER}}_REAL_NAME} POST_BUILD
-            COMMAND ${CMAKE_COMMAND} -E copy ${PY_MODULE_BUILD_INFO_PRE_PATH} ${PY_MODULE_BUILD_INFO_POST_PATH}
-            COMMAND ${CMAKE_COMMAND} -E echo "* MD5 sums: " >> ${PY_MODULE_BUILD_INFO_POST_PATH}
-        )
+    if(MSFT_NON_STANDARD_COMPILER)
+        target_include_directories(${PYTHON_MODULE_${SD_API_VER}} PRIVATE ${PC_BLE_DRIVER_PY_OUTDIR})
     endif()
 
-    add_custom_command(TARGET ${SWIG_MODULE_${PYTHON_MODULE_${SD_API_VER}}_REAL_NAME} POST_BUILD
-        COMMAND ${CMAKE_COMMAND} -E echo_append "** " >> ${PY_MODULE_BUILD_INFO_POST_PATH}
-        COMMAND ${CMAKE_COMMAND} -E md5sum ${SWIG_WRAPPER_${SD_API_VER}_PY_FILE} >> ${PY_MODULE_BUILD_INFO_POST_PATH} WORKING_DIRECTORY ${PY_MODULE_SHARED_LIB_DIR}
-        COMMAND ${CMAKE_COMMAND} -E echo_append "** " >> ${PY_MODULE_BUILD_INFO_POST_PATH}
-        COMMAND ${CMAKE_COMMAND} -E md5sum ${SWIG_WRAPPER_${SD_API_VER}_SHARED_LIB_FILE} >> ${PY_MODULE_BUILD_INFO_POST_PATH} WORKING_DIRECTORY ${PY_MODULE_SHARED_LIB_DIR}
-        COMMAND ${CMAKE_COMMAND} -E echo_append "** " >> ${PY_MODULE_BUILD_INFO_POST_PATH}
-        COMMAND ${CMAKE_COMMAND} -E md5sum ${PC_BLE_DRIVER_${SD_API_VER}_SHARED_LIB_FILE} >> ${PY_MODULE_BUILD_INFO_POST_PATH} WORKING_DIRECTORY ${PY_MODULE_SHARED_LIB_DIR}
+    set(LINK_LIBRARIES nrf::nrf_ble_driver_sd_api_v${SD_API_VER}_${NRF_BLE_DRIVER_LINKAGE_TYPE})
+    if (WIN32 OR APPLE)
+        set(LINK_LIBRARIES ${LINK_LIBRARIES} ${PYTHON_LIBRARY})
+    endif()
+
+    message(STATUS "LINK_LIBRARIES are not ${LINK_LIBRARIES}")
+
+    target_link_libraries(${PYTHON_MODULE_${SD_API_VER}} PRIVATE ${LINK_LIBRARIES})
+    target_compile_definitions(${PYTHON_MODULE_${SD_API_VER}} PRIVATE NRF_SD_BLE_API_VERSION=${SD_API_VER})
+
+    get_target_property(CONNECTIVITY_SD_API_V${SD_API_VER}_PATH nrf::nrf_ble_driver_sd_api_v${SD_API_VER}_${NRF_BLE_DRIVER_LINKAGE_TYPE} INTERFACE_INCLUDE_DIRECTORIES)
+    set(CONNECTIVITY_SD_API_V${SD_API_VER}_PATH ${CONNECTIVITY_SD_API_V${SD_API_VER}_PATH}/../../share/nrf-ble-driver/hex/sd_api_v${SD_API_VER})
+    file(GLOB_RECURSE CONNECTIVITY_SD_API_V${SD_API_VER}_FILES "${CONNECTIVITY_SD_API_V${SD_API_VER}_PATH}/*.hex")
+
+    set_property(
+        TARGET ${PYTHON_MODULE_${SD_API_VER}}
+        PROPERTY RESOURCE "${CONNECTIVITY_SD_API_V${SD_API_VER}_FILES}"
     )
-endforeach(i)
+    if(APPLE)
+        set_property(TARGET ${PYTHON_MODULE_${SD_API_VER}} PROPERTY SUFFIX ".so")
+    endif()
+endforeach()
 
+set(BUILD_OUTPUT_LIB_DIR "pc_ble_driver_py/lib")
+set(BUILD_OUTPUT_HEX_DIR "pc_ble_driver_py/hex")
 
+foreach(SD_API_VER ${SD_API_VERS})
+    install(
+        TARGETS ${PYTHON_MODULE_${SD_API_VER}}
+        RUNTIME DESTINATION ${BUILD_OUTPUT_LIB_DIR}
+        LIBRARY DESTINATION ${BUILD_OUTPUT_LIB_DIR}
+        ARCHIVE DESTINATION ${BUILD_OUTPUT_LIB_DIR}
+        RESOURCE DESTINATION "${BUILD_OUTPUT_HEX_DIR}/sd_api_v${SD_API_VER}"
+    )
 
+    install(
+        FILES ${PC_BLE_DRIVER_PY_OUTDIR}/nrf_ble_driver_sd_api_v${SD_API_VER}.py
+        DESTINATION ${BUILD_OUTPUT_LIB_DIR}
+    )
+
+    if(NRF_BLE_DRIVER_LINKAGE_TYPE STREQUAL "shared")
+        install(
+            FILES $<TARGET_FILE:nrf::nrf_ble_driver_sd_api_v${SD_API_VER}_${NRF_BLE_DRIVER_LINKAGE_TYPE}>
+            DESTINATION ${BUILD_OUTPUT_LIB_DIR}
+        )
+    endif()
+endforeach()
