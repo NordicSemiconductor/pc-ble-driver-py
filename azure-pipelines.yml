@@ -1,8 +1,7 @@
 trigger:
-- feature/s132v5_py3
-- test-azure
 - master
 - release/*
+- add-python-versions
 
 jobs:
   # Linux
@@ -17,7 +16,7 @@ jobs:
       inputs:
         containerRegistry: acr-nrfprivateeu
         command: run
-        arguments: '--rm -e PLAT=$(wheel_platform) -v $(System.DefaultWorkingDirectory):/data nrfwayland.azurecr.io/nrf/projects-pc-ble-driver-py-linux:v2 /build/build-wheels.sh'
+        arguments: '--rm -e PLAT=$(wheel_platform) -v $(System.DefaultWorkingDirectory):/data nrfwayland.azurecr.io/nrf/projects-pc-ble-driver-py-linux:v3 /build/build-wheels.sh'
     - bash: |
         ls -R wheelhouse
         cp --verbose -R wheelhouse/*.whl "$(Build.ArtifactStagingDirectory)"
@@ -33,11 +32,23 @@ jobs:
         isDraft: 'true'
         addChangeLog: 'false'
       condition: ne(variables['Build.Reason'], 'PullRequest')
+
   # macOS
   - job: macOS
     variables:
       VCPKG_ROOT: '$(Agent.HomeDirectory)/vcpkg'
       python_arch: 'x64'
+    strategy:
+      matrix:
+        py36:
+          python_version: '3.6.8'
+          python_bin: '3.6'
+        py37:
+          python_version: '3.7.5'
+          python_bin: '3.7'
+        py38:
+          python_version: '3.8.0'
+          python_bin: '3.8'
     pool:
       vmImage: 'macos-10.13'
     steps:
@@ -58,15 +69,15 @@ jobs:
         vcpkg install nrf-ble-driver:$(python_arch)-osx
       displayName: 'Install nrf-ble-driver'
     - bash: |
-        wget https://www.python.org/ftp/python/3.7.3/python-3.7.3-macosx10.9.pkg
-        sudo installer -pkg python-3.7.3-macosx10.9.pkg -target /
+        wget https://www.python.org/ftp/python/$(python_version)/python-$(python_version)-macosx10.9.pkg
+        sudo installer -pkg python-$(python_version)-macosx10.9.pkg -target /
       displayName: 'Install all pythons'
     - bash: |
         rm -rf _skbuild
-        pypath=`which python3.7`
+        pypath=`which python$(python_bin)`
         ${pypath} -m pip install -r requirements-dev.txt
         ${pypath} setup.py bdist_wheel --build-type Release -- -DCMAKE_OSX_DEPLOYMENT_TARGET=10.9
-      displayName: 'Build for python 3.7'
+      displayName: 'Build for python$(python_bin)'
     - bash: |
         cp -R dist/*.whl "$(Build.ArtifactStagingDirectory)"
       displayName: 'Copy artifacts'
@@ -88,10 +99,34 @@ jobs:
       VCPKG_ROOT: '$(Agent.HomeDirectory)\vcpkg'
     strategy:
       matrix:
-        win64:
+        py36_win64:
+          python_version: '3.6'
+          python_lib: '36'
           python_arch: 'x64'
           generator: 'Visual Studio 15 2017 Win64'
-        win32:
+        py36_win32:
+          python_version: '3.6'
+          python_lib: '36'
+          python_arch: 'x86'
+          generator: 'Visual Studio 15 2017'
+        py37_win64:
+          python_version: '3.7'
+          python_lib: '37'
+          python_arch: 'x64'
+          generator: 'Visual Studio 15 2017 Win64'
+        py37_win32:
+          python_version: '3.7'
+          python_lib: '37'
+          python_arch: 'x86'
+          generator: 'Visual Studio 15 2017'
+        py38_win64:
+          python_version: '3.8'
+          python_lib: '38'
+          python_arch: 'x64'
+          generator: 'Visual Studio 15 2017 Win64'
+        py38_win32:
+          python_version: '3.8'
+          python_lib: '38'
           python_arch: 'x86'
           generator: 'Visual Studio 15 2017'
     pool:
@@ -110,7 +145,7 @@ jobs:
       displayName: 'Install nrf-ble-driver'
     - task: UsePythonVersion@0
       inputs:
-        versionSpec: '3.7'
+        versionSpec: '$(python_version)'
         architecture: '$(python_arch)'
     - bash: |
         rm -rf _skbuild
@@ -118,10 +153,10 @@ jobs:
         pyroot=`dirname ${pypath}`
         pyheader=`ls ${pyroot}/include/Python.h`
         pyincldir=`dirname ${pyheader}`
-        pylib=`ls ${pyroot}/libs/python37.lib`
+        pylib=`ls ${pyroot}/libs/python$(python_lib).lib`
         pip install -r requirements-dev.txt
         python setup.py bdist_wheel --build-type Release -- -DPYTHON_INCLUDE_DIR=${pyincldir} -DPYTHON_LIBRARY=${pylib} -G "$(generator)"
-      displayName: 'Build for python 3.7'
+      displayName: 'Build for python $(python_version)'
     - bash: |
         cp -R dist/*.whl "$(Build.ArtifactStagingDirectory)"
       displayName: 'Copy artifacts'
