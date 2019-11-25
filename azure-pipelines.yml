@@ -1,7 +1,6 @@
 trigger:
 - master
 - release/*
-- add-python-versions
 
 jobs:
   # Linux
@@ -197,5 +196,5 @@ jobs:
         serviceConnection: 'waylandJenkins'
         method: 'POST'
         urlSuffix: 'view/pc-ble-driver-py/job/pc-ble-driver-py-$(osType)/buildWithParameters?BRANCH=$(Build.SourceBranch)&VSTS_URL=$(system.CollectionUri)&TOKEN=$(system.AccessToken)&PROJECT_ID=$(system.teamProjectId)&HUB_NAME=$(system.hostType)&PLAN_ID=$(system.planId)&TASK_ID=$(system.taskInstanceId)&JOB_ID=$(system.jobId)'
-        waitForCompletion: 'true'
+        waitForCompletion: 'false'
       condition: ne(variables['Build.Reason'], 'PullRequest')
