@@ -171,7 +171,7 @@ jobs:
         addChangeLog: 'false'
       condition: ne(variables['Build.Reason'], 'PullRequest')
 
-  - job: Trigger Test
+  - job: TriggerTest
     dependsOn: [
       Windows,
       Linux,
@@ -190,7 +190,7 @@ jobs:
     pool: server
     steps:
     - task: InvokeRESTAPI@1
-      displayName: Trigger test (check test result on Jenkins)
+      displayName: 'Trigger test (check test result on Jenkins)'
       inputs:
         connectionType: 'connectedServiceName'
         serviceConnection: 'waylandJenkins'
