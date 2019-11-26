@@ -65,11 +65,11 @@ class ProgramAdapter(unittest.TestCase):
     def test_programming(self):
         settings = Settings.current()
 
-        serial_ports = [port for port in BLEDriver.enum_serial_ports()]
+        serial_ports = BLEDriver.enum_serial_ports()
 
         # Check that from enumeration matches
         # kits provided from settings
-        found_ports = map(lambda port: port.port, serial_ports)
+        found_ports = list(map(lambda port: port.port, serial_ports))
 
         for serial_port in settings.serial_ports:
             self.assertIn(serial_port, found_ports)
