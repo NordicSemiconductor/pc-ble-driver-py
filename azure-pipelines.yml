@@ -157,6 +157,7 @@ jobs:
         python setup.py bdist_wheel --build-type Release -- -DPYTHON_INCLUDE_DIR=${pyincldir} -DPYTHON_LIBRARY=${pylib} -G "$(generator)"
       displayName: 'Build for python $(python_version)'
     - bash: |
+        for f in dist/*; do mv "${f}" "${f/cp38m/cp38}"; done;
         cp -R dist/*.whl "$(Build.ArtifactStagingDirectory)"
       displayName: 'Copy artifacts'
     - task: GitHubRelease@0
