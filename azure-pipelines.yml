@@ -6,7 +6,7 @@ jobs:
   # Linux
   - job: Linux
     variables:
-      wheel_platform: 'manylinux2010_x86_64'
+      wheel_platform: 'manylinux1_x86_64'
     pool:
       vmImage: 'ubuntu-16.04'
     steps:
@@ -15,7 +15,7 @@ jobs:
       inputs:
         containerRegistry: acr-nrfprivateeu
         command: run
-        arguments: '--rm -e PLAT=$(wheel_platform) -v $(System.DefaultWorkingDirectory):/data nrfwayland.azurecr.io/nrf/projects-pc-ble-driver-py-linux:v3 /build/build-wheels.sh'
+        arguments: '--rm -e PLAT=$(wheel_platform) -v $(System.DefaultWorkingDirectory):/data nrfwayland.azurecr.io/nrf/projects-pc-ble-driver-py-linux:v4 /build/build-wheels.sh'
     - bash: |
         ls -R wheelhouse
         cp --verbose -R wheelhouse/*.whl "$(Build.ArtifactStagingDirectory)"
