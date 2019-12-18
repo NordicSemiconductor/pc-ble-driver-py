@@ -242,8 +242,10 @@ class BLEAdapter(BLEDriverObserver):
             raise ex
 
         response = self.evt_sync[conn_handle].wait(evt=BLEEvtID.gap_evt_data_length_update)
+        max_tx_octets = response["data_length_params"].max_tx_octets
+        logger.debug(f"New Data Length is {max_tx_octets}")
 
-        return response
+        return response["data_length_params"]
 
     @NordicSemiErrorCheck(expected=BLEGattStatusCode.success)
     def service_discovery(self, conn_handle, uuid=None):
