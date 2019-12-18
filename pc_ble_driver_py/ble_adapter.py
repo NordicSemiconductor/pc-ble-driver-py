@@ -231,6 +231,20 @@ class BLEAdapter(BLEDriverObserver):
         self.db_conns[conn_handle].att_mtu = new_mtu
         return new_mtu
 
+    def data_length_update(self, conn_handle, data_length):
+        try:
+            dl_params = BLEGapDataLengthParams()
+            dl_params.max_tx_octets = data_length
+            dl_params.max_rx_octets = data_length
+            self.driver.ble_gap_data_length_update(
+                conn_handle, dl_params, data_length_limitation=None)
+        except NordicSemiException as ex:
+            raise ex
+
+        response = self.evt_sync[conn_handle].wait(evt=BLEEvtID.gap_evt_data_length_update)
+
+        return response
+
     @NordicSemiErrorCheck(expected=BLEGattStatusCode.success)
     def service_discovery(self, conn_handle, uuid=None):
         vendor_services = []
@@ -676,6 +690,9 @@ class BLEAdapter(BLEDriverObserver):
         self, ble_driver, conn_handle, data_length_params
     ):
         self.driver.ble_gap_data_length_update(conn_handle, None, None)
+
+    def on_gap_evt_data_length_update(self, ble_driver, conn_handle, **kwargs):
+        self.evt_sync[conn_handle].notify(evt=BLEEvtID.gap_evt_data_length_update, data=kwargs)
 
     def on_gatts_evt_exchange_mtu_request(self, ble_driver, conn_handle, client_mtu):
         try:
