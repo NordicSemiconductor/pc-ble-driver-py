@@ -196,7 +196,7 @@ class DataLength(unittest.TestCase):
         self.central.stop()
 
     def test_data_length_requiring_increased_event_length(self):
-        requested_data_length = 200
+        requested_data_length = 251
 
         self.peripheral.start(self.adv_name)
         self.central.start(self.adv_name, requested_data_length)
