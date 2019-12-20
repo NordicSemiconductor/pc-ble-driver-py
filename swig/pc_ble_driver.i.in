@@ -243,8 +243,10 @@ static void PythonEvtCallBack(adapter_t *adapter, ble_evt_t *ble_event)
     copied_ble_event = (ble_evt_t*)malloc(sizeof(ble_evt_t));
     memcpy(copied_ble_event, ble_event, sizeof(ble_evt_t));
 #else
-    copied_ble_event = (ble_evt_t*)malloc(ble_event->header.evt_len);
-    memcpy(copied_ble_event, ble_event, ble_event->header.evt_len);
+    // TODO: remove length_correction when NCP-2831 (encoder evt_len issue) has been fixed
+    uint16_t length_correction = 10;
+    copied_ble_event = (ble_evt_t*)malloc(ble_event->header.evt_len + length_correction);
+    memcpy(copied_ble_event, ble_event, ble_event->header.evt_len + length_correction);
 #endif
 
     // Handling of Python Global Interpretor Lock (GIL)

@@ -41,6 +41,7 @@ from pc_ble_driver_py.ble_driver import (
     BLEEnableParams,
     BLEConfig,
     BLEConfigConnGatt,
+    BLEConfigConnGap,
 )
 from pc_ble_driver_py.ble_adapter import BLEAdapter
 from driver_setup import Settings
@@ -83,6 +84,12 @@ def setup_adapter(
         gatt_cfg.att_mtu = adapter.default_mtu
         gatt_cfg.tag = Settings.CFG_TAG
         adapter.driver.ble_cfg_set(BLEConfig.conn_gatt, gatt_cfg)
+
+        if hasattr(settings, "event_length"):
+            gap_cfg = BLEConfigConnGap()
+            gap_cfg.event_length = settings.event_length
+            adapter.driver.ble_cfg_set(BLEConfig.conn_gap, gap_cfg)
+
         adapter.driver.ble_enable()
 
     return adapter
