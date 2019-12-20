@@ -17,6 +17,7 @@ jobs:
         command: run
         arguments: '--rm -e PLAT=$(wheel_platform) -v $(System.DefaultWorkingDirectory):/data nrfwayland.azurecr.io/nrf/projects-pc-ble-driver-py-linux:v3 /build/build-wheels.sh'
     - bash: |
+        set -o errexit -o pipefail
         ls -R wheelhouse
         cp --verbose -R wheelhouse/*.whl "$(Build.ArtifactStagingDirectory)"
       displayName: 'Copy wheels'
@@ -52,6 +53,7 @@ jobs:
       vmImage: 'macos-10.13'
     steps:
     - script: |
+        set -o errexit -o pipefail
         ls /Applications
         sudo xcode-select -s /Applications/Xcode_10.1.app
       displayName: 'Install XCode'
@@ -59,19 +61,23 @@ jobs:
         brew install swig gcc@6
       displayName: 'Install gcc and swig'
     - script: |
+        set -o errexit -o pipefail
         git clone https://github.com/NordicPlayground/vcpkg.git $(VCPKG_ROOT)
         CC=gcc-6 CXX=g++-6 $(VCPKG_ROOT)/bootstrap-vcpkg.sh
       displayName: 'Install vcpkg'
     - script: |
+        set -o errexit -o pipefail
         export PATH=$VCPKG_ROOT:$PATH
         export VCPKG_OSX_DEPLOYMENT_TARGET=10.9
         vcpkg install nrf-ble-driver:$(python_arch)-osx
       displayName: 'Install nrf-ble-driver'
     - bash: |
+        set -o errexit -o pipefail
         wget https://www.python.org/ftp/python/$(python_version)/python-$(python_version)-macosx10.9.pkg
         sudo installer -pkg python-$(python_version)-macosx10.9.pkg -target /
       displayName: 'Install all pythons'
     - bash: |
+        set -o errexit -o pipefail
         rm -rf _skbuild
         pypath=`which python$(python_bin)`
         ${pypath} -m pip install -r requirements-dev.txt
@@ -147,6 +153,7 @@ jobs:
         versionSpec: '$(python_version)'
         architecture: '$(python_arch)'
     - bash: |
+        set -o errexit -o pipefail
         rm -rf _skbuild
         pypath=`which python`
         pyroot=`dirname ${pypath}`
