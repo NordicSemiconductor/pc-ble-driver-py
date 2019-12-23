@@ -1532,6 +1532,48 @@ class BLEConfigGatts(BLEConfigBase):
         return ble_cfg
 
 
+class BLEOptBase(object):
+    @abstractmethod
+    def to_c(self):
+        pass
+
+    @abstractmethod
+    def from_c(self):
+        pass
+
+
+class BLEOptGapChMap(BLEOptBase):
+    def __init__(self, conn_handle=0, ch_map=[0xFF, 0xFF, 0xFF, 0xFF, 0xFF]):
+        self.conn_handle = conn_handle
+        self.ch_map = ch_map
+
+    def to_c(self):
+        opt = driver.ble_opt_t()
+        opt.gap_opt.ch_map.conn_handle = self.conn_handle
+        ch_map_array = util.list_to_uint8_array(self.ch_map[::])
+        opt.gap_opt.ch_map.ch_map = ch_map_array.cast()
+        return opt
+
+    @classmethod
+    def from_c(cls, gap_opt_ch_map):
+        return cls(
+            conn_handle=gap_opt_ch_map.conn_handle,
+            ch_map=util.uint8_array_to_list(gap_opt_ch_map.ch_map, 5)
+        )
+
+
+class BLEOpts(Enum):
+    common_pa_lna = driver.BLE_COMMON_OPT_PA_LNA
+    common_conn_evt_ext = driver.BLE_COMMON_OPT_CONN_EVT_EXT
+    gap_ch_map = driver.BLE_GAP_OPT_CH_MAP
+    gap_local_conn_latency = driver.BLE_GAP_OPT_LOCAL_CONN_LATENCY
+    gap_passkey = driver.BLE_GAP_OPT_PASSKEY
+    gap_scan_req_report = driver.BLE_GAP_OPT_SCAN_REQ_REPORT
+    gap_compat_mode_1 = driver.BLE_GAP_OPT_COMPAT_MODE_1
+    gap_auth_payload_timeout = driver.BLE_GAP_OPT_AUTH_PAYLOAD_TIMEOUT
+    gap_slave_latency_disable = driver.BLE_GAP_OPT_SLAVE_LATENCY_DISABLE
+
+
 class BLEGapDataLengthParams(object):
     def __init__(
         self,
@@ -1681,6 +1723,20 @@ class BLEDriver(object):
         return driver.sd_ble_cfg_set(
             self.rpc_adapter, cfg_id.value, cfg.to_c(), app_ram_base
         )
+
+    @wrapt.synchronized(api_lock)
+    def ble_opt_get(self, opt_id, opt):
+        assert isinstance(opt, BLEOptBase)
+        if isinstance(opt_id, BLEOpts):
+            opt_id = opt_id.value
+        err_code = driver.sd_ble_opt_get(self.rpc_adapter, opt_id, opt.to_c())
+
+        if err_code != driver.NRF_SUCCESS:
+            raise NordicSemiException(
+                "Failed to get BLE option. Error code: 0x{:X}".format(err_code)
+            )
+
+        return opt.from_c()
 
     @wrapt.synchronized(api_lock)
     @classmethod
