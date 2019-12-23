@@ -44,7 +44,7 @@ import logging
 
 from pc_ble_driver_py.observers import BLEDriverObserver, BLEAdapterObserver
 from driver_setup import Settings, setup_adapter
-from pc_ble_driver_py.ble_driver import BLEAdvData
+from pc_ble_driver_py.ble_driver import BLEAdvData, BLEOpts, BLEOptGapChMap
 from pc_ble_driver_py.exceptions import NordicSemiException
 
 
@@ -68,7 +68,12 @@ class Central(BLEDriverObserver, BLEAdapterObserver):
         logger.info("scan_start, trying to find %s", self.connect_with)
         self.adapter.driver.ble_gap_scan_start()
         self.conn_handle = self.conn_q.get(timeout=5)
-        self.adapter.data_length_update(self.conn_handle, requested_dl)
+        # self.adapter.data_length_update(self.conn_handle, requested_dl)
+        opt = BLEOptGapChMap()
+        opt.conn_handle = self.conn_handle
+        breakpoint()
+        opt_retval = self.adapter.driver.ble_opt_get(BLEOpts.gap_ch_map, opt)
+        print(opt_retval)
 
     def stop(self):
         if self.conn_handle:
@@ -195,7 +200,7 @@ class DataLength(unittest.TestCase):
 
         self.central.stop()
 
-    def test_data_length_requiring_increased_event_length(self):
+    def xtest_data_length_requiring_increased_event_length(self):
         requested_data_length = 251
 
         self.peripheral.start(self.adv_name)
@@ -212,7 +217,7 @@ class DataLength(unittest.TestCase):
 
         self.central.stop()
 
-    def test_data_length_too_large(self):
+    def xtest_data_length_too_large(self):
         requested_data_length = 252
 
         self.peripheral.start(self.adv_name)
