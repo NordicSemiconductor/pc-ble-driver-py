@@ -1089,10 +1089,11 @@ class BLEUUID(object):
     def __eq__(self, other):
         if not isinstance(other, BLEUUID):
             return False
-        return (self.value == other.value) and (self.base.base == other.base.base)
+        return (self.value == other.value) and (self.base.type == other.base.type) and \
+            (self.base.base is None or other.base.base is None or self.base.base == other.base.base)
 
     def __hash__(self):
-        return hash(self.value * sum(self.base.base))
+        return hash(self.value * (self.base.type or 1))
 
     @classmethod
     def from_c(cls, uuid):
