@@ -126,6 +126,6 @@ setup(
         'pc_ble_driver_py.lib': ['*.pyd', '*.dll', '*.txt','*.so','*.dylib'],
         'pc_ble_driver_py.hex': ['*.hex'],
         'pc_ble_driver_py.hex.sd_api_v2': ['*.hex'],
-        'pc_ble_driver_py.hex.sd_api_v5': ['*.hex']
+        'pc_ble_driver_py.hex.sd_api_v5': ['*.hex', '*.zip']
     }
 )
