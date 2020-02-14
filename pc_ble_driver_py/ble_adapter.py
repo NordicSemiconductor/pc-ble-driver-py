@@ -468,11 +468,11 @@ class BLEAdapter(BLEDriverObserver):
         result = self.evt_sync[conn_handle].wait(evt=BLEEvtID.gattc_evt_write_rsp)
         return result["status"]
 
-    def read_req(self, conn_handle, uuid):
+    def read_req(self, conn_handle, uuid, offset=0):
         handle = self.db_conns[conn_handle].get_char_value_handle(uuid)
         if handle is None:
             raise NordicSemiException("Characteristic value handler not found")
-        self.driver.ble_gattc_read(conn_handle, handle, 0)
+        self.driver.ble_gattc_read(conn_handle, handle, offset)
         result = self.evt_sync[conn_handle].wait(evt=BLEEvtID.gattc_evt_read_rsp)
         gatt_res = result["status"]
         if gatt_res == BLEGattStatusCode.success:
