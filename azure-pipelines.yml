@@ -8,7 +8,7 @@ jobs:
     variables:
       wheel_platform: 'manylinux2010_x86_64'
     pool:
-      vmImage: 'ubuntu-16.04'
+      vmImage: 'ubuntu-18.04'
     steps:
     - task: Docker@2
       displayName: 'Build ManyLinux wheel'
@@ -50,7 +50,7 @@ jobs:
           python_version: '3.8.0'
           python_bin: '3.8'
     pool:
-      vmImage: 'macos-10.13'
+      vmImage: 'macos-10.15'
     steps:
     - script: |
         set -o errexit -o pipefail
