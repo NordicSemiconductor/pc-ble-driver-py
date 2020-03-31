@@ -2782,16 +2782,15 @@ class Flasher(object):
 
     @wrapt.synchronized(api_lock)
     def call_cmd(self, args):
-        args = [Flasher.NRFJPROG, "--snr", str(self.snr)] + args + ["--family"]
+        args = [Flasher.NRFJPROG, "--snr", str(self.snr)] + args + ["--family"] + [self.family]
+        argstr = " ".join(args)
         try:
-            return subprocess.check_output(
-                args + [self.family], stderr=subprocess.STDOUT
-            )
+            return subprocess.check_output(argstr, stderr=subprocess.STDOUT, shell=True)
         except subprocess.CalledProcessError as e:
             if e.returncode == 18:
-                raise RuntimeError("Invalid Connectivity IC ID: {}".format(self.family))
+                raise RuntimeError(f"Invalid Connectivity IC ID: {self.family}")
             else:
-                raise
+                raise RuntimeError(f"{e.__str__()}\n{e.output}")
 
     @staticmethod
     def is_valid_magic_number(magic_number):
