@@ -417,11 +417,10 @@ class BLEAdapter(BLEDriverObserver):
     def disable_indication(self, conn_handle, uuid):
         return self.disable_notification(conn_handle, uuid)
 
-    @NordicSemiErrorCheck(expected=BLEGattStatusCode.success)
     def conn_param_update(self, conn_handle, conn_params):
         self.driver.ble_gap_conn_param_update(conn_handle, conn_params)
         result = self.evt_sync[conn_handle].wait(evt=BLEEvtID.gap_evt_conn_param_update)
-        return result["status"]
+        return result["conn_params"]
 
     @NordicSemiErrorCheck(expected=BLEGattStatusCode.success)
     def write_req(self, conn_handle, uuid, data):
