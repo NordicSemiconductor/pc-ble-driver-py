@@ -145,6 +145,8 @@ class BLEEvtID(Enum):
     gap_evt_auth_status = driver.BLE_GAP_EVT_AUTH_STATUS
     gap_evt_auth_key_request = driver.BLE_GAP_EVT_AUTH_KEY_REQUEST
     gap_evt_conn_sec_update = driver.BLE_GAP_EVT_CONN_SEC_UPDATE
+    gap_evt_phy_update_request = driver.BLE_GAP_EVT_PHY_UPDATE_REQUEST
+    gap_evt_phy_update = driver.BLE_GAP_EVT_PHY_UPDATE
     gattc_evt_write_rsp = driver.BLE_GATTC_EVT_WRITE_RSP
     gattc_evt_read_rsp = driver.BLE_GATTC_EVT_READ_RSP
     gattc_evt_hvx = driver.BLE_GATTC_EVT_HVX
@@ -1253,6 +1255,28 @@ class BLEGattsCharMD(object):
         return char_md
 
 
+class BLEGapPhys(object):
+    def __init__(self, tx_phy, rx_phy):
+        self.tx_phy = tx_phy
+        self.rx_phy = rx_phy
+
+    def __str__(self):
+        return str(self.__dict__)
+        
+    def to_c(self):
+        p_gap_phys = driver.ble_gap_phys_t()
+        p_gap_phys.tx_phy = self.tx_phy
+        p_gap_phys.rx_phy = self.rx_phy
+        return p_gap_phys
+
+    @classmethod
+    def from_c(cls, params):
+        return cls(
+            tx_phy=params.tx_phys,
+            rx_phy=params.rx_phys,
+        )
+
+
 class BLEDescriptor(object):
     def __init__(self, uuid, handle):
         self.handle = handle
@@ -2063,6 +2087,13 @@ class BLEDriver(object):
 
     @NordicSemiErrorCheck
     @wrapt.synchronized(api_lock)
+    def ble_gap_phy_update(self, conn_handle, p_gap_phys):
+        assert isinstance(p_gap_phys, BLEGapPhys)
+        p_gap_phys = p_gap_phys.to_c()
+        return driver.sd_ble_gap_phy_update(self.rpc_adapter, conn_handle, p_gap_phys)
+
+    @NordicSemiErrorCheck
+    @wrapt.synchronized(api_lock)
     def ble_vs_uuid_add(self, uuid_base):
         assert isinstance(uuid_base, BLEUUIDBase), "Invalid argument type"
         uuid_type = driver.new_uint8()
@@ -2446,6 +2477,28 @@ class BLEDriver(object):
                         conn_handle=ble_event.evt.common_evt.conn_handle,
                         rssi=rssi_changed_evt.rssi,
                     )
+
+            elif evt_id == BLEEvtID.gap_evt_phy_update_request:
+                requested_phy_update = ble_event.evt.gap_evt.params.phy_update_request
+
+                for obs in self.observers:
+                    obs.on_gap_evt_phy_update_request(
+                        ble_driver=self,
+                        conn_handle=ble_event.evt.common_evt.conn_handle,
+                        peer_preferred_phys=BLEGapPhys.from_c(requested_phy_update.peer_preferred_phys)
+                    )
+            elif evt_id == BLEEvtID.gap_evt_phy_update:
+                updated_phy = ble_event.evt.gap_evt.params.phy_update
+
+                for obs in self.observers:
+                    obs.on_gap_evt_phy_update(
+                        ble_driver=self,
+                        conn_handle=ble_event.evt.common_evt.conn_handle,
+                        status=updated_phy.status,
+                        tx_phy=updated_phy.tx_phy,
+                        rx_phy=updated_phy.rx_phy,
+                    )
+
             elif evt_id == BLEEvtID.gattc_evt_write_rsp:
                 write_rsp_evt = ble_event.evt.gattc_evt.params.write_rsp
 
@@ -2569,6 +2622,8 @@ class BLEDriver(object):
                         length=write_evt.len,
                         data=write_evt.data,
                     )
+
+
             elif nrf_sd_ble_api_ver == 2:
                 if evt_id == BLEEvtID.evt_tx_complete:
                     for obs in self.observers:
