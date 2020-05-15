@@ -1264,10 +1264,10 @@ class BLEGapPhys(object):
         return str(self.__dict__)
         
     def to_c(self):
-        p_gap_phys = driver.ble_gap_phys_t()
-        p_gap_phys.tx_phy = self.tx_phy
-        p_gap_phys.rx_phy = self.rx_phy
-        return p_gap_phys
+        gap_phys = driver.ble_gap_phys_t()
+        gap_phys.tx_phy = self.tx_phy
+        gap_phys.rx_phy = self.rx_phy
+        return gap_phys
 
     @classmethod
     def from_c(cls, params):
@@ -2087,10 +2087,10 @@ class BLEDriver(object):
 
     @NordicSemiErrorCheck
     @wrapt.synchronized(api_lock)
-    def ble_gap_phy_update(self, conn_handle, p_gap_phys):
-        assert isinstance(p_gap_phys, BLEGapPhys)
-        p_gap_phys = p_gap_phys.to_c()
-        return driver.sd_ble_gap_phy_update(self.rpc_adapter, conn_handle, p_gap_phys)
+    def ble_gap_phy_update(self, conn_handle, gap_phys):
+        assert isinstance(gap_phys, BLEGapPhys)
+        gap_phys = gap_phys.to_c()
+        return driver.sd_ble_gap_phy_update(self.rpc_adapter, conn_handle, gap_phys)
 
     @NordicSemiErrorCheck
     @wrapt.synchronized(api_lock)

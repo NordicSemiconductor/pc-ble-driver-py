@@ -234,8 +234,8 @@ class BLEAdapter(BLEDriverObserver):
 
     def phy_update(self, conn_handle, req_phy):
         try:
-            p_gap_phys = BLEGapPhys(*req_phy)
-            self.driver.ble_gap_phy_update(conn_handle, p_gap_phys)
+            gap_phys = BLEGapPhys(*req_phy)
+            self.driver.ble_gap_phy_update(conn_handle, gap_phys)
         except NordicSemiException as ex:
             raise ex
 
