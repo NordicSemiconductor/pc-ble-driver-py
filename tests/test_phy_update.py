@@ -54,10 +54,12 @@ from pc_ble_driver_py.ble_driver import (
 
 logger = logging.getLogger(__name__)
 
+req_phy = [driver.BLE_GAP_PHY_1MBPS, driver.BLE_GAP_PHY_1MBPS]
 
 
 class Central(BLEDriverObserver, BLEAdapterObserver):
-    def __init__(self, adapter):
+    def __init__(self, tester, adapter):
+        self.tester = tester
         self.adapter = adapter
         logger.info(
             "Central adapter is %d", self.adapter.driver.rpc_adapter.internal
@@ -122,12 +124,18 @@ class Central(BLEDriverObserver, BLEAdapterObserver):
             self.adapter.connect(peer_addr, tag=1)
 
     def on_gap_evt_phy_update(self, ble_driver, conn_handle, **kwargs):
+        logger.info(f'(Central) Updated: {kwargs}')
+        rsp = [kwargs['tx_phy'], kwargs['rx_phy']]
+        self.tester.assertListEqual(rsp, req_phy, 
+            msg='(rsp != req) BLE_GAP_PHY_UPDATE: phy is not updated according to request')
         self.phy_rsp = [kwargs['tx_phy'], kwargs['rx_phy']]
-        print('updated', self.phy_rsp)
+        
+
 
 
 class Peripheral(BLEDriverObserver, BLEAdapterObserver):
-    def __init__(self, adapter):
+    def __init__(self, tester, adapter):
+        self.tester = tester
         self.adapter = adapter
         logger.info(
             "Peripheral adapter is %d",
@@ -150,11 +158,19 @@ class Peripheral(BLEDriverObserver, BLEAdapterObserver):
         logger.info(f"(Peripheral) New connection: {conn_handle}.")
 
     def on_gap_evt_phy_update_request(self, ble_driver, conn_handle, peer_preferred_phys):
+        logger.info(f'(Peripheral) Update request {peer_preferred_phys}')
+        self.tester.assertListEqual(
+            [peer_preferred_phys.tx_phy, peer_preferred_phys.rx_phy], req_phy,
+            msg='(sen != req) BLE_GAP_PHY_UPDATE_REQUEST: update request is not equal to the one sent from central'
+            )
         self.phy_req = peer_preferred_phys
 
     def on_gap_evt_phy_update(self, ble_driver, conn_handle, **kwargs):
-        print("peripheral phy update", kwargs)
-        self.phy_rsp = [kwargs['tx_phy'], kwargs['rx_phy']]
+        logger.info(f'(Peripheral) Updated {kwargs}')
+        rsp = [kwargs['tx_phy'], kwargs['rx_phy']]
+        self.tester.assertListEqual(rsp, req_phy,  
+            msg='(rsp != req) BLE_GAP_PHY_UPDATE: phy is not updated according to request')
+        self.phy_rsp = rsp
 
 
 class PHYUPDATE(unittest.TestCase):
@@ -171,7 +187,7 @@ class PHYUPDATE(unittest.TestCase):
             settings.driver_log_level,
         )
 
-        self.central = Central(central)
+        self.central = Central(self, central)
 
         peripheral = setup_adapter(
             settings.serial_ports[1],
@@ -188,18 +204,17 @@ class PHYUPDATE(unittest.TestCase):
             random.choice(string.ascii_uppercase + string.digits)
             for _ in range(20)
         )
-        self.peripheral = Peripheral(peripheral)
+        self.peripheral = Peripheral(self, peripheral)
 
 
     def test_phy_update(self):
-        req_phy = (driver.BLE_GAP_PHY_1MBPS, driver.BLE_GAP_PHY_1MBPS)
-        logging.debug(f'Central sending: {req_phy}')
+        logging.info(f'(Central) Requesting: {req_phy}')
         self.peripheral.start(self.adv_name)
         self.central.start(self.adv_name, req_phy)
 
 
-        #print("Peri phy req", self.peripheral.phy_req)
-        #print("Cent phy rsp, new_phy", self.central.phy_rsp, self.central.new_phy)
+        #logger.info("Peri phy req", self.peripheral.phy_req)
+        #logger.info("Cent phy rsp, new_phy", self.central.phy_rsp, self.central.new_phy)
         self.central.stop()
 
     def tearDown(self):

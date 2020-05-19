@@ -2090,7 +2090,12 @@ class BLEDriver(object):
     def ble_gap_phy_update(self, conn_handle, gap_phys):
         assert isinstance(gap_phys, BLEGapPhys)
         gap_phys = gap_phys.to_c()
-        return driver.sd_ble_gap_phy_update(self.rpc_adapter, conn_handle, gap_phys)
+        err_code = driver.sd_ble_gap_phy_update(self.rpc_adapter, conn_handle, gap_phys)
+        if err_code != driver.NRF_SUCCESS:
+            raise NordicSemiException(
+                "Failed to update phy. Error code: {}".format(err_code)
+            )
+        return err_code
 
     @NordicSemiErrorCheck
     @wrapt.synchronized(api_lock)
@@ -2494,7 +2499,7 @@ class BLEDriver(object):
                     obs.on_gap_evt_phy_update(
                         ble_driver=self,
                         conn_handle=ble_event.evt.common_evt.conn_handle,
-                        status=updated_phy.status,
+                        status=BLEHci(updated_phy.status),
                         tx_phy=updated_phy.tx_phy,
                         rx_phy=updated_phy.rx_phy,
                     )

@@ -241,8 +241,6 @@ class BLEAdapter(BLEDriverObserver):
 
         response = self.evt_sync[conn_handle].wait(evt=BLEEvtID.gap_evt_phy_update)
 
-        print("Response adapter", response)
-
         if response is None:
             return
 
@@ -669,7 +667,6 @@ class BLEAdapter(BLEDriverObserver):
     def on_gap_evt_phy_update_request(self, ble_driver, conn_handle, **kwargs):
         try:
             res = kwargs['peer_preferred_phys']
-            print("Response to request", res)
             ble_driver.ble_gap_phy_update(conn_handle, res)
         except NordicSemiException as ex:
             raise NordicSemiException("Phy update failed") from ex
