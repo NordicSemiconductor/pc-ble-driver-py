@@ -318,6 +318,21 @@ class BLEDriverObserver(object):
     def on_rpc_log_entry(self, ble_driver, severity, message):
         logger.debug("evt> severity({}) message({})".format(severity, message))
 
+    def on_gap_evt_phy_update_request(self, ble_driver, conn_handle, peer_preferred_phys):
+        logger.debug(
+            "evt> on_gap_evt_phy_update_request conn({})\n peer_preferred_phys({}) ".format(
+                conn_handle, peer_preferred_phys
+            )
+        )
+
+    def on_gap_evt_phy_update(self, ble_driver, conn_handle, status, tx_phy, rx_phy):
+        logger.debug(
+            "evt> on_gap_evt_phy_update conn({})\n status({})\n"
+            "tx_phy({})\n rx_phy({})".format(
+                conn_handle, status, tx_phy, rx_phy
+            )
+        )
+
 
 class BLEAdapterObserver(object):
     """
