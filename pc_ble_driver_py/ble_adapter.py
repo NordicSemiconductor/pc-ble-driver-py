@@ -322,8 +322,9 @@ class BLEAdapter(BLEDriverObserver):
                 # See:
                 #  https://github.com/NordicSemiconductor/pc-ble-driver-py/issues/38
                 for s in response["services"]:
-                    s.uuid.base = base
-                self.db_conns[conn_handle].services.extend(response["services"])
+                    if s.uuid.value != BLEUUID.Standard.unknown:
+                        s.uuid.base = base
+                        self.db_conns[conn_handle].services.append(s)
 
         for s in self.db_conns[conn_handle].services:
             self.driver.ble_gattc_char_disc(conn_handle, s.start_handle, s.end_handle)
