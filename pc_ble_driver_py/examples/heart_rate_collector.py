@@ -84,7 +84,7 @@ class HRCollector(BLEDriverObserver, BLEAdapterObserver):
 
     def open(self):
         self.adapter.driver.open()
-        if config.__conn_ic_id__ == "NRF51":
+        if config.__conn_ic_id__.upper() == "NRF51":
             self.adapter.driver.ble_enable(
                 BLEEnableParams(
                     vs_uuid_count=1,
@@ -94,7 +94,7 @@ class HRCollector(BLEDriverObserver, BLEAdapterObserver):
                     central_sec_count=0,
                 )
             )
-        elif config.__conn_ic_id__ == "NRF52":
+        elif config.__conn_ic_id__.upper() == "NRF52":
             gatt_cfg = BLEConfigConnGatt()
             gatt_cfg.att_mtu = self.adapter.default_mtu
             gatt_cfg.tag = CFG_TAG
