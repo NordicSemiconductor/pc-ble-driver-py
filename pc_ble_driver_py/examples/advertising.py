@@ -63,7 +63,7 @@ def main(serial_port):
 
     driver.observer_register(observer)
     driver.open()
-    if config.__conn_ic_id__ == "NRF51":
+    if config.__conn_ic_id__.upper() == "NRF51":
         driver.ble_enable(
             BLEEnableParams(
                 vs_uuid_count=0,
@@ -73,7 +73,7 @@ def main(serial_port):
                 central_sec_count=0,
             )
         )
-    elif config.__conn_ic_id__ == "NRF52":
+    elif config.__conn_ic_id__.upper() == "NRF52":
         driver.ble_enable()
     driver.ble_gap_adv_data_set(adv_data)
     driver.ble_gap_adv_start()
