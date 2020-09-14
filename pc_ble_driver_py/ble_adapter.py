@@ -739,6 +739,9 @@ class BLEAdapter(BLEDriverObserver):
                 "missing att_mtu setting in ble_cfg_set, "
                 "different config tags used in ble_cfg_set and adv_start.") from ex
 
+    def on_gatts_evt_sys_attr_missing(self, ble_driver, conn_handle, **kwargs):
+        ble_driver.ble_gatts_sys_attr_set(conn_handle, None, 0, 0)
+
     def on_gattc_evt_exchange_mtu_rsp(self, ble_driver, conn_handle, **kwargs):
         self.evt_sync[conn_handle].notify(
             evt=BLEEvtID.gattc_evt_exchange_mtu_rsp, data=kwargs

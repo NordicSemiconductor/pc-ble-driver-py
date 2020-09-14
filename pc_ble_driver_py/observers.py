@@ -307,9 +307,19 @@ class BLEDriverObserver(object):
             )
         )
 
+    def on_gatts_evt_sys_attr_missing(
+        self,
+        ble_driver,
+        conn_handle,
+        hint
+    ):
+        logger.debug(
+            f"evt> on_gatts_evt_sys_attr_missing conn({conn_handle}) hint({hint})"
+        )
+
     def on_gatts_evt_exchange_mtu_request(self, ble_driver, conn_handle, client_mtu):
         logger.debug(
-            f"evt> on_gatts_evt_exchange_mtu_request conn({conn_handle} client_mtu({client_mtu})"
+            f"evt> on_gatts_evt_exchange_mtu_request conn({conn_handle}) client_mtu({client_mtu})"
         )
 
     def on_rpc_status(self, ble_driver, code, message):

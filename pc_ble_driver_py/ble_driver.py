@@ -155,6 +155,7 @@ class BLEEvtID(Enum):
     gattc_evt_desc_disc_rsp = driver.BLE_GATTC_EVT_DESC_DISC_RSP
     gatts_evt_hvc = driver.BLE_GATTS_EVT_HVC
     gatts_evt_write = driver.BLE_GATTS_EVT_WRITE
+    gatts_evt_sys_attr_missing = driver.BLE_GATTS_EVT_SYS_ATTR_MISSING
 
     if nrf_sd_ble_api_ver == 2:
         evt_tx_complete = driver.BLE_EVT_TX_COMPLETE
@@ -2215,6 +2216,10 @@ class BLEDriver(object):
         hvx_params = hvx_params.to_c()
         return driver.sd_ble_gatts_hvx(self.rpc_adapter, conn_handle, hvx_params)
 
+    def ble_gatts_sys_attr_set(self, conn_handle, sys_attr_data, length, flags):
+        return driver.sd_ble_gatts_sys_attr_set(self.rpc_adapter, conn_handle,
+                                                sys_attr_data, length, flags)
+
     # IMPORTANT: Python annotations on callbacks make the reference count
     # IMPORTANT: for the object become zero in the binding. This makes the
     # IMPORTANT: interpreter crash since it tries to garbage collect
@@ -2628,6 +2633,15 @@ class BLEDriver(object):
                         data=write_evt.data,
                     )
 
+            elif evt_id == BLEEvtID.gatts_evt_sys_attr_missing:
+                sys_attr_missing_evt = ble_event.evt.gatts_evt.params.sys_attr_missing
+
+                for obs in self.observers:
+                    obs.on_gatts_evt_sys_attr_missing(
+                        ble_driver=self,
+                        conn_handle=ble_event.evt.gatts_evt.conn_handle,
+                        hint=sys_attr_missing_evt.hint
+                    )
 
             elif nrf_sd_ble_api_ver == 2:
                 if evt_id == BLEEvtID.evt_tx_complete:
