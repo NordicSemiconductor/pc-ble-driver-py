@@ -781,14 +781,14 @@ class BLEAdapter(BLEDriverObserver):
     ):
         if status != BLEGattStatusCode.success:
             logger.error(
-                "Error. Handle value notification failed. Status {}.".format(status)
+                "Handle value notification failed. Status {}.".format(status)
             )
             return
 
         if hvx_type == BLEGattHVXType.notification:
             uuid = self.db_conns[conn_handle].get_char_uuid(attr_handle)
             if uuid is None:
-                raise NordicSemiException("UUID not found")
+                logger.info(f"Not able to look up UUID for attr_handle {attr_handle}")
 
             for obs in self.observers:
                 obs.on_notification(
@@ -798,7 +798,7 @@ class BLEAdapter(BLEDriverObserver):
         elif hvx_type == BLEGattHVXType.indication:
             uuid = self.db_conns[conn_handle].get_char_uuid(attr_handle)
             if uuid is None:
-                raise NordicSemiException("UUID not found")
+                logger.info(f"Not able to look up UUID for attr_handle {attr_handle}")
 
             for obs in self.observers:
                 obs.on_indication(
