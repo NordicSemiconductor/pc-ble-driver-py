@@ -74,7 +74,7 @@ def setup_adapter(
             BLEEnableParams(
                 vs_uuid_count=1,
                 service_changed=0,
-                periph_conn_count=0,
+                periph_conn_count=1,
                 central_conn_count=1,
                 central_sec_count=0,
             )
