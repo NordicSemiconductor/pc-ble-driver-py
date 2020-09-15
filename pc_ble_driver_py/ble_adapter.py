@@ -377,6 +377,11 @@ class BLEAdapter(BLEDriverObserver):
 
     @NordicSemiErrorCheck(expected=BLEGattStatusCode.success)
     def enable_notification(self, conn_handle, uuid, attr_handle=None):
+        assert isinstance(uuid, BLEUUID), "Invalid argument type"
+
+        if uuid.base.base is not None and uuid.base.type is None:
+            self.driver.ble_uuid_decode(uuid.base.base, uuid)
+
         cccd_list = [1, 0]
 
         cccd_handle = self.db_conns[conn_handle].get_cccd_handle(uuid, attr_handle)
@@ -396,6 +401,11 @@ class BLEAdapter(BLEDriverObserver):
 
     @NordicSemiErrorCheck(expected=BLEGattStatusCode.success)
     def disable_notification(self, conn_handle, uuid, attr_handle=None):
+        assert isinstance(uuid, BLEUUID), "Invalid argument type"
+
+        if uuid.base.base is not None and uuid.base.type is None:
+            self.driver.ble_uuid_decode(uuid.base.base, uuid)
+
         cccd_list = [0, 0]
 
         cccd_handle = self.db_conns[conn_handle].get_cccd_handle(uuid, attr_handle)
@@ -416,6 +426,11 @@ class BLEAdapter(BLEDriverObserver):
 
     @NordicSemiErrorCheck(expected=BLEGattStatusCode.success)
     def enable_indication(self, conn_handle, uuid, attr_handle=None):
+        assert isinstance(uuid, BLEUUID), "Invalid argument type"
+
+        if uuid.base.base is not None and uuid.base.type is None:
+            self.driver.ble_uuid_decode(uuid.base.base, uuid)
+
         cccd_list = [2, 0]
 
         cccd_handle = self.db_conns[conn_handle].get_cccd_handle(uuid, attr_handle)
@@ -746,6 +761,9 @@ class BLEAdapter(BLEDriverObserver):
                 "MTU exchange reply failed. Common causes are: "
                 "missing att_mtu setting in ble_cfg_set, "
                 "different config tags used in ble_cfg_set and adv_start.") from ex
+
+    def on_gatts_evt_sys_attr_missing(self, ble_driver, conn_handle, **kwargs):
+        ble_driver.ble_gatts_sys_attr_set(conn_handle, None, 0, 0)
 
     def on_gattc_evt_exchange_mtu_rsp(self, ble_driver, conn_handle, **kwargs):
         self.evt_sync[conn_handle].notify(
