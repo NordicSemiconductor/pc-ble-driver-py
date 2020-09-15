@@ -2113,6 +2113,28 @@ class BLEDriver(object):
 
     @NordicSemiErrorCheck
     @wrapt.synchronized(api_lock)
+    def ble_uuid_decode(self, uuid_list, uuid):
+        uuid_len = len(uuid_list)
+        assert isinstance(uuid_list, list), "Invalid argument type"
+        assert ((uuid_len == 2) or (uuid_len == 16)), "Invalid uuid length"
+        assert isinstance(uuid, BLEUUID)
+
+        lsb_list = uuid_list[::-1]
+        uuid_le_array = util.list_to_uint8_array(lsb_list)
+        uuid_le_array_cast = uuid_le_array.cast()
+        uuid.base.type = 0xFF  # Placeholder value
+
+        uuid_c = uuid.to_c()
+
+        err_code = driver.sd_ble_uuid_decode(self.rpc_adapter, uuid_len, uuid_le_array_cast,
+                                             uuid_c)
+        if err_code == driver.NRF_SUCCESS:
+            uuid_from_c = BLEUUID.from_c(uuid_c)
+            uuid.base.type = uuid_from_c.base.type
+        return err_code
+
+    @NordicSemiErrorCheck
+    @wrapt.synchronized(api_lock)
     def ble_gattc_write(self, conn_handle, write_params):
         assert isinstance(write_params, BLEGattcWriteParams), "Invalid argument type"
         return driver.sd_ble_gattc_write(
