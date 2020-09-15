@@ -801,9 +801,8 @@ class BLEAdapter(BLEDriverObserver):
                 raise NordicSemiException("UUID not found")
 
             for obs in self.observers:
-                obs.on_notification(
-                    ble_adapter=self, conn_handle=conn_handle, uuid=uuid, attr_handle=attr_handle, data=data
-                )
+                obs.on_notification(self, conn_handle, uuid, data)
+                obs.on_notification_handle(self, conn_handle, uuid, attr_handle, data)
 
         elif hvx_type == BLEGattHVXType.indication:
             uuid = self.db_conns[conn_handle].get_char_uuid(attr_handle)
@@ -811,8 +810,7 @@ class BLEAdapter(BLEDriverObserver):
                 raise NordicSemiException("UUID not found")
 
             for obs in self.observers:
-                obs.on_indication(
-                    ble_adapter=self, conn_handle=conn_handle, uuid=uuid, attr_handle=attr_handle, data=data
-                )
+                obs.on_indication(self, conn_handle, uuid, data)
+                obs.on_indication_handle(self, conn_handle, uuid, attr_handle, data)
 
             self.driver.ble_gattc_hv_confirm(conn_handle, attr_handle)
