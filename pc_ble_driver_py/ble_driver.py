@@ -145,8 +145,6 @@ class BLEEvtID(Enum):
     gap_evt_auth_status = driver.BLE_GAP_EVT_AUTH_STATUS
     gap_evt_auth_key_request = driver.BLE_GAP_EVT_AUTH_KEY_REQUEST
     gap_evt_conn_sec_update = driver.BLE_GAP_EVT_CONN_SEC_UPDATE
-    gap_evt_phy_update_request = driver.BLE_GAP_EVT_PHY_UPDATE_REQUEST
-    gap_evt_phy_update = driver.BLE_GAP_EVT_PHY_UPDATE
     gattc_evt_write_rsp = driver.BLE_GATTC_EVT_WRITE_RSP
     gattc_evt_read_rsp = driver.BLE_GATTC_EVT_READ_RSP
     gattc_evt_hvx = driver.BLE_GATTC_EVT_HVX
@@ -169,6 +167,8 @@ class BLEEvtID(Enum):
         )
         gattc_evt_write_cmd_tx_complete = driver.BLE_GATTC_EVT_WRITE_CMD_TX_COMPLETE
         gatts_evt_hvn_tx_complete = driver.BLE_GATTS_EVT_HVN_TX_COMPLETE
+        gap_evt_phy_update_request = driver.BLE_GAP_EVT_PHY_UPDATE_REQUEST
+        gap_evt_phy_update = driver.BLE_GAP_EVT_PHY_UPDATE
 
 
 class BLEEnableParams(object):
@@ -2510,27 +2510,6 @@ class BLEDriver(object):
                         rssi=rssi_changed_evt.rssi,
                     )
 
-            elif evt_id == BLEEvtID.gap_evt_phy_update_request:
-                requested_phy_update = ble_event.evt.gap_evt.params.phy_update_request
-
-                for obs in self.observers:
-                    obs.on_gap_evt_phy_update_request(
-                        ble_driver=self,
-                        conn_handle=ble_event.evt.common_evt.conn_handle,
-                        peer_preferred_phys=BLEGapPhys.from_c(requested_phy_update.peer_preferred_phys)
-                    )
-            elif evt_id == BLEEvtID.gap_evt_phy_update:
-                updated_phy = ble_event.evt.gap_evt.params.phy_update
-
-                for obs in self.observers:
-                    obs.on_gap_evt_phy_update(
-                        ble_driver=self,
-                        conn_handle=ble_event.evt.common_evt.conn_handle,
-                        status=BLEHci(updated_phy.status),
-                        tx_phy=updated_phy.tx_phy,
-                        rx_phy=updated_phy.rx_phy,
-                    )
-
             elif evt_id == BLEEvtID.gattc_evt_write_rsp:
                 write_rsp_evt = ble_event.evt.gattc_evt.params.write_rsp
 
@@ -2745,6 +2724,29 @@ class BLEDriver(object):
                             conn_handle=ble_event.evt.gap_evt.conn_handle,
                             data_length_params=BLEGapDataLengthParams.from_c(params),
                         )
+
+                elif evt_id == BLEEvtID.gap_evt_phy_update_request:
+                    requested_phy_update = ble_event.evt.gap_evt.params.phy_update_request
+
+                    for obs in self.observers:
+                        obs.on_gap_evt_phy_update_request(
+                            ble_driver=self,
+                            conn_handle=ble_event.evt.common_evt.conn_handle,
+                            peer_preferred_phys=BLEGapPhys.from_c(requested_phy_update.peer_preferred_phys)
+                        )
+
+                elif evt_id == BLEEvtID.gap_evt_phy_update:
+                    updated_phy = ble_event.evt.gap_evt.params.phy_update
+
+                    for obs in self.observers:
+                        obs.on_gap_evt_phy_update(
+                            ble_driver=self,
+                            conn_handle=ble_event.evt.common_evt.conn_handle,
+                            status=BLEHci(updated_phy.status),
+                            tx_phy=updated_phy.tx_phy,
+                            rx_phy=updated_phy.rx_phy,
+                        )
+
         except Exception as e:
             logger.error("Exception: {}".format(str(e)))
             for line in traceback.extract_tb(sys.exc_info()[2]):
