@@ -333,7 +333,10 @@ class BLEAdapterObserver(object):
     def on_indication_handle(self, ble_adapter, conn_handle, uuid, attr_handle, data):
         pass
 
-    def on_notification(self, ble_adapter, conn_handle, uuid, char_handle, data):
+    def on_notification(self, ble_adapter, conn_handle, uuid, data):
+    pass
+
+    def on_notification_handle(self, ble_adapter, conn_handle, uuid, attr_handle, data):
         pass
 
     def on_conn_param_update_request(self, ble_adapter, conn_handle, conn_params):
