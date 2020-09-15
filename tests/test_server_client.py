@@ -48,6 +48,7 @@ from driver_setup import Settings, setup_adapter
 from pc_ble_driver_py.ble_driver import (
     BLEAdvData,
     BLEUUID,
+    BLEUUIDBase,
     BLEGattsCharMD,
     BLEGattCharProps,
     BLEGattsAttrMD,
@@ -60,8 +61,12 @@ from pc_ble_driver_py.ble_driver import (
 
 logger = logging.getLogger(__name__)
 
-SERVICE = 0x180D  # Heart Rate service UUID
-CHARACTERSTIC = 0x2A37  # Heart Rate Measurement characteristic UUID
+UUID_HEART_RATE_SERVICE = 0x180D  # Heart Rate service UUID
+UUID_HEART_RATE_CHAR = 0x2A37  # Heart Rate Measurement characteristic UUID
+UUID_CUSTOM_SERVICE = 0x1111
+UUID_CUSTOM_CHAR = 0x2222
+CUSTOM_BASE = [0x11, 0x22, 0x33, 0x44, 0x00, 0x00, 0x55, 0x66, 0x77, 0x88, 0x99, 0xAA, 0xBB,
+               0xCC, 0xDD, 0xEE]
 DATA = [100]  # Heart Rate list
 ATTR_VALUE = [10]  # Initial Heart Rate Measurement Packet list
 ATTR_MAX_LEN = 8  # Heart Rate Measurement Packet maximum size
@@ -70,9 +75,7 @@ ATTR_MAX_LEN = 8  # Heart Rate Measurement Packet maximum size
 class Central(BLEDriverObserver, BLEAdapterObserver):
     def __init__(self, adapter):
         self.adapter = adapter
-        logger.info(
-            "Central adapter is %d", self.adapter.driver.rpc_adapter.internal
-        )
+        logger.info("Central adapter is %d", self.adapter.driver.rpc_adapter.internal)
         self.conn_q = Queue()
         self.notification_q = Queue()
         self.adapter.observer_register(self)
@@ -91,12 +94,17 @@ class Central(BLEDriverObserver, BLEAdapterObserver):
         try:
             self.conn_handle = self.conn_q.get(timeout=scan_duration)
             self.adapter.service_discovery(self.conn_handle)
-            self.adapter.enable_notification(self.conn_handle,
-                                             BLEUUID(CHARACTERSTIC))
-            logger.info(f"Notification enabled.")
         except Empty:
             logger.info(f"No peripherial advertising with name"
                         f"{self.connect_with} found.")
+
+    def enable_notification(self, uuid):
+        self.adapter.enable_notification(self.conn_handle, uuid)
+        logger.info(f"Notification enabled.")
+
+    def disable_notification(self, uuid):
+        self.adapter.disable_notification(self.conn_handle, uuid)
+        logger.info(f"Notification disabled.")
 
     def on_gap_evt_connected(
         self, ble_driver, conn_handle, peer_addr, role, conn_params
@@ -148,12 +156,13 @@ class Peripheral(BLEDriverObserver, BLEAdapterObserver):
         self.adapter.observer_register(self)
         self.adapter.driver.observer_register(self)
         self.char_handles = None
+        self.uuid_128_base = None
 
-    def setup(self):
+    def setup_services_16bit(self):
         self.char_handles = BLEGattsCharHandles()
         serv_handle = BLEGattHandle()
-        serv_uuid = BLEUUID(SERVICE)
-        char_uuid = BLEUUID(CHARACTERSTIC)
+        serv_uuid = BLEUUID(UUID_HEART_RATE_SERVICE)
+        char_uuid = BLEUUID(UUID_HEART_RATE_CHAR)
 
         props = BLEGattCharProps(notify=True)
         char_md = BLEGattsCharMD(char_props=props)
@@ -165,6 +174,26 @@ class Peripheral(BLEDriverObserver, BLEAdapterObserver):
             driver.BLE_GATTS_SRVC_TYPE_PRIMARY, serv_uuid, serv_handle)
         self.adapter.driver.ble_gatts_characteristic_add(
             serv_handle.handle, char_md, attr, self.char_handles)
+
+    def setup_services_128bit(self):
+        self.char_128_handles = BLEGattsCharHandles()
+        serv_128_handle = BLEGattHandle()
+        uuid_128_base = BLEUUIDBase(CUSTOM_BASE)
+        serv_128_uuid = BLEUUID(UUID_CUSTOM_SERVICE, uuid_128_base)
+        char_128_uuid = BLEUUID(UUID_CUSTOM_CHAR, uuid_128_base)
+
+        props = BLEGattCharProps(notify=True)
+        char_md = BLEGattsCharMD(char_props=props)
+        attr_md = BLEGattsAttrMD()
+        attr = BLEGattsAttr(uuid=char_128_uuid, attr_md=attr_md,
+                            max_len=ATTR_MAX_LEN, value=ATTR_VALUE)
+
+        self.adapter.driver.ble_vs_uuid_add(uuid_128_base)
+        self.adapter.driver.ble_gatts_service_add(
+            driver.BLE_GATTS_SRVC_TYPE_PRIMARY, serv_128_uuid, serv_128_handle)
+        self.adapter.driver.ble_gatts_characteristic_add(
+                serv_128_handle.handle,
+                char_md, attr, self.char_128_handles)
 
     def start(self, adv_name):
         adv_data = BLEAdvData(complete_local_name=adv_name)
@@ -180,6 +209,14 @@ class Peripheral(BLEDriverObserver, BLEAdapterObserver):
     def send_data(self, data):
         hvx_params = BLEGattsHVXParams(
             handle=self.char_handles,
+            hvx_type=driver.BLE_GATT_HVX_NOTIFICATION,
+            data=data)
+        self.adapter.driver.ble_gatts_hvx(self.conn_q.get(timeout=2),
+                                          hvx_params)
+
+    def send_data_128(self, data):
+        hvx_params = BLEGattsHVXParams(
+            handle=self.char_128_handles,
             hvx_type=driver.BLE_GATT_HVX_NOTIFICATION,
             data=data)
         self.adapter.driver.ble_gatts_hvx(self.conn_q.get(timeout=2),
@@ -219,14 +256,34 @@ class ServerClient(unittest.TestCase):
         )
         self.peripheral = Peripheral(peripheral)
 
-    def test_server_client(self):
-        self.peripheral.setup()
+    def test_server_client_16(self):
+        self.peripheral.setup_services_16bit()
         self.peripheral.start(self.adv_name)
         self.central.start(self.adv_name)
+
+        char_uuid = BLEUUID(UUID_HEART_RATE_CHAR)
+        self.central.enable_notification(char_uuid)
 
         self.peripheral.send_data(DATA)
         notification = self.central.notification_q.get(timeout=5)
         self.assertTrue(notification == DATA)
+
+        self.central.disable_notification(char_uuid)
+        self.central.stop()
+
+    def test_server_client_128(self):
+        self.peripheral.setup_services_128bit()
+        self.peripheral.start(self.adv_name)
+        self.central.start(self.adv_name)
+        uuid_128_base = BLEUUIDBase(CUSTOM_BASE)
+        char_128_uuid = BLEUUID(UUID_CUSTOM_CHAR, uuid_128_base)
+        self.central.enable_notification(char_128_uuid)
+
+        self.peripheral.send_data_128(DATA)
+        notification = self.central.notification_q.get(timeout=5)
+        self.assertTrue(notification == DATA)
+
+        self.central.disable_notification(char_128_uuid)
         self.central.stop()
 
     def tearDown(self):
