@@ -80,9 +80,7 @@ class DbConnection(object):
         assert isinstance(uuid, BLEUUID), "Invalid argument type"
         for s in self.services:
             for c in s.chars:
-                if (c.uuid.value == uuid.value) and (
-                    c.uuid.base.type == uuid.base.type
-                ):
+                if (c.uuid.value == uuid.value) and (c.uuid.base.type == uuid.base.type):
                     for d in c.descs:
                         if d.uuid.value == BLEUUID.Standard.cccd:
                             return d.handle
@@ -373,6 +371,11 @@ class BLEAdapter(BLEDriverObserver):
 
     @NordicSemiErrorCheck(expected=BLEGattStatusCode.success)
     def enable_notification(self, conn_handle, uuid):
+        assert isinstance(uuid, BLEUUID), "Invalid argument type"
+
+        if uuid.base.base is not None and uuid.base.type is None:
+            self.driver.ble_uuid_decode(uuid.base.base, uuid)
+
         cccd_list = [1, 0]
 
         handle = self.db_conns[conn_handle].get_cccd_handle(uuid)
@@ -392,6 +395,11 @@ class BLEAdapter(BLEDriverObserver):
 
     @NordicSemiErrorCheck(expected=BLEGattStatusCode.success)
     def disable_notification(self, conn_handle, uuid):
+        assert isinstance(uuid, BLEUUID), "Invalid argument type"
+
+        if uuid.base.base is not None and uuid.base.type is None:
+            self.driver.ble_uuid_decode(uuid.base.base, uuid)
+
         cccd_list = [0, 0]
 
         handle = self.db_conns[conn_handle].get_cccd_handle(uuid)
@@ -412,6 +420,11 @@ class BLEAdapter(BLEDriverObserver):
 
     @NordicSemiErrorCheck(expected=BLEGattStatusCode.success)
     def enable_indication(self, conn_handle, uuid):
+        assert isinstance(uuid, BLEUUID), "Invalid argument type"
+
+        if uuid.base.base is not None and uuid.base.type is None:
+            self.driver.ble_uuid_decode(uuid.base.base, uuid)
+
         cccd_list = [2, 0]
 
         handle = self.db_conns[conn_handle].get_cccd_handle(uuid)
