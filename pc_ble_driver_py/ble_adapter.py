@@ -76,15 +76,21 @@ class DbConnection(object):
                                 return d.handle
         return None
 
-    def get_cccd_handle(self, uuid):
+    def get_cccd_handle(self, uuid, attr_handle=None):
         assert isinstance(uuid, BLEUUID), "Invalid argument type"
         for s in self.services:
             for c in s.chars:
-                if (c.uuid.value == uuid.value) and (c.uuid.base.type == uuid.base.type):
-                    for d in c.descs:
-                        if d.uuid.value == BLEUUID.Standard.cccd:
-                            return d.handle
-                    break
+                if (c.uuid.value == uuid.value) and (
+                    c.uuid.base.type == uuid.base.type):
+                    if attr_handle is None:
+                        for d in c.descs:
+                            if d.uuid.value == BLEUUID.Standard.cccd:
+                                return d.handle
+                        break
+                    elif attr_handle == c.handle_value:
+                        for d in c.descs:
+                            if d.uuid.value == BLEUUID.Standard.cccd:
+                                return d.handle
         return None
 
     def get_char_handle(self, uuid):
@@ -370,7 +376,12 @@ class BLEAdapter(BLEDriverObserver):
         return BLEGattStatusCode.success
 
     @NordicSemiErrorCheck(expected=BLEGattStatusCode.success)
-    def enable_notification(self, conn_handle, uuid):
+    def enable_notification(self, conn_handle, uuid, attr_handle=None):
+        assert isinstance(uuid, BLEUUID), "Invalid argument type"
+
+        if uuid.base.base is not None and uuid.base.type is None:
+            self.driver.ble_uuid_decode(uuid.base.base, uuid)
+
         assert isinstance(uuid, BLEUUID), "Invalid argument type"
 
         if uuid.base.base is not None and uuid.base.type is None:
@@ -378,13 +389,13 @@ class BLEAdapter(BLEDriverObserver):
 
         cccd_list = [1, 0]
 
-        handle = self.db_conns[conn_handle].get_cccd_handle(uuid)
-        if handle is None:
+        cccd_handle = self.db_conns[conn_handle].get_cccd_handle(uuid, attr_handle)
+        if cccd_handle is None:
             raise NordicSemiException("CCCD not found")
         write_params = BLEGattcWriteParams(
             BLEGattWriteOperation.write_req,
             BLEGattExecWriteFlag.unused,
-            handle,
+            cccd_handle,
             cccd_list,
             0,
         )
@@ -394,7 +405,12 @@ class BLEAdapter(BLEDriverObserver):
         return result["status"]
 
     @NordicSemiErrorCheck(expected=BLEGattStatusCode.success)
-    def disable_notification(self, conn_handle, uuid):
+    def disable_notification(self, conn_handle, uuid, attr_handle=None):
+        assert isinstance(uuid, BLEUUID), "Invalid argument type"
+
+        if uuid.base.base is not None and uuid.base.type is None:
+            self.driver.ble_uuid_decode(uuid.base.base, uuid)
+
         assert isinstance(uuid, BLEUUID), "Invalid argument type"
 
         if uuid.base.base is not None and uuid.base.type is None:
@@ -402,14 +418,14 @@ class BLEAdapter(BLEDriverObserver):
 
         cccd_list = [0, 0]
 
-        handle = self.db_conns[conn_handle].get_cccd_handle(uuid)
-        if handle is None:
+        cccd_handle = self.db_conns[conn_handle].get_cccd_handle(uuid, attr_handle)
+        if cccd_handle is None:
             raise NordicSemiException("CCCD not found")
 
         write_params = BLEGattcWriteParams(
             BLEGattWriteOperation.write_req,
             BLEGattExecWriteFlag.unused,
-            handle,
+            cccd_handle,
             cccd_list,
             0,
         )
@@ -419,7 +435,12 @@ class BLEAdapter(BLEDriverObserver):
         return result["status"]
 
     @NordicSemiErrorCheck(expected=BLEGattStatusCode.success)
-    def enable_indication(self, conn_handle, uuid):
+    def enable_indication(self, conn_handle, uuid, attr_handle=None):
+        assert isinstance(uuid, BLEUUID), "Invalid argument type"
+
+        if uuid.base.base is not None and uuid.base.type is None:
+            self.driver.ble_uuid_decode(uuid.base.base, uuid)
+
         assert isinstance(uuid, BLEUUID), "Invalid argument type"
 
         if uuid.base.base is not None and uuid.base.type is None:
@@ -427,14 +448,14 @@ class BLEAdapter(BLEDriverObserver):
 
         cccd_list = [2, 0]
 
-        handle = self.db_conns[conn_handle].get_cccd_handle(uuid)
-        if handle is None:
+        cccd_handle = self.db_conns[conn_handle].get_cccd_handle(uuid, attr_handle)
+        if cccd_handle is None:
             raise NordicSemiException("CCCD not found")
 
         write_params = BLEGattcWriteParams(
             BLEGattWriteOperation.write_req,
             BLEGattExecWriteFlag.unused,
-            handle,
+            cccd_handle,
             cccd_list,
             0,
         )
@@ -444,8 +465,8 @@ class BLEAdapter(BLEDriverObserver):
         return result["status"]
 
     @NordicSemiErrorCheck(expected=BLEGattStatusCode.success)
-    def disable_indication(self, conn_handle, uuid):
-        return self.disable_notification(conn_handle, uuid)
+    def disable_indication(self, conn_handle, uuid, attr_handle=None):
+        return self.disable_notification(conn_handle, uuid, attr_handle)
 
     def conn_param_update(self, conn_handle, conn_params):
         self.driver.ble_gap_conn_param_update(conn_handle, conn_params)
@@ -453,14 +474,15 @@ class BLEAdapter(BLEDriverObserver):
         return result["conn_params"]
 
     @NordicSemiErrorCheck(expected=BLEGattStatusCode.success)
-    def write_req(self, conn_handle, uuid, data):
-        handle = self.db_conns[conn_handle].get_char_value_handle(uuid)
-        if handle is None:
+    def write_req(self, conn_handle, uuid, data, attr_handle=None):
+        if attr_handle is None:
+            attr_handle = self.db_conns[conn_handle].get_char_value_handle(uuid)
+        if attr_handle is None:
             raise NordicSemiException("Characteristic value handler not found")
         write_params = BLEGattcWriteParams(
             BLEGattWriteOperation.write_req,
             BLEGattExecWriteFlag.unused,
-            handle,
+            attr_handle,
             data,
             0,
         )
@@ -469,14 +491,15 @@ class BLEAdapter(BLEDriverObserver):
         return result["status"]
 
     @NordicSemiErrorCheck(expected=BLEGattStatusCode.success)
-    def write_prep(self, conn_handle, uuid, data, offset):
-        handle = self.db_conns[conn_handle].get_char_value_handle(uuid)
-        if handle is None:
+    def write_prep(self, conn_handle, uuid, data, offset, attr_handle=None):
+        if attr_handle is None:
+            attr_handle = self.db_conns[conn_handle].get_char_value_handle(uuid)
+        if attr_handle is None:
             raise NordicSemiException("Characteristic value handler not found")
         write_params = BLEGattcWriteParams(
             BLEGattWriteOperation.prepare_write_req,
             BLEGattExecWriteFlag.prepared_write,
-            handle,
+            attr_handle,
             data,
             offset,
         )
@@ -497,11 +520,12 @@ class BLEAdapter(BLEDriverObserver):
         result = self.evt_sync[conn_handle].wait(evt=BLEEvtID.gattc_evt_write_rsp)
         return result["status"]
 
-    def read_req(self, conn_handle, uuid, offset=0):
-        handle = self.db_conns[conn_handle].get_char_value_handle(uuid)
-        if handle is None:
+    def read_req(self, conn_handle, uuid, offset=0, attr_handle=None):
+        if attr_handle is None:
+            attr_handle = self.db_conns[conn_handle].get_char_value_handle(uuid)
+        if attr_handle is None:
             raise NordicSemiException("Characteristic value handler not found")
-        self.driver.ble_gattc_read(conn_handle, handle, offset)
+        self.driver.ble_gattc_read(conn_handle, attr_handle, offset)
         result = self.evt_sync[conn_handle].wait(evt=BLEEvtID.gattc_evt_read_rsp)
         gatt_res = result["status"]
         if gatt_res == BLEGattStatusCode.success:
@@ -509,18 +533,19 @@ class BLEAdapter(BLEDriverObserver):
         else:
             return gatt_res, None
 
-    def write_cmd(self, conn_handle, uuid, data):
+    def write_cmd(self, conn_handle, uuid, data, attr_handle=None):
         try:
             tx_complete = BLEEvtID.evt_tx_complete
         except:
             tx_complete = BLEEvtID.gattc_evt_write_cmd_tx_complete
-        handle = self.db_conns[conn_handle].get_char_value_handle(uuid)
-        if handle is None:
+        if attr_handle is None:
+            attr_handle = self.db_conns[conn_handle].get_char_value_handle(uuid)
+        if attr_handle is None:
             raise NordicSemiException("Characteristic value handler not found")
         write_params = BLEGattcWriteParams(
             BLEGattWriteOperation.write_cmd,
             BLEGattExecWriteFlag.unused,
-            handle,
+            attr_handle,
             data,
             0,
         )
@@ -791,9 +816,8 @@ class BLEAdapter(BLEDriverObserver):
                 logger.info(f"Not able to look up UUID for attr_handle {attr_handle}")
 
             for obs in self.observers:
-                obs.on_notification(
-                    ble_adapter=self, conn_handle=conn_handle, uuid=uuid, data=data
-                )
+                obs.on_notification(self, conn_handle, uuid, data)
+                obs.on_notification_handle(self, conn_handle, uuid, attr_handle, data)
 
         elif hvx_type == BLEGattHVXType.indication:
             uuid = self.db_conns[conn_handle].get_char_uuid(attr_handle)
@@ -801,8 +825,7 @@ class BLEAdapter(BLEDriverObserver):
                 logger.info(f"Not able to look up UUID for attr_handle {attr_handle}")
 
             for obs in self.observers:
-                obs.on_indication(
-                    ble_adapter=self, conn_handle=conn_handle, uuid=uuid, data=data
-                )
+                obs.on_indication(self, conn_handle, uuid, data)
+                obs.on_indication_handle(self, conn_handle, uuid, attr_handle, data)
 
             self.driver.ble_gattc_hv_confirm(conn_handle, attr_handle)
