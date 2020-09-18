@@ -1257,24 +1257,24 @@ class BLEGattsCharMD(object):
 
 
 class BLEGapPhys(object):
-    def __init__(self, tx_phy, rx_phy):
-        self.tx_phy = tx_phy
-        self.rx_phy = rx_phy
+    def __init__(self, tx_phys, rx_phys):
+        self.tx_phys = tx_phys
+        self.rx_phys = rx_phys
 
     def __str__(self):
         return str(self.__dict__)
-        
+
     def to_c(self):
         gap_phys = driver.ble_gap_phys_t()
-        gap_phys.tx_phy = self.tx_phy
-        gap_phys.rx_phy = self.rx_phy
+        gap_phys.tx_phys = self.tx_phys
+        gap_phys.rx_phys = self.rx_phys
         return gap_phys
 
     @classmethod
     def from_c(cls, params):
         return cls(
-            tx_phy=params.tx_phys,
-            rx_phy=params.rx_phys,
+            tx_phys=params.tx_phys,
+            rx_phys=params.rx_phys,
         )
 
 
@@ -2090,8 +2090,8 @@ class BLEDriver(object):
     @wrapt.synchronized(api_lock)
     def ble_gap_phy_update(self, conn_handle, gap_phys):
         assert isinstance(gap_phys, BLEGapPhys)
-        gap_phys = gap_phys.to_c()
-        err_code = driver.sd_ble_gap_phy_update(self.rpc_adapter, conn_handle, gap_phys)
+        gap_phys_c = gap_phys.to_c()
+        err_code = driver.sd_ble_gap_phy_update(self.rpc_adapter, conn_handle, gap_phys_c)
         if err_code != driver.NRF_SUCCESS:
             raise NordicSemiException(
                 "Failed to update phy. Error code: {}".format(err_code)
