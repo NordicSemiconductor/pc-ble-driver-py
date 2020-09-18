@@ -47,56 +47,51 @@ from driver_setup import Settings, setup_adapter
 
 from pc_ble_driver_py.ble_driver import (
     BLEAdvData,
-    BLEUUID,
-    BLEGapPhys,
+    BLEHci,
     driver,
 )
 
 logger = logging.getLogger(__name__)
-
-req_phy = [driver.BLE_GAP_PHY_1MBPS, driver.BLE_GAP_PHY_1MBPS]
 
 
 class Central(BLEDriverObserver, BLEAdapterObserver):
     def __init__(self, tester, adapter):
         self.tester = tester
         self.adapter = adapter
-        logger.info(
-            "Central adapter is %d", self.adapter.driver.rpc_adapter.internal
-        )
+        logger.info(f"Central adapter is {self.adapter.driver.rpc_adapter.internal}")
         self.conn_q = Queue()
-        self.notification_q = Queue()
+        self.phy_q = Queue()
         self.adapter.observer_register(self)
         self.adapter.driver.observer_register(self)
         self.conn_handle = None
         self.phy_rsp = None
         self.new_phy = None
-        
+
     def stop(self):
         if self.conn_handle:
             self.adapter.driver.ble_gap_disconnect(self.conn_handle)
 
-    def start(self, connect_with, req_phy):
+    def start(self, connect_with, req_phys):
         self.connect_with = connect_with
         logger.info(f"scan_start, trying to find {self.connect_with}")
         scan_duration = 5
         self.adapter.driver.ble_gap_scan_start()
         try:
             self.conn_handle = self.conn_q.get(timeout=scan_duration)
-            resp = self.adapter.phy_update(self.conn_handle, req_phy)
-            self.new_phy = resp 
+            logging.info(f"Central requesting: req_phys={req_phys}")
+            resp = self.adapter.phy_update(self.conn_handle, req_phys)
+            self.new_phy = resp
         except Empty:
-            logger.info(f"No peripherial advertising with name"
-                        f"{self.connect_with} found.")
+            logger.info(f"No peripherial advertising with name {self.connect_with} found.")
 
     def on_gap_evt_connected(
         self, ble_driver, conn_handle, peer_addr, role, conn_params
     ):
         self.conn_q.put(conn_handle)
-        logger.info(f"(Central) New connection: {conn_handle}.")
+        logger.info(f"Central connected, conn_handle={conn_handle}.")
 
     def on_gap_evt_disconnected(self, ble_driver, conn_handle, reason):
-        logger.info(f"Disconnected: {conn_handle} {reason}.")
+        logger.info(f"Disconnected: conn_handle={conn_handle} reason={reason}.")
 
     def on_gap_evt_adv_report(
         self, ble_driver, conn_handle, peer_addr, rssi, adv_type, adv_data
@@ -114,34 +109,26 @@ class Central(BLEDriverObserver, BLEAdapterObserver):
         dev_name = "".join(chr(e) for e in dev_name_list)
 
         if dev_name == self.connect_with:
-            address_string = "".join(
-                "{0:02X}".format(b) for b in peer_addr.addr
-            )
+            address_string = "".join(f"{b:02X}" for b in peer_addr.addr)
             logger.info(
                 f"Trying to connect to peripheral advertising as {dev_name},"
                 f" address: 0x{address_string}"
             )
             self.adapter.connect(peer_addr, tag=1)
 
-    def on_gap_evt_phy_update(self, ble_driver, conn_handle, **kwargs):
-        logger.info(f'(Central) Updated: {kwargs}')
-        rsp = [kwargs['tx_phy'], kwargs['rx_phy']]
-        self.tester.assertListEqual(rsp, req_phy, 
-            msg='(rsp != req) BLE_GAP_PHY_UPDATE: phy is not updated according to request')
-        self.phy_rsp = [kwargs['tx_phy'], kwargs['rx_phy']]
-        
-
+    def on_gap_evt_phy_update(self, ble_driver, conn_handle, status, tx_phy, rx_phy):
+        phy_update = {"status": status, "tx_phy": tx_phy, "rx_phy": rx_phy}
+        self.phy_q.put(phy_update)
 
 
 class Peripheral(BLEDriverObserver, BLEAdapterObserver):
     def __init__(self, tester, adapter):
         self.tester = tester
         self.adapter = adapter
-        logger.info(
-            "Peripheral adapter is %d",
-            self.adapter.driver.rpc_adapter.internal,
-        )
+        logger.info(f"Peripheral adapter is {self.adapter.driver.rpc_adapter.internal}")
         self.conn_q = Queue()
+        self.phy_req_q = Queue()
+        self.phy_q = Queue()
         self.adapter.observer_register(self)
         self.adapter.driver.observer_register(self)
         self.phy_req = None
@@ -155,22 +142,12 @@ class Peripheral(BLEDriverObserver, BLEAdapterObserver):
         self, ble_driver, conn_handle, peer_addr, role, conn_params
     ):
         self.conn_q.put(conn_handle)
-        logger.info(f"(Peripheral) New connection: {conn_handle}.")
 
     def on_gap_evt_phy_update_request(self, ble_driver, conn_handle, peer_preferred_phys):
-        logger.info(f'(Peripheral) Update request {peer_preferred_phys}')
-        self.tester.assertListEqual(
-            [peer_preferred_phys.tx_phy, peer_preferred_phys.rx_phy], req_phy,
-            msg='(sen != req) BLE_GAP_PHY_UPDATE_REQUEST: update request is not equal to the one sent from central'
-            )
-        self.phy_req = peer_preferred_phys
+        self.phy_req_q.put(peer_preferred_phys)
 
-    def on_gap_evt_phy_update(self, ble_driver, conn_handle, **kwargs):
-        logger.info(f'(Peripheral) Updated {kwargs}')
-        rsp = [kwargs['tx_phy'], kwargs['rx_phy']]
-        self.tester.assertListEqual(rsp, req_phy,  
-            msg='(rsp != req) BLE_GAP_PHY_UPDATE: phy is not updated according to request')
-        self.phy_rsp = rsp
+    def on_gap_evt_phy_update(self, ble_driver, conn_handle, status, tx_phy, rx_phy):
+        self.phy_q.put({"status": status, "tx_phy": tx_phy, "rx_phy": rx_phy})
 
 
 class PHYUPDATE(unittest.TestCase):
@@ -206,15 +183,65 @@ class PHYUPDATE(unittest.TestCase):
         )
         self.peripheral = Peripheral(self, peripheral)
 
+    def test_phy_update_1mbps(self):
+        # When requested PHYs are identical to current PHYs, no request is sent out
+        req_phys = [driver.BLE_GAP_PHY_1MBPS, driver.BLE_GAP_PHY_1MBPS]
 
-    def test_phy_update(self):
-        logging.info(f'(Central) Requesting: {req_phy}')
         self.peripheral.start(self.adv_name)
-        self.central.start(self.adv_name, req_phy)
+        self.central.start(self.adv_name, req_phys)
 
+        phy_update_central = self.central.phy_q.get(timeout=2)
+        self.assertEqual(req_phys, [phy_update_central["tx_phy"], phy_update_central["rx_phy"]])
 
-        #logger.info("Peri phy req", self.peripheral.phy_req)
-        #logger.info("Cent phy rsp, new_phy", self.central.phy_rsp, self.central.new_phy)
+        self.central.stop()
+
+    def test_phy_update_2mbps(self):
+        req_phys = [driver.BLE_GAP_PHY_2MBPS, driver.BLE_GAP_PHY_2MBPS]
+
+        self.peripheral.start(self.adv_name)
+        self.central.start(self.adv_name, req_phys)
+
+        phy_req_periph = self.peripheral.phy_req_q.get(timeout=2)
+        logger.info(f"phy_req_periph={phy_req_periph}")
+        self.assertEqual(req_phys, [phy_req_periph.tx_phys, phy_req_periph.tx_phys])
+
+        phy_update_central = self.central.phy_q.get(timeout=2)
+        logger.info(f"phy_update_central={phy_update_central}")
+        self.assertEqual(req_phys, [phy_update_central["tx_phy"], phy_update_central["rx_phy"]])
+        self.assertEqual(phy_update_central["status"], BLEHci.success)
+
+        phy_update_periph = self.peripheral.phy_q.get(timeout=2)
+        logger.info(f"phy_update_central={phy_update_periph}")
+        self.assertEqual(req_phys, [phy_update_periph["tx_phy"], phy_update_periph["rx_phy"]])
+        self.assertEqual(phy_update_periph["status"], BLEHci.success)
+
+        self.central.stop()
+
+    def test_phy_update_1and2mbps(self):
+        combined_1and2mbps = driver.BLE_GAP_PHY_1MBPS | driver.BLE_GAP_PHY_2MBPS
+        req_phys = [combined_1and2mbps, combined_1and2mbps]
+
+        self.peripheral.start(self.adv_name)
+        self.central.start(self.adv_name, req_phys)
+
+        phy_req_periph = self.peripheral.phy_req_q.get(timeout=2)
+        logger.info(f"phy_req_periph={phy_req_periph}")
+        self.assertEqual(req_phys, [phy_req_periph.tx_phys, phy_req_periph.tx_phys])
+
+        phy_update_central = self.central.phy_q.get(timeout=2)
+        logger.info(f"phy_update_central={phy_update_central}")
+        #  Use bitwise AND to check that the resulting PHYs match with the requested range of PHYs
+        self.assertTrue(req_phys[0] & phy_update_central["tx_phy"] == phy_update_central["tx_phy"])
+        self.assertTrue(req_phys[1] & phy_update_central["rx_phy"] == phy_update_central["rx_phy"])
+        self.assertEqual(phy_update_central["status"], BLEHci.success)
+
+        phy_update_periph = self.peripheral.phy_q.get(timeout=2)
+        logger.info(f"phy_update_periph={phy_update_periph}")
+        #  Use bitwise AND to check that the resulting PHYs match with the requested range of PHYs
+        self.assertTrue(req_phys[0] & phy_update_periph["tx_phy"] == phy_update_periph["tx_phy"])
+        self.assertTrue(req_phys[1] & phy_update_periph["rx_phy"] == phy_update_periph["rx_phy"])
+        self.assertEqual(phy_update_periph["status"], BLEHci.success)
+
         self.central.stop()
 
     def tearDown(self):
@@ -229,7 +256,7 @@ def test_suite():
 if __name__ == "__main__":
     logging.basicConfig(
         level=Settings.current().log_level,
-        format="%(asctime)s [%(thread)d/%(threadName)s] %(message)s",   
-        #filename="phy_2mbps.log"
+        format="%(asctime)s [%(thread)d/%(threadName)s] %(message)s",
+        # filename="phy_2mbps.log"
     )
     unittest.main(argv=Settings.clean_args())

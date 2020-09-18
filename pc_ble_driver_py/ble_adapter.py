@@ -235,10 +235,9 @@ class BLEAdapter(BLEDriverObserver):
         self.db_conns[conn_handle].att_mtu = new_mtu
         return new_mtu
 
-
-    def phy_update(self, conn_handle, req_phy):
+    def phy_update(self, conn_handle, req_phys):
         try:
-            gap_phys = BLEGapPhys(*req_phy)
+            gap_phys = BLEGapPhys(*req_phys)
             self.driver.ble_gap_phy_update(conn_handle, gap_phys)
         except NordicSemiException as ex:
             raise ex
@@ -249,7 +248,6 @@ class BLEAdapter(BLEDriverObserver):
             return
 
         return response
-
 
     def data_length_update(self, conn_handle, data_length):
         try:
@@ -703,12 +701,11 @@ class BLEAdapter(BLEDriverObserver):
             evt=BLEEvtID.gap_evt_auth_key_request, data=kwargs
         )
 
-    def on_gap_evt_phy_update_request(self, ble_driver, conn_handle, **kwargs):
+    def on_gap_evt_phy_update_request(self, ble_driver, conn_handle, peer_preferred_phys):
         try:
-            res = kwargs['peer_preferred_phys']
-            ble_driver.ble_gap_phy_update(conn_handle, res)
+            ble_driver.ble_gap_phy_update(conn_handle, peer_preferred_phys)
         except NordicSemiException as ex:
-            raise NordicSemiException("Phy update failed") from ex
+            logger.error(f"Phy update failed. Exception: {ex}")
 
     def on_gap_evt_phy_update(self, ble_driver, conn_handle, **kwargs):
         self.evt_sync[conn_handle].notify(
