@@ -78,7 +78,7 @@ class Central(BLEDriverObserver, BLEAdapterObserver):
         self.adapter.driver.ble_gap_scan_start()
         try:
             self.conn_handle = self.conn_q.get(timeout=scan_duration)
-            logging.info(f"Central requesting: {req_phys=}")
+            logging.info(f"Central requesting: req_phys={req_phys}")
             resp = self.adapter.phy_update(self.conn_handle, req_phys)
             self.new_phy = resp
         except Empty:
@@ -88,10 +88,10 @@ class Central(BLEDriverObserver, BLEAdapterObserver):
         self, ble_driver, conn_handle, peer_addr, role, conn_params
     ):
         self.conn_q.put(conn_handle)
-        logger.info(f"Central connected, {conn_handle=}.")
+        logger.info(f"Central connected, conn_handle={conn_handle}.")
 
     def on_gap_evt_disconnected(self, ble_driver, conn_handle, reason):
-        logger.info(f"Disconnected: {conn_handle=} {reason=}.")
+        logger.info(f"Disconnected: conn_handle={conn_handle} reason={reason}.")
 
     def on_gap_evt_adv_report(
         self, ble_driver, conn_handle, peer_addr, rssi, adv_type, adv_data
@@ -202,16 +202,16 @@ class PHYUPDATE(unittest.TestCase):
         self.central.start(self.adv_name, req_phys)
 
         phy_req_periph = self.peripheral.phy_req_q.get(timeout=2)
-        logger.info(f"{phy_req_periph=}")
+        logger.info(f"phy_req_periph={phy_req_periph}")
         self.assertEqual(req_phys, [phy_req_periph.tx_phys, phy_req_periph.tx_phys])
 
         phy_update_central = self.central.phy_q.get(timeout=2)
-        logger.info(f"{phy_update_central=}")
+        logger.info(f"phy_update_central={phy_update_central}")
         self.assertEqual(req_phys, [phy_update_central["tx_phy"], phy_update_central["rx_phy"]])
         self.assertEqual(phy_update_central["status"], BLEHci.success)
 
         phy_update_periph = self.peripheral.phy_q.get(timeout=2)
-        logger.info(f"{phy_update_periph=}")
+        logger.info(f"phy_update_central={phy_update_periph}")
         self.assertEqual(req_phys, [phy_update_periph["tx_phy"], phy_update_periph["rx_phy"]])
         self.assertEqual(phy_update_periph["status"], BLEHci.success)
 
@@ -225,18 +225,18 @@ class PHYUPDATE(unittest.TestCase):
         self.central.start(self.adv_name, req_phys)
 
         phy_req_periph = self.peripheral.phy_req_q.get(timeout=2)
-        logger.info(f"{phy_req_periph=}")
+        logger.info(f"phy_req_periph={phy_req_periph}")
         self.assertEqual(req_phys, [phy_req_periph.tx_phys, phy_req_periph.tx_phys])
 
         phy_update_central = self.central.phy_q.get(timeout=2)
-        logger.info(f"{phy_update_central=}")
+        logger.info(f"phy_update_central={phy_update_central}")
         #  Use bitwise AND to check that the resulting PHYs match with the requested range of PHYs
         self.assertTrue(req_phys[0] & phy_update_central["tx_phy"] == phy_update_central["tx_phy"])
         self.assertTrue(req_phys[1] & phy_update_central["rx_phy"] == phy_update_central["rx_phy"])
         self.assertEqual(phy_update_central["status"], BLEHci.success)
 
         phy_update_periph = self.peripheral.phy_q.get(timeout=2)
-        logger.info(f"{phy_update_periph=}")
+        logger.info(f"phy_update_periph={phy_update_periph}")
         #  Use bitwise AND to check that the resulting PHYs match with the requested range of PHYs
         self.assertTrue(req_phys[0] & phy_update_periph["tx_phy"] == phy_update_periph["tx_phy"])
         self.assertTrue(req_phys[1] & phy_update_periph["rx_phy"] == phy_update_periph["rx_phy"])
