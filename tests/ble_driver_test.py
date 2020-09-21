@@ -11,7 +11,7 @@ class FlasherParserTestCase(unittest.TestCase):
         '02',  # struct version
         'FF', 'FF', 'FF',  # (reserved for future use)
         '00', '00', '00', '00',  # revision hash
-        '04', '01', '01',  # major, minor, patch
+        '04', '01', '02',  # major, minor, patch
         'FF',  # (reserved for future use)
         '05',  # softdevice ble api number
         '01',  # transport type
@@ -29,7 +29,7 @@ class FlasherParserTestCase(unittest.TestCase):
             {
                 'len': 24,
                 'magic_number': ['17', 'A5', 'D8', '46'],
-                'version': '4.1.1',
+                'version': '4.1.2',
                 'baud_rate': 1000000,
                 'api_version': 5
             }
@@ -51,7 +51,7 @@ class FlasherVersionTestCase(unittest.TestCase):
         self.assertFalse(Flasher.is_valid_version('4.0.0'))
 
     def test_valid_version(self):
-        self.assertTrue(Flasher.is_valid_version('4.1.1'))
+        self.assertTrue(Flasher.is_valid_version('4.1.2'))
 
 
 class FlasherBaudRateTestCase(unittest.TestCase):
