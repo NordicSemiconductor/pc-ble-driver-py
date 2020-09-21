@@ -445,9 +445,10 @@ class BLEGapAddr(object):
         random_private_non_resolvable = (
             driver.BLE_GAP_ADDR_TYPE_RANDOM_PRIVATE_NON_RESOLVABLE
         )
+        anonymous = 0x7F  # driver.BLE_GAP_ADDR_TYPE_ANONYMOUS, available from SD v6
 
     def __init__(self, addr_type, addr):
-        assert isinstance(addr_type, BLEGapAddr.Types), "Invalid argument type"
+        assert type(addr_type) in [BLEGapAddr.Types, int], "Invalid addr_type: {addr_type}"
         self.addr_type = addr_type
         self.addr = addr
 
@@ -463,12 +464,20 @@ class BLEGapAddr(object):
     def from_c(cls, addr):
         addr_list = util.uint8_array_to_list(addr.addr, driver.BLE_GAP_ADDR_LEN)
         addr_list.reverse()
-        return cls(addr_type=BLEGapAddr.Types(addr.addr_type), addr=addr_list)
+        if addr.addr_type in BLEGapAddr.Types.__members__.items():
+            addr_type = BLEGapAddr.Types(addr.addr_type)
+        else:
+            addr_type = addr.addr_type
+        return cls(addr_type=addr_type, addr=addr_list)
 
     def to_c(self):
         addr_array = util.list_to_uint8_array(self.addr[::-1])
         addr = driver.ble_gap_addr_t()
-        addr.addr_type = self.addr_type.value
+        if type(self.addr_type) == BLEGapAddr.Types:
+            addr.addr_type = self.addr_type.value
+        else:
+            logger.info("Unknown address type: {self.addr_type)")
+            addr.addr_type = self.addr_type
         addr.addr = addr_array.cast()
         return addr
 
