@@ -445,9 +445,10 @@ class BLEGapAddr(object):
         random_private_non_resolvable = (
             driver.BLE_GAP_ADDR_TYPE_RANDOM_PRIVATE_NON_RESOLVABLE
         )
+        anonymous = 0x7F  # driver.BLE_GAP_ADDR_TYPE_ANONYMOUS, available from SD v6
 
     def __init__(self, addr_type, addr):
-        assert isinstance(addr_type, BLEGapAddr.Types), "Invalid argument type"
+        assert type(addr_type) in [BLEGapAddr.Types, int], "Invalid addr_type: {addr_type}"
         self.addr_type = addr_type
         self.addr = addr
 
@@ -463,12 +464,20 @@ class BLEGapAddr(object):
     def from_c(cls, addr):
         addr_list = util.uint8_array_to_list(addr.addr, driver.BLE_GAP_ADDR_LEN)
         addr_list.reverse()
-        return cls(addr_type=BLEGapAddr.Types(addr.addr_type), addr=addr_list)
+        if addr.addr_type in BLEGapAddr.Types.__members__.items():
+            addr_type = BLEGapAddr.Types(addr.addr_type)
+        else:
+            addr_type = addr.addr_type
+        return cls(addr_type=addr_type, addr=addr_list)
 
     def to_c(self):
         addr_array = util.list_to_uint8_array(self.addr[::-1])
         addr = driver.ble_gap_addr_t()
-        addr.addr_type = self.addr_type.value
+        if type(self.addr_type) == BLEGapAddr.Types:
+            addr.addr_type = self.addr_type.value
+        else:
+            logger.info("Unknown address type: {self.addr_type)")
+            addr.addr_type = self.addr_type
         addr.addr = addr_array.cast()
         return addr
 
@@ -788,6 +797,18 @@ class BLEAdvData(object):
         information_3d_data = driver.BLE_GAP_AD_TYPE_3D_INFORMATION_DATA
         manufacturer_specific_data = driver.BLE_GAP_AD_TYPE_MANUFACTURER_SPECIFIC_DATA
 
+        # Additional official AD types from
+        # https://www.bluetooth.com/specifications/assigned-numbers/generic-access-profile/
+        indoor_positioning = 0x25
+        transport_discovery_data = 0x26
+        le_supported_features = 0x27
+        channel_map_update_indication = 0x28
+        pb_adv = 0x29
+        mesh_message = 0x2A
+        mesh_beacon = 0x2B
+        biginfo = 0x2C
+        broadcast_code = 0x2D
+
     def __init__(self, **kwargs):
         self.records = dict()
         for k in kwargs:
@@ -844,11 +865,11 @@ class BLEAdvData(object):
                 ad_type = ad_list[index + 1]
                 offset = index + 2
                 key = BLEAdvData.Types(ad_type)
-                ble_adv_data.records[key] = ad_list[offset : offset + ad_len - 1]
+                ble_adv_data.records[key] = ad_list[offset: offset + ad_len - 1]
             except ValueError:
                 if ad_type:
                     logger.info(
-                        "Invalid advertising data type: 0x{:02X}".format(ad_type)
+                        "Unknown advertising data type: 0x{:02X}".format(ad_type)
                     )
                 else:
                     logger.info("Invalid advertising data")
