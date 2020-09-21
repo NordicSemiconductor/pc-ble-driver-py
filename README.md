@@ -13,6 +13,10 @@ The Python bindings require that the development kit you use is programmed with 
 
 See the [license file](LICENSE) for details.
 
+## Disclaimer
+pc-ble-driver-py does not implement or enable all of the features of the underlying pc-ble-driver (C/C++) library. Features have mostly been added on a need basis. Functions or features that have been added may also be lacking sub-features. However, as the underlying language bindings have been auto-generated, it is often the case that features can be made available by adding to the conversion-layer found in ´ble_driver.py´.
+If you find features missing that you would like to have in, you are welcome to propose an implementation through a pull request.
+
 ## Installing from PyPI
 
 To install the latest published version from the Python Package Index simply type:
