@@ -88,7 +88,7 @@ jobs:
         set -o errexit -o pipefail
         git clone $(VCPKG_REPOSITORY) $(VCPKG_ROOT)
         git -C $(VCPKG_ROOT) checkout ${{ parameters.VCPKG_COMMIT }}
-        CC=gcc-6 CXX=g++-6 $(VCPKG_ROOT)/bootstrap-vcpkg.sh
+        CC=gcc-9 CXX=g++-9 $(VCPKG_ROOT)/bootstrap-vcpkg.sh
       displayName: 'Install vcpkg'
     - script: |
         set -o errexit -o pipefail
