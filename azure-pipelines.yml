@@ -1,6 +1,30 @@
+
 trigger:
 - master
 - release/*
+
+parameters:
+  - name: VCPKG_COMMIT
+    displayName: VCPKG commit
+    type: string
+    default: 38e1a6465beeb7b294a584d1c4ec24b2daab2670
+    values:
+    - master
+    - 38e1a6465beeb7b294a584d1c4ec24b2daab2670
+    - 2020.07
+    - 2020.06
+    - 2020.04
+    - 2020.01
+    - 2019.12
+    - 2019.11
+    - 2019.10
+    - 2019.09
+    - 2019.08
+    - 2019.07
+    - 2019.06
+
+variables:
+  VCPKG_REPOSITORY: https://github.com/Microsoft/vcpkg.git
 
 jobs:
   # Linux
@@ -62,7 +86,8 @@ jobs:
       displayName: 'Install gcc and swig'
     - script: |
         set -o errexit -o pipefail
-        git clone https://github.com/NordicPlayground/vcpkg.git $(VCPKG_ROOT)
+        git clone $(VCPKG_REPOSITORY) $(VCPKG_ROOT)
+        git -C $(VCPKG_ROOT) checkout ${{ parameters.VCPKG_COMMIT }}
         CC=gcc-6 CXX=g++-6 $(VCPKG_ROOT)/bootstrap-vcpkg.sh
       displayName: 'Install vcpkg'
     - script: |
@@ -141,7 +166,8 @@ jobs:
         choco install -y --x86 swig
       displayName: 'Install toolchain on Windows'
     - script: |
-        git clone https://github.com/NordicPlayground/vcpkg.git $(VCPKG_ROOT)
+        git $(VCPKG_REPOSITORY) $(VCPKG_ROOT)
+        git -C $(VCPKG_ROOT) checkout ${{ parameters.VCPKG_COMMIT }}
         $(VCPKG_ROOT)\bootstrap-vcpkg.bat
       displayName: 'Install vcpkg'
     - script: |
