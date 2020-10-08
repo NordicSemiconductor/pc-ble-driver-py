@@ -90,7 +90,7 @@ The wheel packages are found in the `dist` directory
 To build this project you will need the following tools:
 
 * [SWIG](http://www.swig.org/) (>= 4.0)
-* [Python](https://www.python.org/) (==2.7 && >=3.7)
+* [Python](https://www.python.org/) (>=3.6)
 * [vcpkg](https://github.com/NordicPlayground/vcpkg)
 * A C/C++ toolchain (should already have been installed to build nrf-ble-driver)
 
@@ -98,7 +98,7 @@ To build this project you will need the following tools:
 See the following sections for platform-specific instructions on the installation of the dependencies.
 
 
-#### Windows 
+#### Windows
 
 * Install the latest CMake stable release by downloading the Windows Installer from [CMake site](https://cmake.org/download/)
 
@@ -109,7 +109,7 @@ SWIG in `c:\swig\swigwin-x.y.z`:
 
     PATH=%PATH%;c:\swig\swigwin-x.y.z;
 
-* Install Python 2.7.x or 3.7.3 or newer by downloading the installer from [Python Windows Downloads](https://www.python.org/downloads/windows/)
+* Install Python 3.6 or newer by downloading the installer from [Python Windows Downloads](https://www.python.org/downloads/windows/)
 
 **Note**: Select the Python architecture (32 or 64-bit) that you plan to build for.
 
