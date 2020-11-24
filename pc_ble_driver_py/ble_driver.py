@@ -521,6 +521,31 @@ class BLEGapSecKeys(object):
             self
         )
 
+class BLEGapLescP256Pk(object):
+    def __init__(self, pk):
+        self.pk  = pk
+
+    @classmethod
+    def from_c(cls, p_pk):
+        return cls(
+            pk = util.uint8_array_to_list(p_pk.pk, driver.BLE_GAP_LESC_P256_PK_LEN)
+        )
+
+    def __str__(self):
+        return ("pk({0.pk}))").format(self)
+
+class BLEGapDHKey(object):
+    def __init__(self, key):
+        self.key  = key
+
+    def to_c(self):
+        key_array = util.list_to_uint8_array(self.key)
+        dh_key = driver.ble_gap_lesc_dhkey_t()
+        dh_key.key = key_array.cast()
+        return dh_key
+
+    def __str__(self):
+        return ("p_dhkey({0.p_dhkey}))").format(self)
 
 class BLEGapEncKey(object):
     def __init__(self, master_id, enc_info):
@@ -542,18 +567,26 @@ class BLEGapIdKey(object):
     def __init__(self, id_info, id_addr_info):
         self.irk = id_info
         self.id_addr_info = id_addr_info
+        assert isinstance(id_addr_info, BLEGapAddr), 'Invalid argument type'
 
     @classmethod
     def from_c(cls, id_key):
         return cls(
-            id_info=util.uint8_array_to_list(
-                id_key.id_info.irk, driver.BLE_GAP_SEC_KEY_LEN
-            ),
-            id_addr_info=BLEGapAddr.from_c(id_key.id_addr_info),
+                id_info = util.uint8_array_to_list(id_key.id_info.irk, driver.BLE_GAP_SEC_KEY_LEN),
+                id_addr_info = BLEGapAddr.from_c(id_key.id_addr_info)
         )
 
+    def to_c(self):
+        id_key = driver.ble_gap_id_key_t()
+        irk_array = util.list_to_uint8_array(self.irk)
+        irk = driver.ble_gap_irk_t()
+        irk.irk = irk_array.cast()
+        id_key.id_info = irk
+        id_key.id_addr_info = self.id_addr_info.to_c()
+        return id_key
+    
     def __str__(self):
-        return "irk({0.irk}) id_addr_info({0.id_addr_info})".format(self)
+        return ("irk({0.irk}) id_addr_info({0.id_addr_info})").format(self)
 
 
 class BLEGapEncInfo(object):
@@ -633,6 +666,32 @@ class BLEGapSecKDist(object):
     def __str__(self):
         return "enc({0.enc}) id({0.id}) sign({0.sign}) link({0.link})".format(self)
 
+class BLEGapSecLevels(object):
+    def __init__(self, lv1, lv2, lv3, lv4):
+        self.lv1 = lv1
+        self.lv2 = lv2
+        self.lv3 = lv3
+        self.lv4 = lv4
+
+
+    @classmethod
+    def from_c(cls, sm_levels):
+        return cls(lv1 = sm_levels.lv1,
+                   lv2 = sm_levels.lv2,
+                   lv3 = sm_levels.lv3,
+                   lv4 = sm_levels.lv4)
+
+    def to_c(self):
+        sm_levels     = driver.ble_gap_sec_levels_t()
+        sm_levels.lv1 = self.lv1
+        sm_levels.lv2 = self.lv2
+        sm_levels.lv3 = self.lv3
+        sm_levels.lv4 = self.lv4
+        return sm_levels
+
+
+    def __str__(self):
+        return ("lv1({0.lv1}) lv2({0.lv2}) lv3({0.lv3}) lv4({0.lv4})").format(self)
 
 class BLEGapSecParams(object):
     def __init__(
@@ -2012,27 +2071,25 @@ class BLEDriver(object):
 
     @NordicSemiErrorCheck
     @wrapt.synchronized(api_lock)
-    def ble_gap_sec_params_reply(
-        self, conn_handle, sec_status, sec_params, own_keys=None, peer_keys=None
-    ):
-        assert isinstance(sec_status, BLEGapSecStatus), "Invalid argument type"
-        assert isinstance(
-            sec_params, (BLEGapSecParams, type(None))
-        ), "Invalid argument type"
-        assert isinstance(own_keys, type(None)), "NOT IMPLEMENTED"
-        assert isinstance(peer_keys, type(None)), "NOT IMPLEMENTED"
+    def ble_gap_sec_params_reply(self, conn_handle, sec_status, sec_params, keyset, p_pk_own_list=None):
+        assert isinstance(sec_status, BLEGapSecStatus),             'Invalid argument type'
+        assert isinstance(sec_params, (BLEGapSecParams, NoneType)), 'Invalid argument type'
 
-        keyset = driver.ble_gap_sec_keyset_t()
+        if not keyset:
+            keyset = driver.ble_gap_sec_keyset_t()
 
-        keyset.keys_own.p_enc_key = driver.ble_gap_enc_key_t()
-        keyset.keys_own.p_id_key = driver.ble_gap_id_key_t()
-        keyset.keys_own.p_sign_key = driver.ble_gap_sign_info_t()
-        keyset.keys_own.p_pk = driver.ble_gap_lesc_p256_pk_t()
+            keyset.keys_own.p_enc_key = driver.ble_gap_enc_key_t()
+            keyset.keys_own.p_id_key = driver.ble_gap_id_key_t()
+            keyset.keys_own.p_sign_key = driver.ble_gap_sign_info_t()
+            keyset.keys_own.p_pk = driver.ble_gap_lesc_p256_pk_t()
+            if p_pk_own_list:
+                p_pk_own_array = util.list_to_uint8_array(p_pk_own_list)
+                keyset.keys_own.p_pk.pk = p_pk_own_array.cast()
 
-        keyset.keys_peer.p_enc_key = driver.ble_gap_enc_key_t()
-        keyset.keys_peer.p_id_key = driver.ble_gap_id_key_t()
-        keyset.keys_peer.p_sign_key = driver.ble_gap_sign_info_t()
-        keyset.keys_peer.p_pk = driver.ble_gap_lesc_p256_pk_t()
+            keyset.keys_peer.p_enc_key = driver.ble_gap_enc_key_t()
+            keyset.keys_peer.p_id_key = driver.ble_gap_id_key_t()
+            keyset.keys_peer.p_sign_key = driver.ble_gap_sign_info_t()
+            keyset.keys_peer.p_pk = driver.ble_gap_lesc_p256_pk_t()
 
         self._keyset = keyset
 
@@ -2041,7 +2098,20 @@ class BLEDriver(object):
             conn_handle,
             sec_status.value,
             sec_params.to_c() if sec_params else None,
-            self._keyset,
+            self._keyset
+        )
+                                                  
+    @NordicSemiErrorCheck
+    @wrapt.synchronized(api_lock)
+    def ble_gap_lesc_dhkey_reply(self, conn_handle, dhkey_list):
+        p_dhkey = driver.ble_gap_lesc_dhkey_t()
+        dhkey_array = util.list_to_uint8_array(dhkey_list)
+        p_dhkey.key = dhkey_array.cast()
+
+        return driver.sd_ble_gap_lesc_dhkey_reply(
+            self.rpc_adapter,
+            conn_handle,
+            p_dhkey
         )
 
     @NordicSemiErrorCheck
@@ -2066,13 +2136,22 @@ class BLEDriver(object):
 
     @NordicSemiErrorCheck
     @wrapt.synchronized(api_lock)
-    def ble_gap_encrypt(self, conn_handle, master_id, enc_info):
-        assert isinstance(master_id, BLEGapMasterId), "Invalid argument type"
-        assert isinstance(enc_info, BLEGapEncInfo), "Invalid argument type"
+    def ble_gap_encrypt(self, conn_handle, master_id, enc_info, lesc):
+        if not master_id or not enc_info:
+            keyset = BLEGapSecKeyset.from_c(self._keyset)
+            if lesc:
+                master_id = keyset.keys_own.enc_key.master_id
+                enc_info = keyset.keys_own.enc_key.enc_info
+            else:
+                master_id = keyset.keys_peer.enc_key.master_id
+                enc_info = keyset.keys_peer.enc_key.enc_info
+        assert isinstance(master_id, BLEGapMasterId), 'Invalid argument type'
+        assert isinstance(enc_info, BLEGapEncInfo), 'Invalid argument type'
+        logger.info("ble_gap_encrypt. \n   master_id: {}\n   enc_info: {}".format(master_id, enc_info))
         return driver.sd_ble_gap_encrypt(
             self.rpc_adapter, conn_handle, master_id.to_c(), enc_info.to_c()
         )
-
+        
     @NordicSemiErrorCheck
     @wrapt.synchronized(api_lock)
     def ble_gap_data_length_update(
@@ -2485,7 +2564,19 @@ class BLEDriver(object):
                         conn_handle=ble_event.evt.common_evt.conn_handle,
                         conn_params=BLEGapConnParams.from_c(conn_params),
                     )
+                    
+            elif evt_id == BLEEvtID.gap_evt_lesc_dhkey_request:
+                lesc_dhkey_request_evt = ble_event.evt.gap_evt.params.lesc_dhkey_request
+                self._keyset.keys_peer.p_pk = lesc_dhkey_request_evt.p_pk_peer
 
+                for obs in self.observers:
+                    obs.on_gap_evt_lesc_dhkey_request(
+                        ble_driver=self,
+                        conn_handle=ble_event.evt.common_evt.conn_handle,
+                        peer_public_key=BLEGapLescP256Pk.from_c(lesc_dhkey_request_evt.p_pk_peer),
+                        oobd_req=lesc_dhkey_request_evt.oobd_req
+                    )
+            
             elif evt_id == BLEEvtID.gap_evt_auth_status:
                 auth_status_evt = ble_event.evt.gap_evt.params.auth_status
 
