@@ -2069,25 +2069,10 @@ class BLEDriver(object):
 
     @NordicSemiErrorCheck
     @wrapt.synchronized(api_lock)
-    def ble_gap_sec_params_reply(self, conn_handle, sec_status, sec_params, keyset, p_pk_own_list=None):
+    def ble_gap_sec_params_reply(self, conn_handle, sec_status, sec_params, keyset):
         assert isinstance(sec_status, BLEGapSecStatus),             'Invalid argument type'
         assert isinstance(sec_params, (BLEGapSecParams, NoneType)), 'Invalid argument type'
 
-        if not keyset:
-            keyset = driver.ble_gap_sec_keyset_t()
-
-            keyset.keys_own.p_enc_key = driver.ble_gap_enc_key_t()
-            keyset.keys_own.p_id_key = driver.ble_gap_id_key_t()
-            keyset.keys_own.p_sign_key = driver.ble_gap_sign_info_t()
-            keyset.keys_own.p_pk = driver.ble_gap_lesc_p256_pk_t()
-            if p_pk_own_list:
-                p_pk_own_array = util.list_to_uint8_array(p_pk_own_list)
-                keyset.keys_own.p_pk.pk = p_pk_own_array.cast()
-
-            keyset.keys_peer.p_enc_key = driver.ble_gap_enc_key_t()
-            keyset.keys_peer.p_id_key = driver.ble_gap_id_key_t()
-            keyset.keys_peer.p_sign_key = driver.ble_gap_sign_info_t()
-            keyset.keys_peer.p_pk = driver.ble_gap_lesc_p256_pk_t()
 
         self._keyset = keyset
 
