@@ -673,7 +673,6 @@ class BLEGapSecLevels(object):
         self.lv3 = lv3
         self.lv4 = lv4
 
-
     @classmethod
     def from_c(cls, sm_levels):
         return cls(lv1 = sm_levels.lv1,
@@ -688,7 +687,6 @@ class BLEGapSecLevels(object):
         sm_levels.lv3 = self.lv3
         sm_levels.lv4 = self.lv4
         return sm_levels
-
 
     def __str__(self):
         return ("lv1({0.lv1}) lv2({0.lv2}) lv3({0.lv3}) lv4({0.lv4})").format(self)
@@ -2103,11 +2101,7 @@ class BLEDriver(object):
                                                   
     @NordicSemiErrorCheck
     @wrapt.synchronized(api_lock)
-    def ble_gap_lesc_dhkey_reply(self, conn_handle, dhkey_list):
-        p_dhkey = driver.ble_gap_lesc_dhkey_t()
-        dhkey_array = util.list_to_uint8_array(dhkey_list)
-        p_dhkey.key = dhkey_array.cast()
-
+    def ble_gap_lesc_dhkey_reply(self, conn_handle, p_dhkey):
         return driver.sd_ble_gap_lesc_dhkey_reply(
             self.rpc_adapter,
             conn_handle,

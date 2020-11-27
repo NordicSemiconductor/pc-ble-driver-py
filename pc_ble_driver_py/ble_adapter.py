@@ -176,6 +176,31 @@ class BLEAdapter(BLEDriverObserver):
         self.evt_sync = dict()
         self.default_mtu = ATT_MTU_DEFAULT
 
+    def clear_keyset(self):
+
+        self.keyset = driver.ble_gap_sec_keyset_t()
+
+        self.id_key_own = driver.ble_gap_id_key_t()
+        self.id_key_peer = driver.ble_gap_id_key_t()
+
+        self.enc_key_own = driver.ble_gap_enc_key_t()
+        self.enc_key_peer = driver.ble_gap_enc_key_t()
+
+        self.sign_info_own = driver.ble_gap_sign_info_t()
+        self.sign_info_peer = driver.ble_gap_sign_info_t()
+
+        self.lesc_pk_own = driver.ble_gap_lesc_p256_pk_t()
+        self.lesc_pk_peer = driver.ble_gap_lesc_p256_pk_t()
+
+        self.keyset.keys_own.p_enc_key   = self.enc_key_own
+        self.keyset.keys_own.p_id_key    = self.id_key_own
+        self.keyset.keys_own.p_sign_key  = self.sign_info_own
+        self.keyset.keys_own.p_pk        = self.lesc_pk_own
+        self.keyset.keys_peer.p_enc_key  = self.enc_key_peer
+        self.keyset.keys_peer.p_id_key   = self.id_key_peer
+        self.keyset.keys_peer.p_sign_key = self.sign_info_peer
+        self.keyset.keys_peer.p_pk       = self.lesc_pk_peer
+
     def get_version(self):
         return self.driver.ble_version_get()
 
@@ -609,19 +634,22 @@ class BLEAdapter(BLEDriverObserver):
 
         self.driver.ble_gap_authenticate(conn_handle, sec_params)
         self.evt_sync[conn_handle].wait(evt=BLEEvtID.gap_evt_sec_params_request, timeout=10)
-
         # sd_ble_gap_sec_params_reply ... In the central role, sec_params must be set to NULL,
         # as the parameters have already been provided during a previous call to
         # sd_ble_gap_authenticate.
-        sec_params = (
-            None
-            if self.db_conns[conn_handle].role == BLEGapRoles.central
-            else sec_params
-        )
-        self.driver.ble_gap_sec_params_reply(
-            conn_handle, BLEGapSecStatus.success, sec_params=sec_params
-        )
+        if not sec_params.lesc:
+            sec_params = (
+                None
+                if self.db_conns[conn_handle].role == BLEGapRoles.central
+                else sec_params
+            )
+            self.driver.ble_gap_sec_params_reply(
+                conn_handle, BLEGapSecStatus.success, sec_params=sec_params, keyset=None
+            )
+        else:
+            self.evt_sync[conn_handle].wait(evt=BLEEvtID.gap_evt_lesc_dhkey_request, timeout=5)
 
+        
         result = self.evt_sync[conn_handle].wait(evt=BLEEvtID.gap_evt_auth_status)
 
         # TODO: The result returned is sometimes of a different type than
