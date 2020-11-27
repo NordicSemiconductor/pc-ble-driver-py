@@ -79,10 +79,10 @@ jobs:
     - script: |
         set -o errexit -o pipefail
         ls /Applications
-        sudo xcode-select -s /Applications/Xcode_11.2.1.app
+        sudo xcode-select -s /Applications/Xcode_11.7.app
       displayName: 'Install XCode'
     - script: |
-        brew install swig gcc@6
+        brew install swig gcc@9
       displayName: 'Install gcc and swig'
     - script: |
         set -o errexit -o pipefail
