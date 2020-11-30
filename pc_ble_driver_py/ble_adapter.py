@@ -62,42 +62,6 @@ def change_endianness(input_string):
     return output
 
 
-class PublicKey(object):
-
-    def __init__(self, x, y, curve_type):
-        assert isinstance(x, (int)), 'Invalid argument type'
-        assert isinstance(y, (int)), 'Invalid argument type'
-        self.x = x
-        self.y = y
-        self.curve_type = curve_type
-
-    def to_c(self):
-
-        logger.debug("ECDH key: Before: x: {:X}".format(self.x))
-        logger.debug("ECDH key: Before: y: {:X}".format(self.y))
-
-        x_list = self._int_to_list(self.x)[::-1]
-        y_list = self._int_to_list(self.y)[::-1]
-
-        logger.debug("ECDH key: After: x: {}".format(" ".join(["0x{:02X}".format(i) for i in x_list])))
-        logger.debug("ECDH key: After: y: {}".format(" ".join(["0x{:02X}".format(i) for i in y_list])))
-
-        return util.list_to_uint8_array(x_list + y_list)
-
-    def _int_to_list(self, input_integer):
-        output_list = []
-        input_hex_string = "{:X}".format(input_integer)
-
-        # Add zeros to start key if they are stripped.
-        while len(input_hex_string) < 64:
-            input_hex_string = "0" + input_hex_string
-
-        for i in range(1, len(input_hex_string), 2):
-            output_list.append(int((input_hex_string[i-1] + input_hex_string[i]), 16))
-
-        return output_list
-
-
 class DbConnection(object):
     def __init__(self):
         self.services = list()
