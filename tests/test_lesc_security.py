@@ -75,6 +75,8 @@ class Central(BLEDriverObserver, BLEAdapterObserver):
         self.adapter.driver.observer_register(self)
         self.conn_handle = None
         self.connecting = False
+        self.lesc = True
+        self.adapter.driver.clear_keyset()
 
     def start(self, connect_with):
         self.connect_with = connect_with
@@ -85,7 +87,7 @@ class Central(BLEDriverObserver, BLEAdapterObserver):
         Thread(
             target=self.adapter.authenticate,
             args=(self.conn_handle, None),
-            kwargs={"bond": True, "mitm": True, "io_caps": BLEGapIOCaps.keyboard_only},
+            kwargs={"bond": True, "mitm": True, "lesc": self.lesc, "io_caps": BLEGapIOCaps.keyboard_only},
         ).start()
 
     def stop(self):
@@ -122,9 +124,24 @@ class Central(BLEDriverObserver, BLEAdapterObserver):
     ):
         self.conn_q.put(conn_handle)
 
+    def on_gap_evt_sec_params_request(self, ble_driver, conn_handle, peer_params):
+        lesc_own_public_key_list = None
+        logger.info("Central on_gap_evt_sec_params_request. peer_params.lesc={}".format(peer_params.lesc))
+        # Generate own private and public lesc keys if lesc is enabled.
+        if peer_params.lesc and self.lesc:
+            logger.debug("Generate LE Secure Connection ECDH private and public key.")
+            keyset = self.adapter.driver.generate_lesc_keyset()
+            ble_driver.ble_gap_sec_params_reply(conn_handle, BLEGapSecStatus.success, None, keyset)
+
+    def on_gap_evt_lesc_dhkey_request(self, ble_driver, conn_handle, peer_public_key, oobd_req):
+        logger.info("Central on_gap_evt_lesc_dhkey_request.")
+        lesc_dhkey = self.adapter.driver.generate_lesc_dhkey(peer_public_key)
+        self.adapter.driver.ble_gap_lesc_dhkey_reply(conn_handle, lesc_dhkey)
+
     def on_gap_evt_auth_key_request(
         self, ble_driver, conn_handle, **kwargs
     ):
+        logger.info("Central on_gap_evt_auth_key_request.")
         passkey = passkeyQueue.get(timeout=10)
         pk = util.list_to_uint8_array(passkey)
 
@@ -145,6 +162,7 @@ class Peripheral(BLEDriverObserver, BLEAdapterObserver):
         self.conn_q = Queue()
         self.adapter.observer_register(self)
         self.adapter.driver.observer_register(self)
+        self.adapter.driver.clear_keyset()
 
     def start(self, adv_name):
         adv_data = BLEAdvData(complete_local_name=adv_name)
@@ -157,20 +175,29 @@ class Peripheral(BLEDriverObserver, BLEAdapterObserver):
         self.conn_q.put(conn_handle)
 
     def on_gap_evt_sec_params_request(self, ble_driver, conn_handle, **kwargs):
+        logger.info("Peripheral: on_gap_evt_sec_params_request.")
         sec_params = BLEGapSecParams.from_c(
             kwargs['peer_params']
         )
 
         sec_params.io_caps = BLEGapIOCaps.display_only
+        sec_params.lesc = True
         sec_params.min_key_size = 7
-        sec_params.kdist_own = BLEGapSecKDist(False, False, False, False)
-        sec_params.kdist_peer = BLEGapSecKDist(False, False, False, False)
+        sec_params.kdist_own = BLEGapSecKDist(True, True, False, False)
+        sec_params.kdist_peer = BLEGapSecKDist(True, True, False, False)
 
-        self.adapter.driver.ble_gap_sec_params_reply(
-            conn_handle, BLEGapSecStatus.success, sec_params=sec_params
-        )
+        logger.debug("Generate LE Secure Connection ECDH private and public key.")
+        keyset = self.adapter.driver.generate_lesc_keyset()
+        ble_driver.ble_gap_sec_params_reply(conn_handle, BLEGapSecStatus.success, sec_params, keyset)
+
+    def on_gap_evt_lesc_dhkey_request(self, ble_driver, conn_handle, peer_public_key, oobd_req):
+        logger.info("Peripheral: on_gap_evt_lesc_dhkey_request.")
+        lesc_dhkey = self.adapter.driver.generate_lesc_dhkey(peer_public_key)
+
+        self.adapter.driver.ble_gap_lesc_dhkey_reply(conn_handle, lesc_dhkey)
 
     def on_gap_evt_passkey_display(self, ble_driver, conn_handle, passkey):
+        logger.info("Peripheral on_gap_evt_passkey_display.")
         passkeyQueue.put(passkey)
 
     def on_gap_evt_auth_status(
@@ -185,10 +212,11 @@ class Peripheral(BLEDriverObserver, BLEAdapterObserver):
                         kdist_peer,
                         auth_status
                     ):
+        logger.info("Peripheral on_gap_evt_auth_status.")     
         authStatusQueue.put(auth_status)
 
 
-class Passkey(unittest.TestCase):
+class LESCSecurity(unittest.TestCase):
     def setUp(self):
         settings = Settings.current()
 
@@ -219,7 +247,7 @@ class Passkey(unittest.TestCase):
         )
         self.peripheral = Peripheral(peripheral)
 
-    def test_passkey(self):
+    def test_lesc_security(self):
         self.peripheral.start(self.adv_name)
         self.central.start(self.adv_name)
         authStatus = authStatusQueue.get(timeout=200)
