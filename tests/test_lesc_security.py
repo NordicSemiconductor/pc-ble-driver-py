@@ -76,7 +76,6 @@ class Central(BLEDriverObserver, BLEAdapterObserver):
         self.conn_handle = None
         self.connecting = False
         self.lesc = True
-        self.adapter.driver.clear_keyset()
 
     def start(self, connect_with):
         self.connect_with = connect_with
@@ -162,7 +161,6 @@ class Peripheral(BLEDriverObserver, BLEAdapterObserver):
         self.conn_q = Queue()
         self.adapter.observer_register(self)
         self.adapter.driver.observer_register(self)
-        self.adapter.driver.clear_keyset()
 
     def start(self, adv_name):
         adv_data = BLEAdvData(complete_local_name=adv_name)

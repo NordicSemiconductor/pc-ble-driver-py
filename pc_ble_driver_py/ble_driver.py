@@ -1820,7 +1820,7 @@ class BLEDriver(object):
             RpcLogSeverity, log_severity_level.lower(), RpcLogSeverity.info
         )
         self.rpc_log_severity_filter(log_severity_level_enum)
-        self._keyset = None
+        self._keyset = self.clear_keyset()
 
         self.log_queue = queue.Queue()
         self.status_queue = queue.Queue()
@@ -1849,7 +1849,7 @@ class BLEDriver(object):
         keyset.keys_peer.p_id_key   = id_key_peer
         keyset.keys_peer.p_sign_key = sign_info_peer
         keyset.keys_peer.p_pk       = lesc_pk_peer
-        self._keyset = keyset
+        return keyset
 
     def generate_lesc_keyset(self, private_key=None):
         def _int_to_list(input_integer):
@@ -2225,13 +2225,13 @@ class BLEDriver(object):
 
     @NordicSemiErrorCheck
     @wrapt.synchronized(api_lock)
-    def ble_gap_sec_params_reply(self, conn_handle, sec_status, sec_params, keyset):
+    def ble_gap_sec_params_reply(self, conn_handle, sec_status, sec_params, keyset=None):
         assert isinstance(sec_status, BLEGapSecStatus),             'Invalid argument type'
         assert isinstance(sec_params, (BLEGapSecParams, NoneType)), 'Invalid argument type'
 
-
-        self._keyset = keyset
-
+        if keyset is not None:
+            self._keyset = keyset
+        
         return driver.sd_ble_gap_sec_params_reply(
             self.rpc_adapter,
             conn_handle,
