@@ -366,6 +366,22 @@ class BLEGapScanParams(object):
 
         return scan_params
 
+class BLEGapConnSecMode(object):
+    def __init__(self, sm, lv):
+        self.sm = sm
+        self.lv = lv
+
+    @classmethod
+    def from_c(cls, conn_sec_mode):
+        return cls(
+            sm=conn_sec_mode.sm,
+            lv=conn_sec_mode.lv,
+        )
+
+    def __str__(self):
+        return "sm({0.ssm}) lv({0.lv}))".format(
+            self
+        )    
 
 class BLEGapConnSec(object):
     def __init__(self, sec_mode, level, encr_key_size):
@@ -1175,6 +1191,10 @@ class BLEGattsAttrMD(object):
     def to_c(self):
         attr_md = driver.ble_gatts_attr_md_t()
         attr_md.vloc = self.vloc
+        logger.warning("Testing read_perm")
+        attr_md.read_perm = driver.ble_gap_conn_sec_mode_t()
+        attr_md.read_perm.sm=1
+        attr_md.read_perm.lv=1
         attr_md.rd_auth = int(self.rd_auth)
         attr_md.wr_auth = int(self.wr_auth)
         attr_md.vlen = self.vlen
