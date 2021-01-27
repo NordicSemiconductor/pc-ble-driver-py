@@ -367,16 +367,57 @@ class BLEGapScanParams(object):
         return scan_params
 
 class BLEGapConnSecMode(object):
-    def __init__(self, sm, lv):
+    def __init__(self, sm=0, lv=0):
         self.sm = sm
         self.lv = lv
+        
+    def set_no_access(self):
+        """BLE_GAP_CONN_SEC_MODE_SET_NO_ACCESS"""
+        self.sm = 0
+        self.lv = 0
+        
+    def set_open(self):
+        """BLE_GAP_CONN_SEC_MODE_SET_OPEN"""
+        self.sm = 1
+        self.lv = 1
+        
+    def set_enc_no_mitm(self):
+        """BLE_GAP_CONN_SEC_MODE_SET_ENC_NO_MITM"""
+        self.sm = 1
+        self.lv = 2
+        
+    def set_enc_with_mitm(self):
+        """BLE_GAP_CONN_SEC_MODE_SET_ENC_WITH_MITM"""
+        self.sm = 1
+        self.lv = 3
+        
+    def set_lesc_enc_with_mitm(self): 
+        """BLE_GAP_CONN_SEC_MODE_SET_LESC_ENC_WITH_MITM"""
+        self.sm = 1
+        self.lv = 4
+    
+    def set_signed_no_mitm(self):
+        """BLE_GAP_CONN_SEC_MODE_SET_SIGNED_NO_MITM"""
+        self.sm = 2
+        self.lv = 1
+    def set_signed_with_mitm(self):
+        """BLE_GAP_CONN_SEC_MODE_SET_SIGNED_WITH_MITM"""
+        self.sm = 2
+        self.lv = 2
 
     @classmethod
-    def from_c(cls, conn_sec_mode):
+    def from_c(cls, sec_mode):
         return cls(
-            sm=conn_sec_mode.sm,
-            lv=conn_sec_mode.lv,
+            sm=sec_mode.sm,
+            lv=sec_mode.lv,
         )
+        
+    def to_c(self):
+        sec_mode = driver.ble_gap_conn_sec_mode_t()
+        sec_mode.sm = self.sm
+        sec_mode.lv = self.lv
+        
+        return sec_mode
 
     def __str__(self):
         return "sm({0.ssm}) lv({0.lv}))".format(
@@ -1182,19 +1223,22 @@ class BLEGattCharProps(object):
 
 class BLEGattsAttrMD(object):
     def __init__(self, vloc=driver.BLE_GATTS_VLOC_STACK,
-                 rd_auth=False, wr_auth=False, vlen=1):
+                 rd_auth=False, wr_auth=False, 
+                 read_perm=None, write_perm=None, vlen=1):
         self.vloc = vloc
         self.rd_auth = rd_auth
         self.wr_auth = wr_auth
+        self.read_perm = read_perm
+        self.write_perm = write_perm
         self.vlen = vlen
 
     def to_c(self):
         attr_md = driver.ble_gatts_attr_md_t()
         attr_md.vloc = self.vloc
-        logger.warning("Testing read_perm")
-        attr_md.read_perm = driver.ble_gap_conn_sec_mode_t()
-        attr_md.read_perm.sm=1
-        attr_md.read_perm.lv=1
+        if self.read_perm:
+            attr_md.read_perm = self.read_perm.to_c()
+        if self.write_perm:
+            attr_md.write_perm = self.write_perm.to_c()
         attr_md.rd_auth = int(self.rd_auth)
         attr_md.wr_auth = int(self.wr_auth)
         attr_md.vlen = self.vlen
