@@ -1328,8 +1328,11 @@ class BLEGattsCharMD(object):
         char_md = driver.ble_gatts_char_md_t()
         char_md.char_props = self.char_props.to_c()
         if self.user_desc:
-            char_md.p_char_user_desc = util.list_to_char_array(self.user_desc)
+            user_desc_array=util.list_to_uint8_array(self.user_desc)
+            user_desc_array_cast = user_desc_array.cast()
+            char_md.p_char_user_desc = user_desc_array_cast
             char_md.char_user_desc_size = len(self.user_desc)
+            char_md.char_user_desc_max_size = len(self.user_desc)
         if self.pf:
             char_md.p_char_pf = self.pf.to_c()
         if self.desc_md:
