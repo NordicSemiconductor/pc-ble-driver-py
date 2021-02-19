@@ -479,7 +479,6 @@ class BLEGapAddr(object):
         if type(self.addr_type) == BLEGapAddr.Types:
             addr.addr_type = self.addr_type.value
         else:
-            logger.info("Unknown address type: {self.addr_type)")
             addr.addr_type = self.addr_type
         addr.addr = addr_array.cast()
         return addr
