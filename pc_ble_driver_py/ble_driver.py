@@ -2066,6 +2066,26 @@ class BLEDriver(object):
         return driver.sd_ble_gap_adv_data_set(
             self.rpc_adapter, p_adv_data, adv_data_len, p_scan_data, scan_data_len
         )
+        
+    @NordicSemiErrorCheck
+    @wrapt.synchronized(api_lock)
+    def ble_gap_device_name_set(self, name, device_name_read_only=True):
+        write_perm=BLEGapConnSecMode()
+        if device_name_read_only:
+            write_perm.sm = 0
+            write_perm.lv = 0
+        else:
+            write_perm.sm = 1
+            write_perm.lv = 1
+        p_write_perm = write_perm.to_c()
+        p_dev_name = name
+        p_dev_name = util.list_to_uint8_array([ord(x) for x in name])
+        p_dev_name_cast = p_dev_name.cast()
+        name_length = len(name)
+
+        return driver.sd_ble_gap_device_name_set(
+            self.rpc_adapter, p_write_perm, p_dev_name_cast, name_length
+        )
 
     @NordicSemiErrorCheck
     @wrapt.synchronized(api_lock)
