@@ -89,8 +89,8 @@ import pc_ble_driver_py.ble_driver_types as util
 from pc_ble_driver_py.exceptions import NordicSemiException
 
 
-NRF_ERRORS = { 
-    getattr(driver, name): name 
+NRF_ERRORS = {
+    getattr(driver, name): name
     for name in dir(driver) if name.startswith('NRF_ERROR_')
 }
 
@@ -495,22 +495,22 @@ class BLEGapSecKeyset(object):
             keys_own=BLEGapSecKeys.from_c(keyset.keys_own),
             keys_peer=BLEGapSecKeys.from_c(keyset.keys_peer),
         )
-        
+
     def to_c(self):
         keyset = driver.ble_gap_sec_keyset_t()
         keyset.keys_own = BLEGapSecKeys(
-                                    self.keys_own.p_enc_key, 
-                                    self.keys_own.p_id_key, 
-                                    self.keys_own.p_sign_key, 
-                                    self.keys_own.p_pk
-                                    ).to_c()
+            self.keys_own.p_enc_key,
+            self.keys_own.p_id_key,
+            self.keys_own.p_sign_key,
+            self.keys_own.p_pk
+        ).to_c()
         keyset.keys_peer = BLEGapSecKeys(
-                                    self.keys_peer.p_enc_key, 
-                                    self.keys_peer.p_id_key, 
-                                    self.keys_peer.p_sign_key, 
-                                    self.keys_peer.p_pk
-                                    ).to_c()
-        
+            self.keys_peer.p_enc_key,
+            self.keys_peer.p_id_key,
+            self.keys_peer.p_sign_key,
+            self.keys_peer.p_pk
+        ).to_c()
+
         return keyset
 
     def __str__(self):
@@ -527,10 +527,10 @@ class BLEGapSecKeys(object):
     @classmethod
     def from_c(cls, keys):
         return cls(
-            enc_key = BLEGapEncKey.from_c(keys.p_enc_key),
-            id_key = BLEGapIdKey.from_c(keys.p_id_key),
-            sign_key = BLEGapSignInfo.from_c(keys.p_sign_key),
-            pk = BLEGapLescP256Pk.from_c(keys.p_pk)
+            enc_key=BLEGapEncKey.from_c(keys.p_enc_key),
+            id_key=BLEGapIdKey.from_c(keys.p_id_key),
+            sign_key=BLEGapSignInfo.from_c(keys.p_sign_key),
+            pk=BLEGapLescP256Pk.from_c(keys.p_pk)
         )
 
     def to_c(self):
@@ -546,6 +546,7 @@ class BLEGapSecKeys(object):
             self
         )
 
+
 class BLEGapLescP256Pk(object):
     def __init__(self, pk):
         self.pk = pk
@@ -553,9 +554,9 @@ class BLEGapLescP256Pk(object):
     @classmethod
     def from_c(cls, p_pk):
         return cls(
-            pk = util.uint8_array_to_list(p_pk.pk, driver.BLE_GAP_LESC_P256_PK_LEN)
+            pk=util.uint8_array_to_list(p_pk.pk, driver.BLE_GAP_LESC_P256_PK_LEN)
         )
-        
+
     def to_c(self):
         lescp256pk_array = util.list_to_uint8_array(self.pk)
         lescp256pk = driver.ble_gap_lesc_p256_pk_t()
@@ -565,9 +566,10 @@ class BLEGapLescP256Pk(object):
     def __str__(self):
         return ("pk({0.pk}))").format(self)
 
+
 class BLEGapDHKey(object):
     def __init__(self, key):
-        self.key  = key
+        self.key=key
 
     def to_c(self):
         key_array = util.list_to_uint8_array(self.key)
@@ -577,6 +579,7 @@ class BLEGapDHKey(object):
 
     def __str__(self):
         return ("p_dhkey({0.p_dhkey}))").format(self)
+
 
 class BLEGapEncKey(object):
     def __init__(self, master_id, enc_info):
@@ -609,8 +612,8 @@ class BLEGapIdKey(object):
     @classmethod
     def from_c(cls, id_key):
         return cls(
-                id_info = util.uint8_array_to_list(id_key.id_info.irk, driver.BLE_GAP_SEC_KEY_LEN),
-                id_addr_info = BLEGapAddr.from_c(id_key.id_addr_info)
+            id_info=util.uint8_array_to_list(id_key.id_info.irk, driver.BLE_GAP_SEC_KEY_LEN),
+            id_addr_info=BLEGapAddr.from_c(id_key.id_addr_info)
         )
 
     def to_c(self):
@@ -621,7 +624,7 @@ class BLEGapIdKey(object):
         id_key.id_info = irk
         id_key.id_addr_info = self.id_addr_info.to_c()
         return id_key
-    
+
     def __str__(self):
         return ("irk({0.irk}) id_addr_info({0.id_addr_info})").format(self)
 
@@ -657,6 +660,7 @@ class BLEGapEncInfo(object):
             self
         )
 
+
 class BLEGapSignInfo(object):
     def __init__(self, csrk):
         self.csrk = csrk
@@ -678,6 +682,7 @@ class BLEGapSignInfo(object):
         return "csrk({0.csrk}))".format(
             self
         )
+
 
 class BLEGapMasterId(object):
     def __init__(self, ediv, rand):
@@ -701,6 +706,7 @@ class BLEGapMasterId(object):
     def __str__(self):
         return "ediv({0.ediv}) rand({0.rand})".format(self)
 
+
 class BLEGapSecKDist(object):
     def __init__(self, enc, id, sign, link):
         self.enc = enc
@@ -723,6 +729,7 @@ class BLEGapSecKDist(object):
     def __str__(self):
         return "enc({0.enc}) id({0.id}) sign({0.sign}) link({0.link})".format(self)
 
+
 class BLEGapSecLevels(object):
     def __init__(self, lv1, lv2, lv3, lv4):
         self.lv1 = lv1
@@ -732,13 +739,13 @@ class BLEGapSecLevels(object):
 
     @classmethod
     def from_c(cls, sm_levels):
-        return cls(lv1 = sm_levels.lv1,
-                   lv2 = sm_levels.lv2,
-                   lv3 = sm_levels.lv3,
-                   lv4 = sm_levels.lv4)
+        return cls(lv1=sm_levels.lv1,
+                   lv2=sm_levels.lv2,
+                   lv3=sm_levels.lv3,
+                   lv4=sm_levels.lv4)
 
     def to_c(self):
-        sm_levels     = driver.ble_gap_sec_levels_t()
+        sm_levels = driver.ble_gap_sec_levels_t()
         sm_levels.lv1 = self.lv1
         sm_levels.lv2 = self.lv2
         sm_levels.lv3 = self.lv3
@@ -747,6 +754,7 @@ class BLEGapSecLevels(object):
 
     def __str__(self):
         return ("lv1({0.lv1}) lv2({0.lv2}) lv3({0.lv3}) lv4({0.lv4})").format(self)
+
 
 class BLEGapSecParams(object):
     def __init__(
@@ -848,6 +856,7 @@ class BLEGapPrivacyParams(object):
             "privacy_mode({0.privacy_mode}) private_addr_type({0.private_addr_type}) "
             "private_addr_cycle_s({0.private_addr_cycle_s}) irk({0.irk})"
         ).format(self)
+
 
 class BLEGapPasskeyDisplay(object):
     def __init__(self, passkey):
@@ -1537,7 +1546,7 @@ class SerialPortDescriptor(object):
         # as an identifier for development kits serial ports
         port = None
 
-        if not org.port == None and sys.platform == "darwin":
+        if org.port is not None and sys.platform == "darwin":
             port = org.port.replace("/cu", "/tty")
         else:
             port = org.port
@@ -1825,7 +1834,7 @@ class BLEDriver(object):
         self.status_queue = queue.Queue()
         self.ble_event_queue = queue.Queue()
 
-    def clear_keyset(self): 
+    def clear_keyset(self):
         keyset = driver.ble_gap_sec_keyset_t()
 
         id_key_own = driver.ble_gap_id_key_t()
@@ -1840,14 +1849,14 @@ class BLEDriver(object):
         lesc_pk_own = driver.ble_gap_lesc_p256_pk_t()
         lesc_pk_peer = driver.ble_gap_lesc_p256_pk_t()
 
-        keyset.keys_own.p_enc_key   = enc_key_own
-        keyset.keys_own.p_id_key    = id_key_own
-        keyset.keys_own.p_sign_key  = sign_info_own
-        keyset.keys_own.p_pk        = lesc_pk_own
-        keyset.keys_peer.p_enc_key  = enc_key_peer
-        keyset.keys_peer.p_id_key   = id_key_peer
+        keyset.keys_own.p_enc_key = enc_key_own
+        keyset.keys_own.p_id_key = id_key_own
+        keyset.keys_own.p_sign_key = sign_info_own
+        keyset.keys_own.p_pk = lesc_pk_own
+        keyset.keys_peer.p_enc_key = enc_key_peer
+        keyset.keys_peer.p_id_key = id_key_peer
         keyset.keys_peer.p_sign_key = sign_info_peer
-        keyset.keys_peer.p_pk       = lesc_pk_peer
+        keyset.keys_peer.p_pk = lesc_pk_peer
         return keyset
 
     def generate_lesc_keyset(self, private_key=None):
@@ -1860,34 +1869,34 @@ class BLEDriver(object):
                 input_hex_string = "0" + input_hex_string
 
             for i in range(1, len(input_hex_string), 2):
-                output_list.append(int((input_hex_string[i-1] + input_hex_string[i]), 16))
+                output_list.append(int((input_hex_string[i - 1] + input_hex_string[i]), 16))
 
             return output_list
-        
+
         self._lesc_private_key = ec.generate_private_key(ec.SECP256R1(), default_backend())
         if not private_key:
             private_key = self._lesc_private_key
         lesc_own_public_key = private_key.public_key()
         lesc_own_public_key_numbers = lesc_own_public_key.public_numbers()
-        lesc_own_public_key = private_key.public_key()    
+        lesc_own_public_key = private_key.public_key()
         x = lesc_own_public_key_numbers.x
         y = lesc_own_public_key_numbers.y
-        
+
         logger.debug("ECDH key: Before: x: {:X}".format(x))
         logger.debug("ECDH key: Before: y: {:X}".format(y))
-        
+
         x_list = _int_to_list(x)[::-1]
         y_list = _int_to_list(y)[::-1]
 
         logger.debug("ECDH key: After: x: {}".format(" ".join(["0x{:02X}".format(i) for i in x_list])))
         logger.debug("ECDH key: After: y: {}".format(" ".join(["0x{:02X}".format(i) for i in y_list])))
         lesc_own_public_key_list = x_list + y_list
-        
+
         # Put own lesc public key into keyset.
         lesc_pk_own = BLEGapLescP256Pk(lesc_own_public_key_list)
         logger.debug("lesc_pk_own {}".format(lesc_pk_own))
         self._keyset.keys_own.p_pk = lesc_pk_own.to_c()
-        
+
         return self._keyset
 
     def generate_lesc_dhkey(self, peer_public_key):
@@ -2012,7 +2021,7 @@ class BLEDriver(object):
             try:
                 while True:
                     self.log_queue.get_nowait()
-            except queue.Empty as _:
+            except queue.Empty:
                 pass
 
             self.status_worker.join()
@@ -2021,7 +2030,7 @@ class BLEDriver(object):
             try:
                 while True:
                     self.status_queue.get_nowait()
-            except queue.Empty as _:
+            except queue.Empty:
                 pass
 
             self.ble_event_worker.join()
@@ -2030,7 +2039,7 @@ class BLEDriver(object):
             try:
                 while True:
                     self.ble_event_queue.get_nowait()
-            except queue.Empty as _:
+            except queue.Empty:
                 pass
 
             logger.debug("Workers stopped")
@@ -2225,12 +2234,12 @@ class BLEDriver(object):
     @NordicSemiErrorCheck
     @wrapt.synchronized(api_lock)
     def ble_gap_sec_params_reply(self, conn_handle, sec_status, sec_params, keyset=None):
-        assert isinstance(sec_status, BLEGapSecStatus),             'Invalid argument type'
-        assert isinstance(sec_params, (BLEGapSecParams, NoneType)), 'Invalid argument type'
+        assert isinstance(sec_status, BLEGapSecStatus), "Invalid argument type"
+        assert isinstance(sec_params, (BLEGapSecParams, NoneType)), "Invalid argument type"
 
         if keyset is not None:
             self._keyset = keyset
-        
+
         return driver.sd_ble_gap_sec_params_reply(
             self.rpc_adapter,
             conn_handle,
@@ -2238,7 +2247,7 @@ class BLEDriver(object):
             sec_params.to_c() if sec_params else None,
             self._keyset
         )
-                                                  
+
     @NordicSemiErrorCheck
     @wrapt.synchronized(api_lock)
     def ble_gap_lesc_dhkey_reply(self, conn_handle, p_dhkey):
@@ -2540,7 +2549,7 @@ class BLEDriver(object):
             try:
                 item = self.log_queue.get(True, WORKER_QUEUE_WAIT_TIME)
                 self.log_message_handler_sync(*item)
-            except queue.Empty as _:
+            except queue.Empty:
                 pass
             except Exception as ex:
                 logger.exception("Exception in log handler: {}".format(ex))
@@ -2550,7 +2559,7 @@ class BLEDriver(object):
             try:
                 item = self.ble_event_queue.get(True, WORKER_QUEUE_WAIT_TIME)
                 self.ble_event_handler_sync(*item)
-            except queue.Empty as _:
+            except queue.Empty:
                 pass
             except Exception as ex:
                 logger.exception("Exception in event handler: {}".format(ex))
@@ -2700,7 +2709,7 @@ class BLEDriver(object):
                         conn_handle=ble_event.evt.common_evt.conn_handle,
                         conn_params=BLEGapConnParams.from_c(conn_params),
                     )
-                    
+
             elif evt_id == BLEEvtID.gap_evt_lesc_dhkey_request:
                 lesc_dhkey_request_evt = ble_event.evt.gap_evt.params.lesc_dhkey_request
                 self._keyset.keys_peer.p_pk = lesc_dhkey_request_evt.p_pk_peer
@@ -2712,7 +2721,7 @@ class BLEDriver(object):
                         peer_public_key=BLEGapLescP256Pk.from_c(lesc_dhkey_request_evt.p_pk_peer),
                         oobd_req=lesc_dhkey_request_evt.oobd_req
                     )
-            
+
             elif evt_id == BLEEvtID.gap_evt_auth_status:
                 auth_status_evt = ble_event.evt.gap_evt.params.auth_status
 

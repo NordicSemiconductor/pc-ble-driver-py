@@ -534,7 +534,7 @@ class BLEAdapter(BLEDriverObserver):
     def write_cmd(self, conn_handle, uuid, data, attr_handle=None):
         try:
             tx_complete = BLEEvtID.evt_tx_complete
-        except:
+        except Exception:
             tx_complete = BLEEvtID.gattc_evt_write_cmd_tx_complete
         if attr_handle is None:
             attr_handle = self.db_conns[conn_handle].get_char_value_handle(uuid)
@@ -624,12 +624,11 @@ class BLEAdapter(BLEDriverObserver):
         else:
             self.evt_sync[conn_handle].wait(evt=BLEEvtID.gap_evt_lesc_dhkey_request, timeout=5)
 
-        
         result = self.evt_sync[conn_handle].wait(evt=BLEEvtID.gap_evt_auth_status)
 
         # TODO: The result returned is sometimes of a different type than
         # TODO: gap_evt_auth_status. This is a bug that needs further investigation.
-        if not "auth_status" in result:
+        if "auth_status" not in result:
             return None
 
         # If success then keys are stored in self.driver._keyset.
