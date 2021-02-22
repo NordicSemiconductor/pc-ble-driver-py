@@ -519,10 +519,10 @@ class BLEGapSecKeyset(object):
 
 class BLEGapSecKeys(object):
     def __init__(self, enc_key, id_key, sign_key, pk):
-        self.p_enc_key = enc_key
-        self.p_id_key = id_key
-        self.p_sign_key = sign_key
-        self.p_pk = pk
+        self.enc_key = enc_key
+        self.id_key = id_key
+        self.sign_key = sign_key
+        self.pk = pk
 
     @classmethod
     def from_c(cls, keys):
@@ -535,10 +535,10 @@ class BLEGapSecKeys(object):
 
     def to_c(self):
         sec_keys = driver.ble_gap_sec_keys_t()
-        sec_keys.p_enc_key = BLEGapEncKey(self.p_enc_key.master_id, self.p_enc_key.enc_info).to_c()
-        sec_keys.p_id_key = BLEGapIdKey(self.p_id_key.id_info, self.p_id_key.id_info).to_c()
-        sec_keys.p_sign_key = BLEGapSignInfo(self.p_sign_key.csrk).to_c()
-        sec_keys.p_pk = BLEGapLescP256Pk(self.p_pk.pk).to_c()
+        sec_keys.p_enc_key = BLEGapEncKey(self.enc_key.master_id, self.enc_key.enc_info).to_c()
+        sec_keys.p_id_key = BLEGapIdKey(self.id_key.id_info, self.id_key.id_info).to_c()
+        sec_keys.p_sign_key = BLEGapSignInfo(self.sign_key.csrk).to_c()
+        sec_keys.p_pk = BLEGapLescP256Pk(self.pk.pk).to_c()
         return sec_keys
 
     def __str__(self):
@@ -1834,29 +1834,19 @@ class BLEDriver(object):
         self.status_queue = queue.Queue()
         self.ble_event_queue = queue.Queue()
 
-    def clear_keyset(self):
+    def init_keyset(self):
         keyset = driver.ble_gap_sec_keyset_t()
 
-        id_key_own = driver.ble_gap_id_key_t()
-        id_key_peer = driver.ble_gap_id_key_t()
+        keyset.keys_own.p_enc_key = driver.ble_gap_enc_key_t()
+        keyset.keys_own.p_id_key = driver.ble_gap_id_key_t()
+        keyset.keys_own.p_sign_key = driver.ble_gap_sign_info_t()
+        keyset.keys_own.p_pk = driver.ble_gap_lesc_p256_pk_t()
 
-        enc_key_own = driver.ble_gap_enc_key_t()
-        enc_key_peer = driver.ble_gap_enc_key_t()
+        keyset.keys_peer.p_enc_key = driver.ble_gap_enc_key_t()
+        keyset.keys_peer.p_id_key = driver.ble_gap_id_key_t()
+        keyset.keys_peer.p_sign_key = driver.ble_gap_sign_info_t()
+        keyset.keys_peer.p_pk = driver.ble_gap_lesc_p256_pk_t()
 
-        sign_info_own = driver.ble_gap_sign_info_t()
-        sign_info_peer = driver.ble_gap_sign_info_t()
-
-        lesc_pk_own = driver.ble_gap_lesc_p256_pk_t()
-        lesc_pk_peer = driver.ble_gap_lesc_p256_pk_t()
-
-        keyset.keys_own.p_enc_key = enc_key_own
-        keyset.keys_own.p_id_key = id_key_own
-        keyset.keys_own.p_sign_key = sign_info_own
-        keyset.keys_own.p_pk = lesc_pk_own
-        keyset.keys_peer.p_enc_key = enc_key_peer
-        keyset.keys_peer.p_id_key = id_key_peer
-        keyset.keys_peer.p_sign_key = sign_info_peer
-        keyset.keys_peer.p_pk = lesc_pk_peer
         return keyset
 
     def generate_lesc_keyset(self, private_key=None):
@@ -1926,7 +1916,8 @@ class BLEDriver(object):
         shared_key_list = shared_key_list[::-1]
         logger.debug("shared_key_list = {}".format(shared_key_list))
 
-        logger.debug("Shared secret list, little endian: {} \n".format(" ".join(["0x{:02X}".format(i) for i in shared_key_list])))
+        key_list_string = " ".join(["0x{:02X}".format(i) for i in shared_key_list])
+        logger.debug("Shared secret list, little endian: {} \n".format(key_list_string))
         logger.debug("len(shared_key_list) = {}".format(len(shared_key_list)))
         # Reply to Softdevice with shared key
         lesc_dhkey = BLEGapDHKey(shared_key_list).to_c()
