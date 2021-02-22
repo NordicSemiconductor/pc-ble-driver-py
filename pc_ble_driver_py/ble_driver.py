@@ -1828,7 +1828,7 @@ class BLEDriver(object):
             RpcLogSeverity, log_severity_level.lower(), RpcLogSeverity.info
         )
         self.rpc_log_severity_filter(log_severity_level_enum)
-        self._keyset = self.clear_keyset()
+        self._keyset = self.init_keyset()
 
         self.log_queue = queue.Queue()
         self.status_queue = queue.Queue()
