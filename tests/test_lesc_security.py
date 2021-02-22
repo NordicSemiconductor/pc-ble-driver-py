@@ -38,8 +38,7 @@
 
 import unittest
 from queue import Queue
-from threading import Thread, Condition
-import time
+from threading import Thread
 import random
 import string
 import logging
@@ -48,10 +47,6 @@ from pc_ble_driver_py.observers import BLEDriverObserver, BLEAdapterObserver
 from driver_setup import Settings, setup_adapter
 
 from pc_ble_driver_py.ble_driver import (
-    BLEDriver,
-    BLEEnableParams,
-    BLEConfig,
-    BLEConfigConnGatt,
     BLEAdvData,
     BLEGapIOCaps,
     BLEGapSecStatus,
@@ -107,7 +102,7 @@ class Central(BLEDriverObserver, BLEAdapterObserver):
 
         dev_name = "".join(chr(e) for e in dev_name_list)
 
-        if dev_name == self.connect_with and self.connecting == False:
+        if dev_name == self.connect_with and self.connecting is False:
             self.connecting = True
             address_string = "".join("{0:02X}".format(b) for b in peer_addr.addr)
             logger.info(
@@ -124,7 +119,6 @@ class Central(BLEDriverObserver, BLEAdapterObserver):
         self.conn_q.put(conn_handle)
 
     def on_gap_evt_sec_params_request(self, ble_driver, conn_handle, peer_params):
-        lesc_own_public_key_list = None
         logger.info("Central on_gap_evt_sec_params_request. peer_params.lesc={}".format(peer_params.lesc))
         # Generate own private and public lesc keys if lesc is enabled.
         if peer_params.lesc and self.lesc:
@@ -210,7 +204,7 @@ class Peripheral(BLEDriverObserver, BLEAdapterObserver):
                         kdist_peer,
                         auth_status
                     ):
-        logger.info("Peripheral on_gap_evt_auth_status.")     
+        logger.info("Peripheral on_gap_evt_auth_status.")
         authStatusQueue.put(auth_status)
 
 
