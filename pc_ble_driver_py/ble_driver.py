@@ -2285,12 +2285,13 @@ class BLEDriver(object):
         return driver.sd_ble_gap_encrypt(
             self.rpc_adapter, conn_handle, master_id.to_c(), enc_info.to_c()
         )
-        
+
     @NordicSemiErrorCheck
     @wrapt.synchronized(api_lock)
     def ble_gap_data_length_update(
         self, conn_handle, data_length_params, data_length_limitation
     ):
+        assert nrf_sd_ble_api_ver >= 5, 'Data Length Update requires SD API v5 or higher'
         assert isinstance(data_length_params, (BLEGapDataLengthParams, type(None)))
         assert isinstance(
             data_length_limitation, (BLEGapDataLengthLimitation, type(None))
@@ -2323,6 +2324,7 @@ class BLEDriver(object):
     @NordicSemiErrorCheck
     @wrapt.synchronized(api_lock)
     def ble_gap_phy_update(self, conn_handle, gap_phys):
+        assert nrf_sd_ble_api_ver >= 5, 'PHY Update requires SD API v5 or higher'
         assert isinstance(gap_phys, BLEGapPhys)
         gap_phys_c = gap_phys.to_c()
         err_code = driver.sd_ble_gap_phy_update(self.rpc_adapter, conn_handle, gap_phys_c)
