@@ -533,7 +533,7 @@ class BLEAdapter(BLEDriverObserver):
     def write_cmd(self, conn_handle, uuid, data, attr_handle=None):
         try:
             tx_complete = BLEEvtID.evt_tx_complete
-        except:
+        except Exception:
             tx_complete = BLEEvtID.gattc_evt_write_cmd_tx_complete
         if attr_handle is None:
             attr_handle = self.db_conns[conn_handle].get_char_value_handle(uuid)
@@ -608,24 +608,26 @@ class BLEAdapter(BLEDriverObserver):
 
         self.driver.ble_gap_authenticate(conn_handle, sec_params)
         self.evt_sync[conn_handle].wait(evt=BLEEvtID.gap_evt_sec_params_request, timeout=10)
-
         # sd_ble_gap_sec_params_reply ... In the central role, sec_params must be set to NULL,
         # as the parameters have already been provided during a previous call to
         # sd_ble_gap_authenticate.
-        sec_params = (
-            None
-            if self.db_conns[conn_handle].role == BLEGapRoles.central
-            else sec_params
-        )
-        self.driver.ble_gap_sec_params_reply(
-            conn_handle, BLEGapSecStatus.success, sec_params=sec_params
-        )
+        if not sec_params.lesc:
+            sec_params = (
+                None
+                if self.db_conns[conn_handle].role == BLEGapRoles.central
+                else sec_params
+            )
+            self.driver.ble_gap_sec_params_reply(
+                conn_handle, BLEGapSecStatus.success, sec_params=sec_params, keyset=None
+            )
+        else:
+            self.evt_sync[conn_handle].wait(evt=BLEEvtID.gap_evt_lesc_dhkey_request, timeout=5)
 
         result = self.evt_sync[conn_handle].wait(evt=BLEEvtID.gap_evt_auth_status)
 
         # TODO: The result returned is sometimes of a different type than
         # TODO: gap_evt_auth_status. This is a bug that needs further investigation.
-        if not "auth_status" in result:
+        if "auth_status" not in result:
             return None
 
         # If success then keys are stored in self.driver._keyset.
@@ -681,6 +683,9 @@ class BLEAdapter(BLEDriverObserver):
 
     def on_gap_evt_sec_request(self, ble_driver, conn_handle, **kwargs):
         self.evt_sync[conn_handle].notify(evt=BLEEvtID.gap_evt_sec_request, data=kwargs)
+
+    def on_gap_evt_lesc_dhkey_request(self, ble_driver, conn_handle, **kwargs):
+        self.evt_sync[conn_handle].notify(evt=BLEEvtID.gap_evt_lesc_dhkey_request, data=kwargs)
 
     def on_gap_evt_auth_status(self, ble_driver, conn_handle, **kwargs):
         self.evt_sync[conn_handle].notify(evt=BLEEvtID.gap_evt_auth_status, data=kwargs)

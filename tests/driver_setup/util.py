@@ -76,7 +76,7 @@ def setup_adapter(
                 service_changed=0,
                 periph_conn_count=1,
                 central_conn_count=1,
-                central_sec_count=0,
+                central_sec_count=1,
             )
         )
     elif settings.nrf_family == "NRF52":
