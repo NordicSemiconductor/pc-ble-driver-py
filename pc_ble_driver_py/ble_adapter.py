@@ -282,6 +282,7 @@ class BLEAdapter(BLEDriverObserver):
             if response["status"] == BLEGattStatusCode.success:
                 for s in response["services"]:
                     if s.uuid.value == BLEUUID.Standard.unknown:
+                        breakpoint()
                         vendor_services.append(s)
                     else:
                         self.db_conns[conn_handle].services.append(s)

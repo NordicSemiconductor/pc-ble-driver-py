@@ -1189,11 +1189,11 @@ class BLEUUIDBase(object):
 
 class BLEUUID(object):
     class Standard(Enum):
-        unknown = 0x0000
-        service_primary = 0x2800
-        service_secondary = 0x2801
-        characteristic = 0x2803
-        cccd = 0x2902
+        unknown = driver.BLE_UUID_UNKNOWN  # 0x0000
+        service_primary = driver.BLE_UUID_SERVICE_PRIMARY
+        service_secondary = driver.BLE_UUID_SERVICE_SECONDARY
+        characteristic = driver.BLE_UUID_CHARACTERISTIC
+        cccd = driver.BLE_UUID_DESCRIPTOR_CLIENT_CHAR_CONFIG
         battery_level = 0x2A19
         heart_rate = 0x2A37
 
@@ -2458,6 +2458,20 @@ class BLEDriver(object):
             char_handle.user_desc_handle = handles.user_desc_handle
             char_handle.cccd_handle = handles.cccd_handle
             char_handle.sccd_handle = handles.sccd_handle
+        return err_code
+
+    @NordicSemiErrorCheck
+    @wrapt.synchronized(api_lock)
+    def ble_gatts_descriptor_add(self, char_handle, attr, descr_handle):
+        assert isinstance(char_handle, int), "Invalid argument type"
+        assert isinstance(attr, BLEGattsAttr), "Invalid argument type"
+        assert isinstance(descr_handle, BLEGattHandle), "Invalid argument type"
+        attr_c = attr.to_c()
+        handle = driver.new_uint16()
+        err_code = driver.sd_ble_gatts_descriptor_add(
+            self.rpc_adapter, char_handle, attr_c, handle)
+        if err_code == driver.NRF_SUCCESS:
+            descr_handle.handle = driver.uint16_value(handle)
         return err_code
 
     @NordicSemiErrorCheck

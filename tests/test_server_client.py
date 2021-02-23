@@ -63,8 +63,10 @@ logger = logging.getLogger(__name__)
 
 UUID_HEART_RATE_SERVICE = 0x180D  # Heart Rate service UUID
 UUID_HEART_RATE_CHAR = 0x2A37  # Heart Rate Measurement characteristic UUID
+UUID_DESCR = 0x2906  # Random standard UUID: Valid Range
 UUID_CUSTOM_SERVICE = 0x1111
-UUID_CUSTOM_CHAR = 0x2222
+UUID_CUSTOM_CHAR = 0x0000  # 0x2222
+UUID_CUSTOM_DESC = 0x3333
 CUSTOM_BASE = [0x11, 0x22, 0x33, 0x44, 0x00, 0x00, 0x55, 0x66, 0x77, 0x88, 0x99, 0xAA, 0xBB,
                0xCC, 0xDD, 0xEE]
 DATA = [100]  # Heart Rate list
@@ -141,7 +143,7 @@ class Central(BLEDriverObserver, BLEAdapterObserver):
             self.adapter.connect(peer_addr, tag=1)
 
     def on_notification(self, ble_adapter, conn_handle, uuid, data):
-        logger.info(f"Connection: {conn_handle}, {uuid} = {data}.")
+        logger.info(f"Notification received, conn: {conn_handle}, UUID: {uuid}, data: {data}.")
         self.notification_q.put(data)
 
 
@@ -161,39 +163,61 @@ class Peripheral(BLEDriverObserver, BLEAdapterObserver):
     def setup_services_16bit(self):
         self.char_handles = BLEGattsCharHandles()
         serv_handle = BLEGattHandle()
+        descr_handle = BLEGattHandle()
         serv_uuid = BLEUUID(UUID_HEART_RATE_SERVICE)
         char_uuid = BLEUUID(UUID_HEART_RATE_CHAR)
+        descr_uuid = BLEUUID(UUID_DESCR)
 
         props = BLEGattCharProps(notify=True)
         char_md = BLEGattsCharMD(char_props=props)
         attr_md = BLEGattsAttrMD()
-        attr = BLEGattsAttr(uuid=char_uuid, attr_md=attr_md,
-                            max_len=ATTR_MAX_LEN, value=ATTR_VALUE)
+        char_attr = BLEGattsAttr(uuid=char_uuid, attr_md=attr_md,
+                                 max_len=ATTR_MAX_LEN, value=ATTR_VALUE)
+        descr_attr = BLEGattsAttr(uuid=descr_uuid, attr_md=attr_md,
+                                  max_len=ATTR_MAX_LEN, value=ATTR_VALUE)
 
-        self.adapter.driver.ble_gatts_service_add(
-            driver.BLE_GATTS_SRVC_TYPE_PRIMARY, serv_uuid, serv_handle)
-        self.adapter.driver.ble_gatts_characteristic_add(
-            serv_handle.handle, char_md, attr, self.char_handles)
+        self.adapter.driver.ble_gatts_service_add(driver.BLE_GATTS_SRVC_TYPE_PRIMARY,
+                                                  serv_uuid, serv_handle)
+        logger.debug(f'Assigned service handle: {serv_handle.handle}')
+        self.adapter.driver.ble_gatts_characteristic_add(serv_handle.handle,
+                                                         char_md, char_attr,
+                                                         self.char_handles)
+        logger.debug(f'Assigned characteristic value handle: {self.char_handles.value_handle}')
+        self.adapter.driver.ble_gatts_descriptor_add(self.char_handles.value_handle,
+                                                     descr_attr, descr_handle)
+        logger.debug(f'Assigned descriptor handle: {descr_handle.handle}')
 
     def setup_services_128bit(self):
         self.char_128_handles = BLEGattsCharHandles()
         serv_128_handle = BLEGattHandle()
+        descr_128_handle = BLEGattHandle()
         uuid_128_base = BLEUUIDBase(CUSTOM_BASE)
         serv_128_uuid = BLEUUID(UUID_CUSTOM_SERVICE, uuid_128_base)
         char_128_uuid = BLEUUID(UUID_CUSTOM_CHAR, uuid_128_base)
+        descr_128_uuid = BLEUUID(UUID_CUSTOM_DESC, uuid_128_base)
 
-        props = BLEGattCharProps(notify=True)
-        char_md = BLEGattsCharMD(char_props=props)
+        char_props = BLEGattCharProps(notify=True)
+        char_md = BLEGattsCharMD(char_props=char_props)
         attr_md = BLEGattsAttrMD()
-        attr = BLEGattsAttr(uuid=char_128_uuid, attr_md=attr_md,
-                            max_len=ATTR_MAX_LEN, value=ATTR_VALUE)
+        char_attr = BLEGattsAttr(uuid=char_128_uuid, attr_md=attr_md,
+                                 max_len=ATTR_MAX_LEN, value=ATTR_VALUE)
+
+        descr_attr = BLEGattsAttr(uuid=descr_128_uuid, attr_md=attr_md,
+                                  max_len=ATTR_MAX_LEN, value=ATTR_VALUE)
 
         self.adapter.driver.ble_vs_uuid_add(uuid_128_base)
-        self.adapter.driver.ble_gatts_service_add(
-            driver.BLE_GATTS_SRVC_TYPE_PRIMARY, serv_128_uuid, serv_128_handle)
-        self.adapter.driver.ble_gatts_characteristic_add(
-                serv_128_handle.handle,
-                char_md, attr, self.char_128_handles)
+        self.adapter.driver.ble_gatts_service_add(driver.BLE_GATTS_SRVC_TYPE_PRIMARY,
+                                                  serv_128_uuid, serv_128_handle)
+        logger.debug(f'Assigned service handle: {serv_128_handle.handle}')
+
+        self.adapter.driver.ble_gatts_characteristic_add(serv_128_handle.handle,
+                                                         char_md, char_attr,
+                                                         self.char_128_handles)
+        logger.debug(f'Assigned characteristic value handle: {self.char_128_handles.value_handle}')
+
+        self.adapter.driver.ble_gatts_descriptor_add(self.char_128_handles.value_handle,
+                                                     descr_attr, descr_128_handle)
+        logger.debug(f'Assigned descriptor handle: {descr_128_handle.handle}')
 
     def start(self, adv_name):
         adv_data = BLEAdvData(complete_local_name=adv_name)
