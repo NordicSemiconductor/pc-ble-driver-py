@@ -2946,7 +2946,9 @@ class BLEDriver(object):
                         auth_required=write_evt.auth_required,
                         offset=write_evt.offset,
                         length=write_evt.len,
-                        data=write_evt.data,
+                        data=util.uint8_array_to_list(
+                            write_evt.data, write_evt.len
+                        ),
                     )
 
             elif evt_id == BLEEvtID.gatts_evt_sys_attr_missing:
