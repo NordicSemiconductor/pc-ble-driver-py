@@ -403,6 +403,7 @@ class BLEGapConnSecMode(object):
         """BLE_GAP_CONN_SEC_MODE_SET_SIGNED_NO_MITM"""
         self.sm = 2
         self.lv = 1
+
     def set_signed_with_mitm(self):
         """BLE_GAP_CONN_SEC_MODE_SET_SIGNED_WITH_MITM"""
         self.sm = 2
@@ -423,7 +424,7 @@ class BLEGapConnSecMode(object):
         return sec_mode
 
     def __str__(self):
-        return "sm({0.ssm}) lv({0.lv}))".format(
+        return "sm({0.sm}) lv({0.lv}))".format(
             self
         )    
 
