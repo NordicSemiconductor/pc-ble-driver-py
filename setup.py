@@ -56,7 +56,7 @@ elif py3:
         print(py_version_old_message)
         sys.exit(-1)
 
-    requirements = ['wrapt']
+    requirements = ['wrapt', 'cryptography']
 else:
     print(py_version_old_message)
     sys.exit(-1)
@@ -66,11 +66,13 @@ if os.path.exists('MANIFEST'):
 
 here = os.path.abspath(os.path.dirname(__file__))
 
+
 def read(*parts):
     # intentionally *not* adding an encoding option to open, See:
     #   https://github.com/pypa/virtualenv/issues/201#issuecomment-3145690
     with codecs.open(os.path.join(here, *parts), 'r') as fp:
         return fp.read()
+
 
 def find_version(*file_paths):
     version_file = read(*file_paths)
@@ -83,6 +85,7 @@ def find_version(*file_paths):
         return version_match.group(1)
 
     raise RuntimeError("Unable to find version string.")
+
 
 packages = find_packages(exclude=["tests*"])
 
@@ -123,7 +126,7 @@ setup(
     install_requires=requirements,
     packages=packages,
     package_data={
-        'pc_ble_driver_py.lib': ['*.pyd', '*.dll', '*.txt','*.so','*.dylib'],
+        'pc_ble_driver_py.lib': ['*.pyd', '*.dll', '*.txt','*.so', '*.dylib'],
         'pc_ble_driver_py.hex': ['*.hex'],
         'pc_ble_driver_py.hex.sd_api_v2': ['*.hex'],
         'pc_ble_driver_py.hex.sd_api_v5': ['*.hex', '*.zip']
