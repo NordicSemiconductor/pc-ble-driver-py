@@ -192,6 +192,9 @@ class Peripheral(BLEDriverObserver, BLEAdapterObserver):
         logger.info("Peripheral on_gap_evt_passkey_display.")
         passkeyQueue.put(passkey)
 
+    def on_gap_evt_conn_sec_update(self, ble_driver, conn_handle, conn_sec):
+        logger.info(f"Conn sec update: {conn_sec}")
+
     def on_gap_evt_auth_status(
                         self,
                         ble_driver,

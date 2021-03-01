@@ -429,21 +429,20 @@ class BLEGapConnSecMode(object):
         )    
 
 class BLEGapConnSec(object):
-    def __init__(self, sec_mode, level, encr_key_size):
+    def __init__(self, sec_mode, encr_key_size):
+        assert isinstance(sec_mode, BLEGapConnSecMode), "Invalid argument type"
         self.sec_mode = sec_mode
-        self.level = level
         self.encr_key_size = encr_key_size
 
     @classmethod
     def from_c(cls, conn_sec):
         return cls(
-            sec_mode=conn_sec.sec_mode.sm,
-            level=conn_sec.sec_mode.lv,
+            sec_mode=BLEGapConnSecMode.from_c(conn_sec.sec_mode),
             encr_key_size=conn_sec.encr_key_size,
         )
 
     def __str__(self):
-        return "sec_mode({0.sec_mode}) level({0.level}) encr_key_size({0.encr_key_size})".format(
+        return "sec_mode({0.sec_mode}) encr_key_size({0.encr_key_size})".format(
             self
         )
 
