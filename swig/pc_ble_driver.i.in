@@ -195,76 +195,33 @@ std::shared_ptr<adapter_context_t> adapter_context_find(adapter_t *adapter_ptr)
 %}
 
 
-%{// TODO Delete me
-    //TODO: Remove this hotfix-block 
+%{
 
-
-
-
-
-
-#include <iostream>    
+// #include <iostream>    
 #include <mutex>
 #include <string>
-#include <atomic> 
 
 
-class GILStateWrapper{// Ensure gil state, and release it when leaving scope
+class GILStateWrapper{
+    // Ensure the python GIL is a state such that SWIG functions can be called within a scope
     private:
         PyGILState_STATE gstate;
-        std::string name;
+        std::string lock_action_debug_message;
         std::lock_guard<std::recursive_mutex> lock; 
+        static std::recursive_mutex GIL_MUTEX; 
     public: 
-        static std::recursive_mutex OUTER_MUTEX; 
-
-        GILStateWrapper(char* name) : name(name), lock(GILStateWrapper::OUTER_MUTEX) {
-            std::thread::id this_id = std::this_thread::get_id();
-            // std::cout << "{\"Locking " << std::string(name) << "(" << this_id << ")" << "\" :";
+        GILStateWrapper(char* _unused_debug_message) : lock_action_debug_message(_unused_debug_message), lock(GILStateWrapper::GIL_MUTEX) {
             this->gstate = PyGILState_Ensure();
-            // std::cout << " [ " << std:: endl; 
-
         }
         GILStateWrapper(): GILStateWrapper("") {
         }    
         ~GILStateWrapper(){
-            std::thread::id this_id = std::this_thread::get_id();
-            // std::cout << "\"Freeing " << this->name << "(" << this_id << ")" << "\"]}," << std:: endl; 
             PyGILState_Release(this->gstate);
         }
 };
 
-std::recursive_mutex GILStateWrapper::OUTER_MUTEX; 
-// std::recursive_mutex callback_mutex; // A segfault happens in python 3.9, that is solved by adding this  
-// std::mutex callback_mutex; // A segfault happens in python 3.9, that is solved by adding this  
+std::recursive_mutex GILStateWrapper::GIL_MUTEX;
 
-// class InitialisationAnouncer{
-//     public:
-//     InitialisationAnouncer(const char* name){
-//         std::thread::id this_id = std::this_thread::get_id();
-//         std::cout << "{\"Locking " << std::string(name) << "(" << this_id << ")" << "\" :[ " << std:: endl; 
-
-//     }
-// };
-// class PrintingLockWrapper{
-//     public: 
-//     InitialisationAnouncer filler; 
-//     // std::lock_guard<std::recursive_mutex> lock;
-//     std::lock_guard<std::mutex> lock;
-//     std::string name;
-//     // PrintingLockWrapper(const char* name, std::recursive_mutex &mutex): 
-//     PrintingLockWrapper(const char* name, std::mutex &mutex): 
-//             filler(name) 
-//             , lock(mutex) 
-//             {
-//         this->name = std::string(name); 
-
-//     } 
-//     ~PrintingLockWrapper(){
-//         std::thread::id this_id = std::this_thread::get_id();
-//         std::cout << "\"Freeing " << this->name << "(" << this_id << ")" << "\"]}," << std:: endl; 
-//     }
-
-// }; 
 %}
 
 /* Event callback handling */
@@ -275,19 +232,9 @@ static void PythonEvtCallBack(adapter_t *adapter, ble_evt_t *ble_event)
     PyObject *arglist;
     PyObject *adapter_obj;
     PyObject *ble_evt_obj;
-    //PyGILState_STATE gstate; //TODO Uncomment if the GIL lock was bad
     ble_evt_t* copied_ble_event;
     PyObject *result;
 
-    // if (! callback_mutex.try_lock()){
-    //     std::cout << "Skipping PythonEvtCallBack" << "(" << std::this_thread::get_id() << ")"<< std::endl;
-    //     return; 
-    // }
-    // else{
-
-    //     std::cout << "Running PythonEvtCallBack" << "(" << std::this_thread::get_id() << ")"<< std::endl;
-    // }
-    // PrintingLockWrapper lock("PythonEvtCallBack", callback_mutex); 
     //TODO Fix the deprecation waringngs on 3.9
     auto adapter_context = adapter_context_find(adapter);
 
@@ -331,9 +278,7 @@ static void PythonEvtCallBack(adapter_t *adapter, ble_evt_t *ble_event)
     memcpy(copied_ble_event, ble_event, ble_event->header.evt_len + length_correction);
 #endif
 
-    // Handling of Python Global Interpretor Lock (GIL)
-    //TODO Verify that the wrapper is good
-    // gstate = PyGILState_Ensure(); //TODO Uncomment if the wrapper was bad 
+
     GILStateWrapper GIL_lock("PythonEvtCallback"); 
 
 
@@ -350,9 +295,7 @@ static void PythonEvtCallBack(adapter_t *adapter, ble_evt_t *ble_event)
     Py_XDECREF(ble_evt_obj);
     Py_DECREF(arglist);
 
-    // PyGILState_Release(gstate); //TODO Uncomment if the wrapper was bad 
 
-    // callback_mutex.unlock(); // TODO Delete this unlock
 }
 %}
 
@@ -366,22 +309,8 @@ static void PythonStatusCallBack(adapter_t *adapter, sd_rpc_app_status_t status_
     PyObject *adapter_obj;
     PyObject *status_code_obj;
     PyObject *status_message_obj;
-    //PyGILState_STATE gstate; //TODO Uncomment if the GIL lock was bad
     PyObject *result;
 
-    // int lock_status = std::try_lock(callback_mutex); 
-    // if (lock_status != 0){
-    // if (! callback_mutex.try_lock()){
-    //     std::cout << "Skipping PythonStatusCallback" << "(" << std::this_thread::get_id() << ")"<< std::endl;
-    //     return;
-    // }
-    // else{
-
-    //     std::cout << "Running PythonEvtCallBack" << "(" << std::this_thread::get_id() << ")"<< std::endl;
-    // }
-    //std::cout << "Locking PythonStatusCallBack" << std::endl;
-    // PrintingLockWrapper unlock_messager("PythonStatusCallBack", callback_mutex);
-    //std::lock_guard<std::recursive_mutex> lock(callback_mutex); // TODO See if the segfault is handled
     auto adapter_context = adapter_context_find(adapter);
 
     if (!adapter_context)
@@ -424,8 +353,7 @@ static void PythonStatusCallBack(adapter_t *adapter, sd_rpc_app_status_t status_
     Py_XDECREF(status_message_obj);
     Py_DECREF(arglist);
 
-    // PyGILState_Release(gstate); //TODO Uncomment if the wrapper was bad 
-    // callback_mutex.unlock();
+
 }
 %}
 
@@ -438,21 +366,8 @@ static void PythonLogCallBack(adapter_t *adapter, sd_rpc_log_severity_t severity
     PyObject *adapter_obj;
     PyObject *severity_obj;
     PyObject *message_obj;
-    //PyGILState_STATE gstate; //TODO Uncomment if the GIL lock was bad
     PyObject *result;
 
-    // int lock_status = std::try_lock(callback_mutex); 
-    // if (! callback_mutex.try_lock()){
-    //     std::cout << "Skipping PythonLogCallBack" << "(" << std::this_thread::get_id() << ")"<< std::endl;
-    //     return; 
-    // }
-    // else{
-
-    //     std::cout << "Running PythonEvtCallBack" << "(" << std::this_thread::get_id() << ")"<< std::endl;
-    // }
-    // std::cout << "Locking PythonLogCallBack" << std::endl;
-    // PrintingLockWrapper unlock_messager("PythonLogCallBack", callback_mutex);
-    //std::lock_guard<std::recursive_mutex> lock(callback_mutex); // TODO See if the segfault is handled
     auto adapter_context = adapter_context_find(adapter);
 
     if (!adapter_context)
@@ -477,7 +392,6 @@ static void PythonLogCallBack(adapter_t *adapter, sd_rpc_log_severity_t severity
     // For information regarding GIL and copying of data, please look at
     // function PythonEvtCallBack.
 
-    // gstate = PyGILState_Ensure();//TODO UNCOMMENT if the GIL wrapper was bad
     GILStateWrapper GIL_lock("PythonLogCallBack"); 
 
     adapter_obj = SWIG_NewPointerObj(SWIG_as_voidptr(adapter), SWIGTYPE_p_adapter_t, 0 |  0 );
@@ -495,8 +409,7 @@ static void PythonLogCallBack(adapter_t *adapter, sd_rpc_log_severity_t severity
     Py_XDECREF(severity_obj);
     Py_DECREF(arglist);
 
-    // PyGILState_Release(gstate);//TODO Uncomment if the wrapper was bad 
-    // callback_mutex.unlock();
+;
 }
 %}
 
@@ -512,13 +425,9 @@ PyObject* sd_rpc_open_py(PyObject *adapter, PyObject *py_status_handler, PyObjec
     uint32_t result;
     std::shared_ptr<adapter_context_t> ctx{nullptr};
 
-    // PrintingLockWrapper unlock_messager("sd_rpc_open_py", callback_mutex); // TODO See if the segfault is handled
 
-    // auto gstate = PyGILState_Ensure();//TODO UNCOMMENT if the GIL wrapper was bad
     {
-        // std::cout << "sd_rpc_open_py First lock begin" << std::endl;
         GILStateWrapper GIL_lock("sd_rpc_open_py"); 
-        // std::cout << "sd_rpc_open_py First lock end" << std::endl;
 
 
         res1 = SWIG_ConvertPtr(adapter, &argp1,SWIGTYPE_p_adapter_t, 0 |  0 );
@@ -549,7 +458,6 @@ PyObject* sd_rpc_open_py(PyObject *adapter, PyObject *py_status_handler, PyObjec
        GILStateWrapper GIL_lock("sd_rpc_open_py_2"); 
        resultobj = SWIG_From_unsigned_SS_int((unsigned int) (result));
     }
-    // PyGILState_Release(gstate);//TODO Uncomment if the wrapper was bad 
     return resultobj;
 
 fail:
@@ -563,21 +471,12 @@ PyObject *sd_rpc_close_py(PyObject *adapter) {
     int res1 = 0;
     uint32_t result;
     std::shared_ptr<adapter_context_t> ctx{nullptr};
-    //PyGILState_STATE gstate; //TODO Uncomment if the GIL lock was bad
 
-
-
-    //std::cout << "Locking sd_rpc_close" << std::endl;
-    // PrintingLockWrapper unlock_messager("sd_rpc_close_py", callback_mutex);
-    // std::lock_guard<std::recursive_mutex> lock(callback_mutex); // TODO See if the segfault is handled
-    // gstate = PyGILState_Ensure();//todo UNCOMMENT if the GIL wrapper was bad
 
 
 
     {
-        // std::cout << "Begin lock" << std::endl;
         GILStateWrapper GIL_lock("sd_rpc_close_py_1"); 
-        // std::cout << "End lock" << std::endl;
         res1 = SWIG_ConvertPtr(adapter, &argp1, SWIGTYPE_p_adapter_t, 0 |  0 );
         if (!SWIG_IsOK(res1)) {
             SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "sd_rpc_close" "', argument " "1"" of type '" "adapter_t *""'");
@@ -610,7 +509,6 @@ PyObject *sd_rpc_close_py(PyObject *adapter) {
 
 
             resultobj = SWIG_From_unsigned_SS_int((unsigned int)(result));
-            // PyGILState_Release(gstate);//TODO Uncomment if the wrapper was bad 
         }
         return resultobj;
     }
