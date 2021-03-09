@@ -197,30 +197,30 @@ std::shared_ptr<adapter_context_t> adapter_context_find(adapter_t *adapter_ptr)
 
 %{
 
-// #include <iostream>    
+
 #include <mutex>
 #include <string>
 
 
-class GILStateWrapper{
-    // Ensure the python GIL is a state such that SWIG functions can be called within a scope
-    private:
-        PyGILState_STATE gstate;
-        std::string lock_action_debug_message;
-        std::lock_guard<std::recursive_mutex> lock; 
-        static std::recursive_mutex GIL_MUTEX; 
-    public: 
-        GILStateWrapper(char* _unused_debug_message) : lock_action_debug_message(_unused_debug_message), lock(GILStateWrapper::GIL_MUTEX) {
-            this->gstate = PyGILState_Ensure();
-        }
-        GILStateWrapper(): GILStateWrapper("") {
-        }    
-        ~GILStateWrapper(){
-            PyGILState_Release(this->gstate);
-        }
-};
+    class GILStateWrapper{
+        // Ensure the python GIL is a state such that SWIG functions can be called within a scope
+        private:
+            PyGILState_STATE gstate;
+            std::string lock_action_debug_message;
+            std::lock_guard<std::recursive_mutex> lock; 
+            static std::recursive_mutex GIL_MUTEX; 
+        public: 
+            GILStateWrapper(const char* _unused_debug_message) : lock_action_debug_message(_unused_debug_message), lock(GILStateWrapper::GIL_MUTEX) {
+                this->gstate = PyGILState_Ensure();
+            }
+            GILStateWrapper(): GILStateWrapper("") {
+            }    
+            ~GILStateWrapper(){
+                PyGILState_Release(this->gstate);
+            }
+    };
 
-std::recursive_mutex GILStateWrapper::GIL_MUTEX;
+    std::recursive_mutex GILStateWrapper::GIL_MUTEX;
 
 %}
 
@@ -335,7 +335,6 @@ static void PythonStatusCallBack(adapter_t *adapter, sd_rpc_app_status_t status_
     // For information regarding GIL and copying of data, please look at
     // function PythonEvtCallBack.
 
-    // gstate = PyGILState_Ensure();
     GILStateWrapper GIL_lock("PythonStatusCallBack"); 
 
     adapter_obj = SWIG_NewPointerObj(SWIG_as_voidptr(adapter), SWIGTYPE_p_adapter_t, 0 |  0 );
