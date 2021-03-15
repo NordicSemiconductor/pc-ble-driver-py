@@ -39,7 +39,7 @@ jobs:
       displayName: 'Build ManyLinux wheel'
       inputs:
         containerRegistry: acr-nrfprivateeu
-        command: build
+        command: run
         arguments: '--rm -e PLAT=$(wheel_platform) -v $(System.DefaultWorkingDirectory):/data nrfwayland.azurecr.io/nrf/projects-pc-ble-driver-py-linux:v6 /build/build-wheels.sh'
     - bash: |
         set -o errexit -o pipefail
