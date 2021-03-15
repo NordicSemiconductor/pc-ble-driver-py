@@ -7,22 +7,15 @@ parameters:
   - name: VCPKG_COMMIT
     displayName: VCPKG commit
     type: string
-    default: 38e1a6465beeb7b294a584d1c4ec24b2daab2670
+    default: 2020.11-1
     values:
-    - master
-    - 38e1a6465beeb7b294a584d1c4ec24b2daab2670
-    - 2020.07
-    - 2020.06
-    - 2020.04
-    - 2020.01
-    - 2019.12
-    - 2019.11
-    - 2019.10
-    - 2019.09
-    - 2019.08
-    - 2019.07
-    - 2019.06
-
+      - 2020.11-1
+      - 2020.11
+      - 2020.07
+      - 2020.06
+      - 2020.04
+      - 2020.01
+      - master
 variables:
   VCPKG_REPOSITORY: https://github.com/Microsoft/vcpkg.git
   VCPKG_OVERLAY_PORTS_REPOSITORY: https://github.com/NordicPlayground/vcpkg-export-public
