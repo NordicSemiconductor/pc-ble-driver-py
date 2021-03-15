@@ -25,6 +25,7 @@ parameters:
 
 variables:
   VCPKG_REPOSITORY: https://github.com/Microsoft/vcpkg.git
+  VCPKG_OVERLAY_PORTS_REPOSITORY: https://github.com/NordicPlayground/vcpkg-export-public
 
 jobs:
   # Linux
@@ -38,7 +39,7 @@ jobs:
       displayName: 'Build ManyLinux wheel'
       inputs:
         containerRegistry: acr-nrfprivateeu
-        command: run
+        command: build
         arguments: '--rm -e PLAT=$(wheel_platform) -v $(System.DefaultWorkingDirectory):/data nrfwayland.azurecr.io/nrf/projects-pc-ble-driver-py-linux:v6 /build/build-wheels.sh'
     - bash: |
         set -o errexit -o pipefail
@@ -50,17 +51,18 @@ jobs:
         gitHubConnection: 'waylandCI'
         repositoryName: 'NordicSemiconductor/pc-ble-driver-py'
         action: 'edit'
-        tagSource: 'Git tag'
+        tagSource: 'manual'
         tag: '$(Build.SourceBranchName)'
         assetUploadMode: 'replace'
-        isDraft: 'true'
-        addChangeLog: 'false'
+        isDraft: true
+        addChangeLog: false
       condition: ne(variables['Build.Reason'], 'PullRequest')
 
   # macOS
   - job: macOS
     variables:
       VCPKG_ROOT: '$(Agent.HomeDirectory)/vcpkg'
+      VCPKG_OVERLAY_PORTS: '$(Agent.HomeDirectory)/vcpkg-overlay-ports'
       python_arch: 'x64'
     strategy:
       matrix:
@@ -73,6 +75,9 @@ jobs:
         py38:
           python_version: '3.8.0'
           python_bin: '3.8'
+        py39:
+          python_version: '3.9.0'
+          python_bin: '3.9'
     pool:
       vmImage: 'macos-10.15'
     steps:
@@ -88,6 +93,7 @@ jobs:
         set -o errexit -o pipefail
         git clone $(VCPKG_REPOSITORY) $(VCPKG_ROOT)
         git -C $(VCPKG_ROOT) checkout ${{ parameters.VCPKG_COMMIT }}
+        git clone $(VCPKG_OVERLAY_PORTS_REPOSITORY) $(VCPKG_OVERLAY_PORTS)
         CC=gcc-9 CXX=g++-9 $(VCPKG_ROOT)/bootstrap-vcpkg.sh
       displayName: 'Install vcpkg'
     - script: |
@@ -96,6 +102,9 @@ jobs:
         export VCPKG_OSX_DEPLOYMENT_TARGET=10.9
         vcpkg install nrf-ble-driver:$(python_arch)-osx
       displayName: 'Install nrf-ble-driver'
+      env: {
+        VCPKG_OVERLAY_PORTS: "$(VCPKG_OVERLAY_PORTS)"
+      }        
     - bash: |
         set -o errexit -o pipefail
         wget https://www.python.org/ftp/python/$(python_version)/python-$(python_version)-macosx10.9.pkg
@@ -116,17 +125,18 @@ jobs:
         gitHubConnection: 'waylandCI'
         repositoryName: 'NordicSemiconductor/pc-ble-driver-py'
         action: 'edit'
-        tagSource: 'Git tag'
+        tagSource: 'manual'
         tag: '$(Build.SourceBranchName)'
         assetUploadMode: 'replace'
-        isDraft: 'true'
-        addChangeLog: 'false'
+        isDraft: true
+        addChangeLog: false
       condition: ne(variables['Build.Reason'], 'PullRequest')
 
   # Windows
   - job: Windows
     variables:
       VCPKG_ROOT: '$(Agent.HomeDirectory)\vcpkg'
+      VCPKG_OVERLAY_PORTS: '$(Agent.HomeDirectory)\vcpkg-overlay-ports'
     strategy:
       matrix:
         py36_win64:
@@ -159,6 +169,16 @@ jobs:
           python_lib: '38'
           python_arch: 'x86'
           generator: 'Visual Studio 15 2017'
+        py39_win32:
+          python_version: '3.9'
+          python_lib: '39'
+          python_arch: 'x86'
+          generator: 'Visual Studio 15 2017'
+        py39_win64:
+          python_version: '3.9'
+          python_lib: '39'
+          python_arch: 'x64'
+          generator: 'Visual Studio 15 2017 Win64'
     pool:
       vmImage: 'vs2017-win2016'
     steps:
@@ -168,12 +188,16 @@ jobs:
     - script: |
         git clone $(VCPKG_REPOSITORY) $(VCPKG_ROOT)
         git -C $(VCPKG_ROOT) checkout ${{ parameters.VCPKG_COMMIT }}
+        git clone $(VCPKG_OVERLAY_PORTS_REPOSITORY) $(VCPKG_OVERLAY_PORTS)
         $(VCPKG_ROOT)\bootstrap-vcpkg.bat
       displayName: 'Install vcpkg'
     - script: |
         set PATH=$(VCPKG_ROOT);%PATH%
         vcpkg install nrf-ble-driver:$(python_arch)-windows
       displayName: 'Install nrf-ble-driver'
+      env: {
+        VCPKG_OVERLAY_PORTS: "$(VCPKG_OVERLAY_PORTS)"
+      }        
     - task: UsePythonVersion@0
       inputs:
         versionSpec: '$(python_version)'
@@ -198,11 +222,11 @@ jobs:
         gitHubConnection: 'waylandCI'
         repositoryName: 'NordicSemiconductor/pc-ble-driver-py'
         action: 'edit'
-        tagSource: 'Git tag'
+        tagSource: 'manual'
         tag: '$(Build.SourceBranchName)'
         assetUploadMode: 'replace'
-        isDraft: 'true'
-        addChangeLog: 'false'
+        isDraft: true
+        addChangeLog: false
       condition: ne(variables['Build.Reason'], 'PullRequest')
 
   - job: TriggerTest
