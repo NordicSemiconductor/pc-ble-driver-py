@@ -55,7 +55,7 @@ jobs:
   - job: macOS
     variables:
       VCPKG_ROOT: '$(Agent.HomeDirectory)/vcpkg'
-      VCPKG_OVERLAY_PORTS: '$(Agent.HomeDirectory)/vcpkg-overlay-ports'
+      VCPKG_OVERLAY_PORTS_DIR: '$(Agent.HomeDirectory)/vcpkg-overlay-ports'
       python_arch: 'x64'
     strategy:
       matrix:
@@ -85,7 +85,7 @@ jobs:
     - script: |
         set -o errexit -o pipefail
         git clone $(VCPKG_REPOSITORY) $(VCPKG_ROOT) --branch ${{ parameters.VCPKG_COMMIT }} --depth 1
-        git clone $(VCPKG_OVERLAY_PORTS_REPOSITORY) $(VCPKG_OVERLAY_PORTS) --depth 1
+        git clone $(VCPKG_OVERLAY_PORTS_REPOSITORY) $(VCPKG_OVERLAY_PORTS_DIR) --depth 1
         CC=gcc-9 CXX=g++-9 $(VCPKG_ROOT)/bootstrap-vcpkg.sh
       displayName: 'Install vcpkg'
     - script: |
@@ -95,7 +95,7 @@ jobs:
         vcpkg install nrf-ble-driver:$(python_arch)-osx
       displayName: 'Install nrf-ble-driver'
       env: {
-        VCPKG_OVERLAY_PORTS: "$(VCPKG_OVERLAY_PORTS)/ports"
+        VCPKG_OVERLAY_PORTS: "$(VCPKG_OVERLAY_PORTS_DIR)/ports"
       }        
     - bash: |
         set -o errexit -o pipefail
@@ -128,7 +128,7 @@ jobs:
   - job: Windows
     variables:
       VCPKG_ROOT: '$(Agent.HomeDirectory)\vcpkg'
-      VCPKG_OVERLAY_PORTS: '$(Agent.HomeDirectory)\vcpkg-overlay-ports'
+      VCPKG_OVERLAY_PORTS_DIR: '$(Agent.HomeDirectory)\vcpkg-overlay-ports'
     strategy:
       matrix:
         py36_win64:
@@ -179,7 +179,7 @@ jobs:
       displayName: 'Install toolchain on Windows'
     - script: |
         git clone $(VCPKG_REPOSITORY) $(VCPKG_ROOT) --branch ${{ parameters.VCPKG_COMMIT }} --depth 1
-        git clone $(VCPKG_OVERLAY_PORTS_REPOSITORY) $(VCPKG_OVERLAY_PORTS)
+        git clone $(VCPKG_OVERLAY_PORTS_REPOSITORY) $(VCPKG_OVERLAY_PORTS_DIR) --depth 1
         $(VCPKG_ROOT)\bootstrap-vcpkg.bat
       displayName: 'Install vcpkg'
     - script: |
@@ -187,7 +187,7 @@ jobs:
         vcpkg install nrf-ble-driver:$(python_arch)-windows
       displayName: 'Install nrf-ble-driver'
       env: {
-        VCPKG_OVERLAY_PORTS: "$(VCPKG_OVERLAY_PORTS)/ports"
+        VCPKG_OVERLAY_PORTS: "$(VCPKG_OVERLAY_PORTS_DIR)/ports"
       }        
     - task: UsePythonVersion@0
       inputs:
