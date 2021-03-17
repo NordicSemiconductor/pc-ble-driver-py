@@ -24,7 +24,7 @@ jobs:
   # Linux
   - job: Linux
     variables:
-      wheel_platform: 'manylinux2010_x86_64'
+      wheel_platform: 'manylinux2014_x86_64'
     pool:
       vmImage: 'ubuntu-18.04'
     steps:
@@ -85,7 +85,7 @@ jobs:
     - script: |
         set -o errexit -o pipefail
         git clone $(VCPKG_REPOSITORY) $(VCPKG_ROOT) --branch ${{ parameters.VCPKG_COMMIT }} --depth 1
-        git clone $(VCPKG_OVERLAY_PORTS_REPOSITORY) $(VCPKG_OVERLAY_PORTS)
+        git clone $(VCPKG_OVERLAY_PORTS_REPOSITORY) $(VCPKG_OVERLAY_PORTS) --depth 1
         CC=gcc-9 CXX=g++-9 $(VCPKG_ROOT)/bootstrap-vcpkg.sh
       displayName: 'Install vcpkg'
     - script: |
