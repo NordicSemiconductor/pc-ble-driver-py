@@ -257,7 +257,8 @@ jobs:
         linux:
           osType: 'linux'
 
-    pool: server
+    pool:
+      vmImage: 'ubuntu-18.04'
     steps:
       - task: DownloadPipelineArtifact@2
         inputs:
