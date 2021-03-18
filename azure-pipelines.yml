@@ -33,7 +33,7 @@ jobs:
       inputs:
         containerRegistry: acr-nrfprivateeu
         command: run
-        arguments: '--rm -e PLAT=$(wheel_platform) -v $(System.DefaultWorkingDirectory):/data nrfwayland.azurecr.io/nrf/projects-pc-ble-driver-py-linux:v9 /build/build-wheels.sh'
+        arguments: '--rm -e PLAT=$(wheel_platform) -v $(System.DefaultWorkingDirectory):/data nrfwayland.azurecr.io/nrf/projects-pc-ble-driver-py-linux:v10 /build/build-wheels.sh'
     - bash: |
         set -o errexit -o pipefail
         ls -R wheelhouse
@@ -84,18 +84,27 @@ jobs:
       displayName: 'Install gcc and swig'
     - script: |
         set -o errexit -o pipefail
-        git clone $(VCPKG_REPOSITORY) $(VCPKG_ROOT) --branch ${{ parameters.VCPKG_COMMIT }} --depth 1
-        git clone $(VCPKG_OVERLAY_PORTS_REPOSITORY) $(VCPKG_OVERLAY_PORTS_DIR) --depth 1
-        CC=gcc-9 CXX=g++-9 $(VCPKG_ROOT)/bootstrap-vcpkg.sh
+        git clone $VCPKG_REPOSITORY $VCPKG_ROOT --branch $VCPKG_COMMIT --depth 1
+        git clone $VCPKG_OVERLAY_PORTS_REPOSITORY $VCPKG_OVERLAY_PORTS_DIR --depth 1
+        CC=gcc-9 CXX=g++-9 $VCPKG_ROOT/bootstrap-vcpkg.sh
       displayName: 'Install vcpkg'
+      env: {
+        VCPKG_REPOSITORY: "$(VCPKG_REPOSITORY)",
+        VCPKG_ROOT: "$(VCPKG_ROOT)",
+        VCPKG_COMMIT: "${{ parameters.VCPKG_COMMIT }}",
+        VCPKG_OVERLAY_PORTS_REPOSITORY: "$(VCPKG_OVERLAY_PORTS_REPOSITORY)",
+        VCPKG_OVERLAY_PORTS_DIR: "$(VCPKG_OVERLAY_PORTS_DIR)"
+      }
     - script: |
         set -o errexit -o pipefail
         export PATH=$VCPKG_ROOT:$PATH
         export VCPKG_OSX_DEPLOYMENT_TARGET=10.9
+        echo "VCPKG_OVERLAY_PORTS: $VCPKG_OVERLAY_PORTS"
         vcpkg install nrf-ble-driver:$(python_arch)-osx
       displayName: 'Install nrf-ble-driver'
       env: {
-        VCPKG_OVERLAY_PORTS: "$(VCPKG_OVERLAY_PORTS_DIR)/ports"
+        VCPKG_OVERLAY_PORTS: "$(VCPKG_OVERLAY_PORTS_DIR)/ports",
+        VCPKG_ROOT: "$(VCPKG_ROOT)"
       }        
     - bash: |
         set -o errexit -o pipefail
@@ -178,16 +187,26 @@ jobs:
         choco install -y --x86 swig
       displayName: 'Install toolchain on Windows'
     - script: |
-        git clone $(VCPKG_REPOSITORY) $(VCPKG_ROOT) --branch ${{ parameters.VCPKG_COMMIT }} --depth 1
-        git clone $(VCPKG_OVERLAY_PORTS_REPOSITORY) $(VCPKG_OVERLAY_PORTS_DIR) --depth 1
-        $(VCPKG_ROOT)\bootstrap-vcpkg.bat
+        git clone $VCPKG_REPOSITORY $VCPKG_ROOT --branch $VCPKG_COMMIT --depth 1
+        git clone $VCPKG_OVERLAY_PORTS_REPOSITORY $VCPKG_OVERLAY_PORTS_DIR --depth 1
+        $VCPKG_ROOT\bootstrap-vcpkg.bat
       displayName: 'Install vcpkg'
+      env: {
+        VCPKG_COMMIT: "${{ parameters.VCPKG_COMMIT }}",
+        VCPKG_REPOSITORY: $(VCPKG_REPOSITORY),
+        VCPKG_ROOT: $(VCPKG_ROOT),
+        VCPKG_OVERLAY_PORTS_REPOSITORY: $(VCPKG_OVERLAY_PORTS_REPOSITORY),
+        VCPKG_OVERLAY_PORTS_DIR: $(VCPKG_OVERLAY_PORTS_DIR),
+      }
     - script: |
-        set PATH=$(VCPKG_ROOT);%PATH%
+        set PATH=%VCPKG_ROOT%;%PATH%
+        echo "VCPKG_ROOT: %VCPKG_ROOT%"
+        echo "VCPKG_OVERLAY_PORTS: %VCPKG_OVERLAY_PORTS%"
         vcpkg install nrf-ble-driver:$(python_arch)-windows
       displayName: 'Install nrf-ble-driver'
       env: {
-        VCPKG_OVERLAY_PORTS: "$(VCPKG_OVERLAY_PORTS_DIR)/ports"
+        VCPKG_OVERLAY_PORTS: "$(VCPKG_OVERLAY_PORTS_DIR)\\ports",
+        VCPKG_ROOT: "$(VCPKG_ROOT)"
       }        
     - task: UsePythonVersion@0
       inputs:
@@ -204,6 +223,9 @@ jobs:
         pip install -r requirements-dev.txt
         python setup.py bdist_wheel --build-type Release -- -DPYTHON_INCLUDE_DIR=${pyincldir} -DPYTHON_LIBRARY=${pylib} -G "$(generator)"
       displayName: 'Build for python $(python_version)'
+      env: {
+        VCPKG_ROOT: "$(VCPKG_ROOT)"
+      }        
     - bash: |
         for f in dist/*; do mv "${f}" "${f/cp38m/cp38}"; done;
         cp -R dist/*.whl "$(Build.ArtifactStagingDirectory)"
