@@ -37,8 +37,7 @@ steps:
   
   - bash: | 
       pip install -r requirements-dev.txt
-      pip install $(Pipeline.Workspace)/$(parameters.package_name)
-
+      pip install $(Pipeline.Workspace)/$(parameters.package_name)      --user --force-reinstall
     displayName: Pip install
 
 
@@ -53,15 +52,16 @@ steps:
         DRV_LOG_LEVEL="info"
         
         set -e
-        python${i} -m pip install --user --force-reinstall pc_ble_driver_py-*-cp${i/./}${SOABI}-manylinux2010_*.whl
-        python${i} tests/test_programming.py        --port-a ${PORT_A} --port-b ${PORT_B} --log-level ${LOG_LEVEL} --driver-log-level ${DRV_LOG_LEVEL}
-        python${i} tests/test_ble_common_api.py     --port-a ${PORT_A} --port-b ${PORT_B} --log-level ${LOG_LEVEL} --driver-log-level ${DRV_LOG_LEVEL}
-        python${i} tests/test_rssi.py               --port-a ${PORT_A} --port-b ${PORT_B} --log-level ${LOG_LEVEL} --driver-log-level ${DRV_LOG_LEVEL}
-        python${i} tests/test_connection_update.py  --port-a ${PORT_A} --port-b ${PORT_B} --log-level ${LOG_LEVEL} --driver-log-level ${DRV_LOG_LEVEL}
-        python${i} tests/test_mtu.py                --port-a ${PORT_A} --port-b ${PORT_B} --log-level ${LOG_LEVEL} --driver-log-level ${DRV_LOG_LEVEL}
-        python${i} tests/test_passkey.py            --port-a ${PORT_A} --port-b ${PORT_B} --log-level ${LOG_LEVEL} --driver-log-level ${DRV_LOG_LEVEL}
-        python${i} tests/test_phy_update.py         --port-a ${PORT_A} --port-b ${PORT_B} --log-level ${LOG_LEVEL} --driver-log-level ${DRV_LOG_LEVEL}
-        python${i} tests/test_data_length.py        --port-a ${PORT_A} --port-b ${PORT_B} --log-level ${LOG_LEVEL} --driver-log-level ${DRV_LOG_LEVEL}
-        python${i} tests/test_server_client.py      --port-a ${PORT_A} --port-b ${PORT_B} --log-level ${LOG_LEVEL} --driver-log-level ${DRV_LOG_LEVEL}
+
+
+        python tests/test_programming.py        --port-a ${PORT_A} --port-b ${PORT_B} --log-level ${LOG_LEVEL} --driver-log-level ${DRV_LOG_LEVEL}
+        python tests/test_ble_common_api.py     --port-a ${PORT_A} --port-b ${PORT_B} --log-level ${LOG_LEVEL} --driver-log-level ${DRV_LOG_LEVEL}
+        python tests/test_rssi.py               --port-a ${PORT_A} --port-b ${PORT_B} --log-level ${LOG_LEVEL} --driver-log-level ${DRV_LOG_LEVEL}
+        python tests/test_connection_update.py  --port-a ${PORT_A} --port-b ${PORT_B} --log-level ${LOG_LEVEL} --driver-log-level ${DRV_LOG_LEVEL}
+        python tests/test_mtu.py                --port-a ${PORT_A} --port-b ${PORT_B} --log-level ${LOG_LEVEL} --driver-log-level ${DRV_LOG_LEVEL}
+        python tests/test_passkey.py            --port-a ${PORT_A} --port-b ${PORT_B} --log-level ${LOG_LEVEL} --driver-log-level ${DRV_LOG_LEVEL}
+        python tests/test_phy_update.py         --port-a ${PORT_A} --port-b ${PORT_B} --log-level ${LOG_LEVEL} --driver-log-level ${DRV_LOG_LEVEL}
+        python tests/test_data_length.py        --port-a ${PORT_A} --port-b ${PORT_B} --log-level ${LOG_LEVEL} --driver-log-level ${DRV_LOG_LEVEL}
+        python tests/test_server_client.py      --port-a ${PORT_A} --port-b ${PORT_B} --log-level ${LOG_LEVEL} --driver-log-level ${DRV_LOG_LEVEL}
 
     displayName: Jenkins run      
