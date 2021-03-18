@@ -44,7 +44,7 @@ jobs:
         gitHubConnection: 'waylandCI'
         repositoryName: 'NordicSemiconductor/pc-ble-driver-py'
         action: 'edit'
-        tagSource: 'manual'
+        tagSource: 'Git tag'
         tag: '$(Build.SourceBranchName)'
         assetUploadMode: 'replace'
         isDraft: true
@@ -99,7 +99,6 @@ jobs:
         set -o errexit -o pipefail
         export PATH=$VCPKG_ROOT:$PATH
         export VCPKG_OSX_DEPLOYMENT_TARGET=10.9
-        echo "VCPKG_OVERLAY_PORTS: $VCPKG_OVERLAY_PORTS"
         vcpkg install nrf-ble-driver:$(python_arch)-osx
       displayName: 'Install nrf-ble-driver'
       env: {
@@ -126,7 +125,7 @@ jobs:
         gitHubConnection: 'waylandCI'
         repositoryName: 'NordicSemiconductor/pc-ble-driver-py'
         action: 'edit'
-        tagSource: 'manual'
+        tagSource: 'Git tag'
         tag: '$(Build.SourceBranchName)'
         assetUploadMode: 'replace'
         isDraft: true
@@ -235,7 +234,7 @@ jobs:
         gitHubConnection: 'waylandCI'
         repositoryName: 'NordicSemiconductor/pc-ble-driver-py'
         action: 'edit'
-        tagSource: 'manual'
+        tagSource: 'Git tag'
         tag: '$(Build.SourceBranchName)'
         assetUploadMode: 'replace'
         isDraft: true
