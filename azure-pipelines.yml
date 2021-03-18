@@ -266,3 +266,99 @@ jobs:
           artifact: artifact-py-$(wheel_platform)
       - script: "echo display: dir\ndir\necho display: $(Pipeline.Workspace)\ndir $(Pipeline.Workspace)\n"
         displayName: Build dist
+      - script: | 
+          export PATH=${LINUX_NODE_10_64}:${PATH}
+          export PATH=${LINUX_CONDA_PATH}:${PATH}
+
+          which npm
+          # Install build support tools
+          npm i NordicPlayground/pc-nrfconnect-build#semver:^0.1.0 || FAILURE=1
+
+          # Fetch prebuilt wheels
+          echo ${PYVERSIONS}
+          for i in ${PYVERSIONS} ; do
+            node node_modules/pc-nrfconnect-build/scripts/fetch-pydriver-draft.js linux ${i/./} || FAILURE=1
+          done
+
+          # Clean environments
+          for i in ${PYVERSIONS} ; do
+            conda remove -n driver_py_python${i} --all || FAILURE=1
+          done
+
+          if [ $FAILURE -ne 0 ]; then
+            echo "Test failed"
+            npx nrfconnect-build signal-completion --failed
+            exit 1
+          fi
+        displayName: Jenkins build
+
+      - script: |
+          export PATH=${LINUX_NRFJPROG_PATH}:${PATH}
+          export PATH=${LINUX_NODE_10_64}:${PATH}
+          export LD_LIBRARY_PATH=${LINUX_LD_LIBRARY_PATH}
+
+          ports=(`nrf-device-lister -p PCA10056`)
+          export PORT_A=${ports[0]}
+          ports=(`nrf-device-lister -p PCA10040`)
+          export PORT_B=${ports[0]}
+
+          for i in ${PYVERSIONS} ; do
+            echo "Test in python ${i} environment..."
+
+            $LINUX_CONDA_PATH/conda create -n driver_py_python${i} python=${i}
+            . $LINUX_CONDA_PATH/activate driver_py_python${i}
+            which python
+            which pip
+
+            SOABI="m"
+
+            if [ $i = "2.7" ]; then
+              SOABI="mu"
+            fi
+
+            if [ $i = "3.8" ]; then
+              SOABI=""
+            fi
+            
+            LOG_LEVEL="debug"
+            DRV_LOG_LEVEL="info"
+            
+            set -e
+            python${i} -m pip install --user --force-reinstall pc_ble_driver_py-*-cp${i/./}${SOABI}-manylinux2010_*.whl
+            python${i} tests/test_programming.py --port-a ${PORT_A} --port-b ${PORT_B} --log-level ${LOG_LEVEL} --driver-log-level ${DRV_LOG_LEVEL}
+            python${i} tests/test_ble_common_api.py --port-a ${PORT_A} --port-b ${PORT_B} --log-level ${LOG_LEVEL} --driver-log-level ${DRV_LOG_LEVEL}
+            python${i} tests/test_rssi.py --port-a ${PORT_A} --port-b ${PORT_B} --log-level ${LOG_LEVEL} --driver-log-level ${DRV_LOG_LEVEL}
+            python${i} tests/test_connection_update.py --port-a ${PORT_A} --port-b ${PORT_B} --log-level ${LOG_LEVEL} --driver-log-level ${DRV_LOG_LEVEL}
+            python${i} tests/test_mtu.py --port-a ${PORT_A} --port-b ${PORT_B} --log-level ${LOG_LEVEL} --driver-log-level ${DRV_LOG_LEVEL}
+            python${i} tests/test_passkey.py --port-a ${PORT_A} --port-b ${PORT_B} --log-level ${LOG_LEVEL} --driver-log-level ${DRV_LOG_LEVEL}
+            python${i} tests/test_phy_update.py --port-a ${PORT_A} --port-b ${PORT_B} --log-level ${LOG_LEVEL} --driver-log-level ${DRV_LOG_LEVEL}
+            python${i} tests/test_data_length.py --port-a ${PORT_A} --port-b ${PORT_B} --log-level ${LOG_LEVEL} --driver-log-level ${DRV_LOG_LEVEL}
+            python${i} tests/test_server_client.py --port-a ${PORT_A} --port-b ${PORT_B} --log-level ${LOG_LEVEL} --driver-log-level ${DRV_LOG_LEVEL}
+            #python${i} tests/test_driver_open_close.py --port-a ${PORT_A} --port-b ${PORT_B} --log-level ${LOG_LEVEL} --driver-log-level ${DRV_LOG_LEVEL}
+
+            
+            if [ $? -ne 0 ]; then
+              echo "Test failed"
+              npx nrfconnect-build signal-completion --failed
+              exit 1
+            fi
+          done        
+        displayName: Jenkins run
+      - script: | 
+          export PATH=${LINUX_CONDA_PATH}:${PATH}
+          export PATH=${LINUX_NODE_8_64}:${PATH}
+
+          # Clean environments
+          for i in ${PYVERSIONS} ; do
+            conda remove -n driver_py_python${i} --all || FAILURE=1
+          done
+
+          if [ $FAILURE -eq 0 ]; then
+            echo "Test passed"
+          #  npx nrfconnect-build signal-completion --succeeded
+          else
+            echo "Test failed"
+          #  npx nrfconnect-build signal-completion --failed
+            exit 1
+          fi      
+        displayName: Jenkins run2        
