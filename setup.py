@@ -45,7 +45,7 @@ from setuptools import find_packages
 py2 = sys.version_info[0] == 2
 py3 = sys.version_info[0] == 3
 
-py_version_old_message = 'pc-ble-driver-py only supports Python version 3.6 and newer'
+py_version_old_message = "pc-ble-driver-py only supports Python version 3.6 and newer"
 requirements = []
 
 if py2:
@@ -56,13 +56,13 @@ elif py3:
         print(py_version_old_message)
         sys.exit(-1)
 
-    requirements = ['wrapt', 'cryptography']
+    requirements = ["wrapt", "cryptography"]
 else:
     print(py_version_old_message)
     sys.exit(-1)
 
-if os.path.exists('MANIFEST'):
-    os.remove('MANIFEST')
+if os.path.exists("MANIFEST"):
+    os.remove("MANIFEST")
 
 here = os.path.abspath(os.path.dirname(__file__))
 
@@ -70,16 +70,14 @@ here = os.path.abspath(os.path.dirname(__file__))
 def read(*parts):
     # intentionally *not* adding an encoding option to open, See:
     #   https://github.com/pypa/virtualenv/issues/201#issuecomment-3145690
-    with codecs.open(os.path.join(here, *parts), 'r') as fp:
+    with codecs.open(os.path.join(here, *parts), "r") as fp:
         return fp.read()
 
 
 def find_version(*file_paths):
     version_file = read(*file_paths)
     version_match = re.search(
-        r"^__version__ = ['\"]([^'\"]*)['\"]",
-        version_file,
-        re.M,
+        r"^__version__ = ['\"]([^'\"]*)['\"]", version_file, re.M,
     )
     if version_match:
         return version_match.group(1)
@@ -90,45 +88,41 @@ def find_version(*file_paths):
 packages = find_packages(exclude=["tests*"])
 
 setup(
-    name='pc_ble_driver_py',
+    name="pc_ble_driver_py",
     version=find_version("pc_ble_driver_py", "__init__.py"),
-    description='Python bindings for the Nordic pc-ble-driver SoftDevice serialization library',
-    long_description='A Python interface and library for pc-ble-driver. This allows Python applications to interface '
-                     'with a Nordic Semiconductor IC (both nRF51 and nRF52 series) over a serial port to obtain '
-                     'access to the full serialized SoftDevice API.',
-    url='https://github.com/NordicSemiconductor/pc-ble-driver-py',
-    license='Modified BSD License',
-    author='Nordic Semiconductor ASA',
+    description="Python bindings for the Nordic pc-ble-driver SoftDevice serialization library",
+    long_description="A Python interface and library for pc-ble-driver. This allows Python applications to interface "
+    "with a Nordic Semiconductor IC (both nRF51 and nRF52 series) over a serial port to obtain "
+    "access to the full serialized SoftDevice API.",
+    url="https://github.com/NordicSemiconductor/pc-ble-driver-py",
+    license="Modified BSD License",
+    author="Nordic Semiconductor ASA",
     classifiers=[
-        'Development Status :: 4 - Beta',
-
-        'Intended Audience :: Developers',
-
-        'Operating System :: MacOS',
-        'Operating System :: Microsoft :: Windows',
-        'Operating System :: POSIX :: Linux',
-
-        'Topic :: System :: Networking',
-        'Topic :: System :: Hardware :: Hardware Drivers',
-        'Topic :: Software Development :: Embedded Systems',
-
-        'License :: Other/Proprietary License',
-
-        'Programming Language :: Python',
-        'Programming Language :: Python :: 3',
-        'Programming Language :: Python :: 3.6',
-        'Programming Language :: Python :: 3.7',
-        'Programming Language :: Python :: 3.8'
+        "Development Status :: 4 - Beta",
+        "Intended Audience :: Developers",
+        "Operating System :: MacOS",
+        "Operating System :: Microsoft :: Windows",
+        "Operating System :: POSIX :: Linux",
+        "Topic :: System :: Networking",
+        "Topic :: System :: Hardware :: Hardware Drivers",
+        "Topic :: Software Development :: Embedded Systems",
+        "License :: Other/Proprietary License",
+        "Programming Language :: Python",
+        "Programming Language :: Python :: 3",
+        "Programming Language :: Python :: 3.6",
+        "Programming Language :: Python :: 3.7",
+        "Programming Language :: Python :: 3.8",
+        "Programming Language :: Python :: 3.9",
     ],
-    keywords='nordic nrf51 nrf52 ble bluetooth softdevice serialization bindings pc-ble-driver pc-ble-driver-py '
-             'pc_ble_driver pc_ble_driver_py',
+    keywords="nordic nrf51 nrf52 ble bluetooth softdevice serialization bindings pc-ble-driver pc-ble-driver-py "
+    "pc_ble_driver pc_ble_driver_py",
     python_requires=">=3.6, <3.10",
     install_requires=requirements,
     packages=packages,
     package_data={
-        'pc_ble_driver_py.lib': ['*.pyd', '*.dll', '*.txt','*.so', '*.dylib'],
-        'pc_ble_driver_py.hex': ['*.hex'],
-        'pc_ble_driver_py.hex.sd_api_v2': ['*.hex'],
-        'pc_ble_driver_py.hex.sd_api_v5': ['*.hex', '*.zip']
-    }
+        "pc_ble_driver_py.lib": ["*.pyd", "*.dll", "*.txt", "*.so", "*.dylib"],
+        "pc_ble_driver_py.hex": ["*.hex"],
+        "pc_ble_driver_py.hex.sd_api_v2": ["*.hex"],
+        "pc_ble_driver_py.hex.sd_api_v5": ["*.hex", "*.zip"],
+    },
 )
