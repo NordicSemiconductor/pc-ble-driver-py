@@ -73,13 +73,12 @@ class Settings(object):
         retval = list(sys.argv)
 
         for arg_to_remove in args_to_remove:
-            try:
+            if arg_to_remove in retval:
                 idx = retval.index(arg_to_remove)
                 # Remove argument and argument value
                 del retval[idx]
                 del retval[idx]
-            except ValueError as _:
-                pass
+
 
         return retval
 

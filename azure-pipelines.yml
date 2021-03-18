@@ -57,6 +57,11 @@ jobs:
         addChangeLog: 'false'
       condition: ne(variables['Build.Reason'], 'PullRequest')
 
+    - task: PublishPipelineArtifact@1
+      inputs:
+        path: "$(Build.ArtifactStagingDirectory)"
+        artifact: artifact-py-$(wheel_platform)
+
   # macOS
   - job: macOS
     variables:
@@ -123,6 +128,10 @@ jobs:
         addChangeLog: 'false'
       condition: ne(variables['Build.Reason'], 'PullRequest')
 
+    - task: PublishPipelineArtifact@1
+      inputs:
+        path: "$(Build.ArtifactStagingDirectory)"
+        artifact: artifact-py-$(python_lib)-$(python_arch)-macOS
   # Windows
   - job: Windows
     variables:
@@ -204,7 +213,10 @@ jobs:
         isDraft: 'true'
         addChangeLog: 'false'
       condition: ne(variables['Build.Reason'], 'PullRequest')
-
+    - task: PublishPipelineArtifact@1
+      inputs:
+        path: "$(Build.ArtifactStagingDirectory)"
+        artifact: artifact-py-$(python_lib)-$(python_arch)-windows
   - job: TriggerTest
     dependsOn: [
       Windows,
@@ -232,3 +244,24 @@ jobs:
         urlSuffix: 'view/pc-ble-driver-py/job/pc-ble-driver-py-$(osType)/buildWithParameters?BRANCH=$(Build.SourceBranch)&VSTS_URL=$(system.CollectionUri)&TOKEN=$(system.AccessToken)&PROJECT_ID=$(system.teamProjectId)&HUB_NAME=$(system.hostType)&PLAN_ID=$(system.planId)&TASK_ID=$(system.taskInstanceId)&JOB_ID=$(system.jobId)'
         waitForCompletion: 'false'
       condition: ne(variables['Build.Reason'], 'PullRequest')
+  - job: TestLinux
+
+    variables:
+      wheel_platform: 'manylinux2010_x86_64'
+
+    dependsOn: [
+      Linux,
+    ]
+    strategy:
+      matrix:
+        linux:
+          osType: 'linux'
+
+    pool: server
+    steps:
+      - task: DownloadPipelineArtifact@2
+        inputs:
+          source: current
+          artifact: artifact-py-$(wheel_platform)
+      - script: "echo display: dir\ndir\necho display: $(Pipeline.Workspace)\ndir $(Pipeline.Workspace)\n"
+        displayName: Build dist
