@@ -13,7 +13,7 @@ steps:
   - task: DownloadPipelineArtifact@2
     inputs:
       source: current
-      artifact: $(artifact)
+      artifact: ${{artifact}}
 
   - script: "echo display: dir\ndir\necho display: $(Pipeline.Workspace)\ndir $(Pipeline.Workspace)\n"
     displayName: Download artifact
