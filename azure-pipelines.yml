@@ -148,6 +148,7 @@ jobs:
         artifact: artifact-py-$(python_lib)-$(python_arch)-macOS
   # Windows
   - job: Windows
+    condition: eq(parameters.RunWindows, 'true')
     variables:
       VCPKG_ROOT: '$(Agent.HomeDirectory)\vcpkg'
     strategy:
@@ -232,6 +233,8 @@ jobs:
         path: "$(Build.ArtifactStagingDirectory)"
         artifact: artifact-py-$(python_lib)-$(python_arch)-windows
   - job: TriggerTest
+    
+    condition: and( eq(parameters.RunMacOS, 'true'), eq(parameters.RunWindows, 'true'))
     dependsOn: [
       Windows,
       Linux,
