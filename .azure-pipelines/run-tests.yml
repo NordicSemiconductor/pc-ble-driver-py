@@ -6,6 +6,8 @@ parameters:
   - name: arch
     type: number
 
+  - name: package_name
+    type: string
 steps:
 
 
@@ -26,7 +28,16 @@ steps:
       architecture: "x$(arch)" 
 
   # add python version here  
-  #pip install 
+  #pip install
+  
+  - bash: | 
+      pip install -r requirements-dev.txt
+      pip install $(Pipeline.Workspace)/$(parameters.package_name)
+
+    displayName: Pip install
+
+
+
   - bash: |
         ports=(`nrf-device-lister -p PCA10056`)
         export PORT_A=${ports[0]}
