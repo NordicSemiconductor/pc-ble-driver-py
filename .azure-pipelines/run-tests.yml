@@ -18,12 +18,12 @@ steps:
       artifact: ${{parameters.artifact}}
 
   - script: "echo display: dir\ndir\necho display: $(Pipeline.Workspace)\ndir $(Pipeline.Workspace)\n"
-    displayName: Download artifact
+    displayName: Display  artifact directories
   
   - script: |
-      echo Dosplaying Python versions in $(Agent.ToolsDirectory)
+      echo Displaying Python versions in $(Agent.ToolsDirectory)
       dir $(Agent.ToolsDirectory)
-    displayName: Download artifact
+    displayName: Show python versions
     
 
   - task: UsePythonVersion@0
