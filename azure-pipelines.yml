@@ -89,11 +89,11 @@ jobs:
         CC=gcc-9 CXX=g++-9 $VCPKG_ROOT/bootstrap-vcpkg.sh
       displayName: 'Install vcpkg'
       env: {
-        VCPKG_REPOSITORY: "$(VCPKG_REPOSITORY)",
-        VCPKG_ROOT: "$(VCPKG_ROOT)",
+        VCPKG_REPOSITORY: $(VCPKG_REPOSITORY),
+        VCPKG_ROOT: $(VCPKG_ROOT),
         VCPKG_COMMIT: "${{ parameters.VCPKG_COMMIT }}",
-        VCPKG_OVERLAY_PORTS_REPOSITORY: "$(VCPKG_OVERLAY_PORTS_REPOSITORY)",
-        VCPKG_OVERLAY_PORTS_DIR: "$(VCPKG_OVERLAY_PORTS_DIR)"
+        VCPKG_OVERLAY_PORTS_REPOSITORY: $(VCPKG_OVERLAY_PORTS_REPOSITORY),
+        VCPKG_OVERLAY_PORTS_DIR: $(VCPKG_OVERLAY_PORTS_DIR)
       }
     - script: |
         set -o errexit -o pipefail
@@ -187,9 +187,9 @@ jobs:
         choco install -y --x86 swig
       displayName: 'Install toolchain on Windows'
     - script: |
-        git clone $VCPKG_REPOSITORY $VCPKG_ROOT --branch $VCPKG_COMMIT --depth 1
-        git clone $VCPKG_OVERLAY_PORTS_REPOSITORY $VCPKG_OVERLAY_PORTS_DIR --depth 1
-        $VCPKG_ROOT\bootstrap-vcpkg.bat
+        git clone %VCPKG_REPOSITORY% %VCPKG_ROOT% --branch %VCPKG_COMMIT% --depth 1
+        git clone %VCPKG_OVERLAY_PORTS_REPOSITORY% %VCPKG_OVERLAY_PORTS_DIR% --depth 1
+        %VCPKG_ROOT%\bootstrap-vcpkg.bat
       displayName: 'Install vcpkg'
       env: {
         VCPKG_COMMIT: "${{ parameters.VCPKG_COMMIT }}",
