@@ -77,7 +77,7 @@ jobs:
 
   # macOS
   - job: macOS
-    condition: eq(parameters.RunMacOS, 'true')
+    condition: eq(${{parameters.RunMacOS}}, 'true')
     variables:
       VCPKG_ROOT: '$(Agent.HomeDirectory)/vcpkg'
       python_arch: 'x64'
@@ -148,7 +148,7 @@ jobs:
         artifact: artifact-py-$(python_lib)-$(python_arch)-macOS
   # Windows
   - job: Windows
-    condition: eq(parameters.RunWindows, 'true')
+    condition: eq(${{parameters.RunWindows}}, 'true')
     variables:
       VCPKG_ROOT: '$(Agent.HomeDirectory)\vcpkg'
     strategy:
@@ -234,7 +234,7 @@ jobs:
         artifact: artifact-py-$(python_lib)-$(python_arch)-windows
   - job: TriggerTest
     
-    condition: and( eq(parameters.RunMacOS, 'true'), eq(parameters.RunWindows, 'true'))
+    condition: and( eq(${{parameters.RunMacOS}}, 'true'), eq(${{parameters.RunWindows}}, 'true'))
     dependsOn: [
       Windows,
       Linux,
