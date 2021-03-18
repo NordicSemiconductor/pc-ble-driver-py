@@ -19,11 +19,11 @@ steps:
     displayName: Download artifact
     
 
-- task: UsePythonVersion@0
-  inputs:
-    versionSpec: $(py_version)
-    addToPath: true 
-    architecture: "x$(arch)" 
+  - task: UsePythonVersion@0
+    inputs:
+      versionSpec: $(py_version)
+      addToPath: true 
+      architecture: "x$(arch)" 
 
   # add python version here  
   #pip install 
