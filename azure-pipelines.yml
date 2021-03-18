@@ -300,3 +300,32 @@ jobs:
           arch: 64 
           artifact: "artifact-py-$(wheel_platform)"
           package_name: pc_ble_driver_py-0.15.1-cp37-cp37m-manylinux2010_x86_64.whl
+
+
+
+  # - job: TestWindows
+  #   condition: eq(${{parameters.RunWindows}}, true)
+  #   variables:
+  #     wheel_platform: 'manylinux2010_x86_64'
+
+  #   dependsOn: [
+  #     Linux,
+  #   ]
+  #   strategy:
+  #     matrix:
+  #       linux:
+  #         osType: 'Windows'
+
+  #   pool:
+  #     name: test-pool-onv12-1      
+  #     demands: Agent.OS -equals Windows NT
+  #   steps:
+
+
+  #     - template: .azure-pipelines/run-tests.yml
+  #       parameters:
+  #         py_versions: '3.7.4'
+  #         arch: 64 
+  #         artifact: "artifact-py-$(wheel_platform)"
+  #         package_name: TODO_FIX_THIS_NAME
+
