@@ -22,7 +22,9 @@ steps:
   
   - script: |
       echo Displaying Python versions in $(Agent.ToolsDirectory)
+      echo begin---------------------------
       dir $(Agent.ToolsDirectory)
+      echo end-----------------------------
     displayName: Show python versions
     
 
