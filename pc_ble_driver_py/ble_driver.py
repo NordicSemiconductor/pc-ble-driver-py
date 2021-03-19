@@ -403,6 +403,7 @@ class BLEGapConnSecMode(object):
         """BLE_GAP_CONN_SEC_MODE_SET_SIGNED_NO_MITM"""
         self.sm = 2
         self.lv = 1
+
     def set_signed_with_mitm(self):
         """BLE_GAP_CONN_SEC_MODE_SET_SIGNED_WITH_MITM"""
         self.sm = 2
@@ -423,26 +424,25 @@ class BLEGapConnSecMode(object):
         return sec_mode
 
     def __str__(self):
-        return "sm({0.ssm}) lv({0.lv}))".format(
+        return "sm({0.sm}) lv({0.lv}))".format(
             self
         )    
 
 class BLEGapConnSec(object):
-    def __init__(self, sec_mode, level, encr_key_size):
+    def __init__(self, sec_mode, encr_key_size):
+        assert isinstance(sec_mode, BLEGapConnSecMode), "Invalid argument type"
         self.sec_mode = sec_mode
-        self.level = level
         self.encr_key_size = encr_key_size
 
     @classmethod
     def from_c(cls, conn_sec):
         return cls(
-            sec_mode=conn_sec.sec_mode.sm,
-            level=conn_sec.sec_mode.lv,
+            sec_mode=BLEGapConnSecMode.from_c(conn_sec.sec_mode),
             encr_key_size=conn_sec.encr_key_size,
         )
 
     def __str__(self):
-        return "sec_mode({0.sec_mode}) level({0.level}) encr_key_size({0.encr_key_size})".format(
+        return "sec_mode({0.sec_mode}) encr_key_size({0.encr_key_size})".format(
             self
         )
 
