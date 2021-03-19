@@ -321,7 +321,7 @@ jobs:
       demands: Agent.OS -equals Darwin
     steps:
 
-      - template: .azure-pipelines/run-tests.mac.yml
+      - template: .azure-pipelines/run-tests-mac.yml
         parameters:
           # py_versions: '3.7.4'
           # arch: 64 
