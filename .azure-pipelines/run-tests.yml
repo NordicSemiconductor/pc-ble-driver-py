@@ -27,22 +27,7 @@ steps:
       echo end-----------------------------
     displayName: Show python versions
     
-  # - task: UsePythonVersion@0
-  #   inputs:
 
-  #     versionSpec: '3.x'
-  #     addToPath: true 
-      # architecture: 'x64'
-
-
-  # - task: UsePythonVersion@0
-  #   inputs:
-  #     versionSpec: $(py_version)
-  #     addToPath: true 
-  #     architecture: "x$(parameters.arch)" 
-
-  # add python version here  
-  #pip install
   
   - bash: | 
       pip install -r requirements-dev.txt
@@ -50,6 +35,7 @@ steps:
       dir $(Pipeline.Workspace)
       echo "--------" Install:  ${{ parameters.package_name }}
 
+      python --version 
 
       pip install $(Pipeline.Workspace)/${{ parameters.package_name }}      --user --force-reinstall
     displayName: Pip install
