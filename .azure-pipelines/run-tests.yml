@@ -29,6 +29,7 @@ steps:
     
   # - task: UsePythonVersion@0
   #   inputs:
+
   #     versionSpec: '3.x'
   #     addToPath: true 
       # architecture: 'x64'
@@ -47,18 +48,10 @@ steps:
       pip install -r requirements-dev.txt
       echo "--------" From: $(Pipeline.Workspace)
       dir $(Pipeline.Workspace)
-      echo "--------" Install:  $(parameters.package_name)
-      echo "--------" Install:  ${{parameters.package_name}}
-      echo "--------" Install:  ${parameters.package_name}
+      echo "--------" Install:  ${{ parameters.package_name }}
 
-      echo "--------" Install:  $(package_name)
-      echo "--------" Install:  ${{package_name}}
-      echo "--------" Install:  ${package_name}
-    
-      echo "--------" Install:  $(parameter.package_name)
-      echo "--------" Install:  ${{parameter.package_name}}
-      echo "--------" Install:  ${parameter.package_name}      
-      pip install $(Pipeline.Workspace)/$(parameters.package_name)      --user --force-reinstall
+
+      pip install $(Pipeline.Workspace)/${{ parameters.package_name }}      --user --force-reinstall
     displayName: Pip install
 
 
