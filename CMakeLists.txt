@@ -15,6 +15,7 @@ if(WIN32)
 endif()
 
 set(PC_BLE_DRIVER_PY_OUTDIR ${CMAKE_BINARY_DIR}/outdir)
+set(NRF_BLE_DRIVER_VERSION "4.1.4")
 
 # There is no reason to compile more than two SoftDevice API versions
 # The Python module only supports one SoftDevice API
@@ -26,7 +27,7 @@ find_package(SWIG REQUIRED)
 include(${SWIG_USE_FILE})
 
 # nrf-ble-driver
-find_package(nrf-ble-driver 4.1.2 CONFIG REQUIRED)
+find_package(nrf-ble-driver ${NRF_BLE_DRIVER_VERSION} EXACT CONFIG REQUIRED)
 
 # PYTHON_INCLUDE_DIR provided by scikit-build
 include_directories(${PYTHON_INCLUDE_DIR})
