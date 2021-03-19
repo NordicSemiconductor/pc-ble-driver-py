@@ -278,6 +278,8 @@ jobs:
   # Run tests
   - job: TestLinux
 
+    condition: eq(${{parameters.RunLinux}}, 'true')
+
     variables:
       wheel_platform: 'manylinux2010_x86_64'
 
@@ -302,4 +304,28 @@ jobs:
           package_name: pc_ble_driver_py-0.15.1-cp36-cp36m-manylinux2010_x86_64.whl
 
 
+
+  - job: TestMacOS
+
+    # condition: eq(${{ parameters.RunMacOS }}, 'true') 
+
+    dependsOn: [
+      MacOS,
+    ]
+
+    variables: 
+      python_lib: 36
+
+    pool:
+      name: test-pool-onv12-1
+      demands: Agent.OS -equals Darwin
+    steps:
+
+      - template: .azure-pipelines/run-tests.mac.yml
+        parameters:
+          # py_versions: '3.7.4'
+          # arch: 64 
+          artifact: "artifact-py-$(wheel_platform)"
+          package_name: artifact-py-$(python_lib)-x64-macOS
+            # artifact-py-$(python_lib)-$(python_arch)-macOS
 

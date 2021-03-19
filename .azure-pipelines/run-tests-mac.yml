@@ -1,0 +1,77 @@
+
+parameters:
+  - name: artifact
+    type: string
+
+  - name: package_name
+    type: string
+steps:
+
+
+
+  - task: DownloadPipelineArtifact@2
+    inputs:
+      source: current
+      artifact: ${{parameters.artifact}}
+
+  - script: "echo display: dir\ndir\necho display: $(Pipeline.Workspace)\ndir $(Pipeline.Workspace)\n"
+    displayName: Display  artifact directories
+  
+  - script: |
+      echo Displaying Python versions in $(Agent.ToolsDirectory)
+      echo begin---------------------------
+      dir $(Agent.ToolsDirectory)
+      echo end-----------------------------
+    displayName: Show python versions
+    
+
+  
+  - bash: | 
+      
+      echo "--------" From: $(Pipeline.Workspace)
+      dir $(Pipeline.Workspace)
+      echo "--------" Install:  ${{ parameters.package_name }}
+
+      
+      echo start run python 36 
+      python3.6 -m pip install -r requirements-dev.txt 
+
+      python3.6 -m pip install   $(Pipeline.Workspace)/pc_ble_driver_py-0.15.1-cp36-cp36m-manylinux2010_x86_64.whl
+      python3.6 -m pip install   $(Pipeline.Workspace)/pc_ble_driver_py-0.15.1-cp37-cp37m-manylinux2010_x86_64.whl
+      python3.6 -m pip install   $(Pipeline.Workspace)/pc_ble_driver_py-0.15.1-cp38-cp38-manylinux2010_x86_64.whl
+      echo end python 36
+
+      echo start pyhon 36m 
+
+      python3.6m -m pip install -r requirements-dev.txt 
+      python3.6m -m pip install   $(Pipeline.Workspace)/pc_ble_driver_py-0.15.1-cp36-cp36m-manylinux2010_x86_64.whl
+      python3.6m -m pip install   $(Pipeline.Workspace)/pc_ble_driver_py-0.15.1-cp37-cp37m-manylinux2010_x86_64.whl
+      python3.6m -m pip install   $(Pipeline.Workspace)/pc_ble_driver_py-0.15.1-cp38-cp38-manylinux2010_x86_64.whl
+      echo end python 36m
+    displayName: Pip install
+
+
+
+  - bash: |
+        ports=(`nrf-device-lister -p PCA10056`)
+        export PORT_A=${ports[0]}
+        ports=(`nrf-device-lister -p PCA10040`)
+        export PORT_B=${ports[0]}
+
+        LOG_LEVEL="debug"
+        DRV_LOG_LEVEL="info"
+        
+        set -e
+
+
+        python3.6m tests/test_programming.py        --port-a ${PORT_A} --port-b ${PORT_B} --log-level ${LOG_LEVEL} --driver-log-level ${DRV_LOG_LEVEL}
+        python3.6m tests/test_ble_common_api.py     --port-a ${PORT_A} --port-b ${PORT_B} --log-level ${LOG_LEVEL} --driver-log-level ${DRV_LOG_LEVEL}
+        python3.6m tests/test_rssi.py               --port-a ${PORT_A} --port-b ${PORT_B} --log-level ${LOG_LEVEL} --driver-log-level ${DRV_LOG_LEVEL}
+        python3.6m tests/test_connection_update.py  --port-a ${PORT_A} --port-b ${PORT_B} --log-level ${LOG_LEVEL} --driver-log-level ${DRV_LOG_LEVEL}
+        python3.6m tests/test_mtu.py                --port-a ${PORT_A} --port-b ${PORT_B} --log-level ${LOG_LEVEL} --driver-log-level ${DRV_LOG_LEVEL}
+        python3.6m tests/test_passkey.py            --port-a ${PORT_A} --port-b ${PORT_B} --log-level ${LOG_LEVEL} --driver-log-level ${DRV_LOG_LEVEL}
+        python3.6m tests/test_phy_update.py         --port-a ${PORT_A} --port-b ${PORT_B} --log-level ${LOG_LEVEL} --driver-log-level ${DRV_LOG_LEVEL}
+        python3.6m tests/test_data_length.py        --port-a ${PORT_A} --port-b ${PORT_B} --log-level ${LOG_LEVEL} --driver-log-level ${DRV_LOG_LEVEL}
+        python3.6m tests/test_server_client.py      --port-a ${PORT_A} --port-b ${PORT_B} --log-level ${LOG_LEVEL} --driver-log-level ${DRV_LOG_LEVEL}
+
+    displayName: Jenkins run      
