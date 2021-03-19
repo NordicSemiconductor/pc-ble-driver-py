@@ -48,7 +48,6 @@ steps:
       echo "--------" From: $(Pipeline.Workspace)
       dir $(Pipeline.Workspace)
       echo "--------" Install:  $(parameters.package_name)
-      dir $(parameters.package_name)
       pip install $(Pipeline.Workspace)/$(parameters.package_name)      --user --force-reinstall
     displayName: Pip install
 
