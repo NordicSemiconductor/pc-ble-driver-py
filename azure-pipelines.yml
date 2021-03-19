@@ -296,10 +296,10 @@ jobs:
 
       - template: .azure-pipelines/run-tests.yml
         parameters:
-          py_versions: '3.7.4'
-          arch: 64 
+          # py_versions: '3.7.4'
+          # arch: 64 
           artifact: "artifact-py-$(wheel_platform)"
-          package_name: pc_ble_driver_py-0.15.1-cp36-cp36m-manylinux2010_x86_64.whl
+          package_name:  wrapt-1.12.1-cp36-cp36m-manylinux1_x86_64.whl                   pc_ble_driver_py-0.15.1-cp36-cp36m-manylinux2010_x86_64.whl
 
 
 

@@ -1,10 +1,10 @@
 parameters:
   - name: artifact
     type: string
-  - name: py_versions
-    type: object
-  - name: arch
-    type: number
+  # - name: py_versions
+  #   type: object
+  # - name: arch
+  #   type: number
 
   - name: package_name
     type: string
@@ -30,14 +30,17 @@ steps:
 
   
   - bash: | 
-      pip install -r requirements-dev.txt
+      pip3 install -r requirements-dev.txt
       echo "--------" From: $(Pipeline.Workspace)
       dir $(Pipeline.Workspace)
       echo "--------" Install:  ${{ parameters.package_name }}
 
       python3 --version 
-
+      pip3 --version
       pip3 install $(Pipeline.Workspace)/${{ parameters.package_name }}      --user --force-reinstall
+
+      echo more explicitly 
+      python3 -m pip $(Pipeline.Workspace)/${{ parameters.package_name }}      --user --force-reinstall
     displayName: Pip install
 
 
