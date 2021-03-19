@@ -27,12 +27,18 @@ steps:
       echo end-----------------------------
     displayName: Show python versions
     
-
   - task: UsePythonVersion@0
     inputs:
-      versionSpec: $(py_version)
+      versionSpec: '3.x'
       addToPath: true 
-      architecture: "x$(parameters.arch)" 
+      architecture: 'x64'
+
+
+  # - task: UsePythonVersion@0
+  #   inputs:
+  #     versionSpec: $(py_version)
+  #     addToPath: true 
+  #     architecture: "x$(parameters.arch)" 
 
   # add python version here  
   #pip install
