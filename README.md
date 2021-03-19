@@ -32,7 +32,7 @@ not a valid Win32 application'`.
 please install the redistributable installer for [Visual Studio 2013](https://www.microsoft.com/en-us/download/details.aspx?id=40784) or [Visual Studio 2015](https://www.microsoft.com/en-us/download/details.aspx?id=48145) respectively. Make sure to install the one corresponding to the architecture of your **Python** installation (x86 or x64).
 
 ### macOS limitations
-The binary distribution of pc-ble-driver-py will only work with the official Python versions, not the one provided with macOS.
+The binary distribution of pc-ble-driver-py will only work with the official Python versions, not the one provided with macOS or a brew install.
 
 ## Building from source
 
