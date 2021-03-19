@@ -41,6 +41,7 @@ variables:
 
 jobs:
   # Linux
+    condition: eq(${{parameters.RunLinux}}, 'true')
   - job: Linux
     variables:
       wheel_platform: 'manylinux2010_x86_64'
