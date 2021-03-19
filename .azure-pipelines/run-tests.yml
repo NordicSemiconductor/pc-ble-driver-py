@@ -40,7 +40,10 @@ steps:
       pip3 install $(Pipeline.Workspace)/${{ parameters.package_name }}      --user --force-reinstall
 
       echo more explicitly 
-      python3 -m pip $(Pipeline.Workspace)/${{ parameters.package_name }}      --user --force-reinstall
+      python3 -m pip install  $(Pipeline.Workspace)/${{ parameters.package_name }}      --user --force-reinstall
+      python3 -m pip install  $(Pipeline.Workspace)/${{ parameters.package_name }}      --user --force-reinstall
+      echo Use m version
+      python3.6m -m pip install  $(Pipeline.Workspace)/${{ parameters.package_name }}      --user --force-reinstall
     displayName: Pip install
 
 
