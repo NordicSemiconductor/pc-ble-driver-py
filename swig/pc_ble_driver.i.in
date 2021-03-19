@@ -195,6 +195,35 @@ std::shared_ptr<adapter_context_t> adapter_context_find(adapter_t *adapter_ptr)
 %}
 
 
+%{
+
+
+#include <mutex>
+#include <string>
+
+
+    class GILStateWrapper{
+        // Ensure the python GIL is a state such that SWIG functions can be called within a scope
+        private:
+            PyGILState_STATE gstate;
+            std::string lock_action_debug_message;
+            std::lock_guard<std::recursive_mutex> lock; 
+            static std::recursive_mutex GIL_MUTEX; 
+        public: 
+            GILStateWrapper(const char* _unused_debug_message) : lock_action_debug_message(_unused_debug_message), lock(GILStateWrapper::GIL_MUTEX) {
+                this->gstate = PyGILState_Ensure();
+            }
+            GILStateWrapper(): GILStateWrapper("") {
+            }    
+            ~GILStateWrapper(){
+                PyGILState_Release(this->gstate);
+            }
+    };
+
+    std::recursive_mutex GILStateWrapper::GIL_MUTEX;
+
+%}
+
 /* Event callback handling */
 %{
 static void PythonEvtCallBack(adapter_t *adapter, ble_evt_t *ble_event)
@@ -203,10 +232,10 @@ static void PythonEvtCallBack(adapter_t *adapter, ble_evt_t *ble_event)
     PyObject *arglist;
     PyObject *adapter_obj;
     PyObject *ble_evt_obj;
-    PyGILState_STATE gstate;
     ble_evt_t* copied_ble_event;
     PyObject *result;
 
+    //TODO Fix the deprecation waringngs on 3.9
     auto adapter_context = adapter_context_find(adapter);
 
     if (!adapter_context)
@@ -249,8 +278,9 @@ static void PythonEvtCallBack(adapter_t *adapter, ble_evt_t *ble_event)
     memcpy(copied_ble_event, ble_event, ble_event->header.evt_len + length_correction);
 #endif
 
-    // Handling of Python Global Interpretor Lock (GIL)
-    gstate = PyGILState_Ensure();
+
+    GILStateWrapper GIL_lock("PythonEvtCallback"); 
+
 
     adapter_obj = SWIG_NewPointerObj(SWIG_as_voidptr(adapter), SWIGTYPE_p_adapter_t, 0 |  0 );
     // Create a Python object that points to the copied event, let the interpreter take care of
@@ -258,14 +288,14 @@ static void PythonEvtCallBack(adapter_t *adapter, ble_evt_t *ble_event)
     ble_evt_obj = SWIG_NewPointerObj(SWIG_as_voidptr(copied_ble_event), SWIGTYPE_p_ble_evt_t, SWIG_POINTER_OWN);
     arglist = Py_BuildValue("(OO)", adapter_obj, ble_evt_obj);
 
-    result = PyEval_CallObject(func, arglist);
+    result = PyObject_Call(func, arglist, NULL);
 
     Py_XDECREF(result);
     Py_XDECREF(adapter_obj);
     Py_XDECREF(ble_evt_obj);
     Py_DECREF(arglist);
 
-    PyGILState_Release(gstate);
+
 }
 %}
 
@@ -279,7 +309,6 @@ static void PythonStatusCallBack(adapter_t *adapter, sd_rpc_app_status_t status_
     PyObject *adapter_obj;
     PyObject *status_code_obj;
     PyObject *status_message_obj;
-    PyGILState_STATE gstate;
     PyObject *result;
 
     auto adapter_context = adapter_context_find(adapter);
@@ -306,7 +335,7 @@ static void PythonStatusCallBack(adapter_t *adapter, sd_rpc_app_status_t status_
     // For information regarding GIL and copying of data, please look at
     // function PythonEvtCallBack.
 
-    gstate = PyGILState_Ensure();
+    GILStateWrapper GIL_lock("PythonStatusCallBack"); 
 
     adapter_obj = SWIG_NewPointerObj(SWIG_as_voidptr(adapter), SWIGTYPE_p_adapter_t, 0 |  0 );
     status_code_obj = SWIG_From_int((int)(status_code));
@@ -315,7 +344,7 @@ static void PythonStatusCallBack(adapter_t *adapter, sd_rpc_app_status_t status_
     status_message_obj = SWIG_Python_str_FromChar((const char *)status_message);
     arglist = Py_BuildValue("(OOO)", adapter_obj, status_code_obj, status_message_obj);
 
-    result = PyEval_CallObject(func, arglist);
+    result = PyObject_Call(func, arglist, NULL);
 
     Py_XDECREF(result);
     Py_XDECREF(adapter_obj);
@@ -323,7 +352,7 @@ static void PythonStatusCallBack(adapter_t *adapter, sd_rpc_app_status_t status_
     Py_XDECREF(status_message_obj);
     Py_DECREF(arglist);
 
-    PyGILState_Release(gstate);
+
 }
 %}
 
@@ -336,7 +365,6 @@ static void PythonLogCallBack(adapter_t *adapter, sd_rpc_log_severity_t severity
     PyObject *adapter_obj;
     PyObject *severity_obj;
     PyObject *message_obj;
-    PyGILState_STATE gstate;
     PyObject *result;
 
     auto adapter_context = adapter_context_find(adapter);
@@ -363,7 +391,7 @@ static void PythonLogCallBack(adapter_t *adapter, sd_rpc_log_severity_t severity
     // For information regarding GIL and copying of data, please look at
     // function PythonEvtCallBack.
 
-    gstate = PyGILState_Ensure();
+    GILStateWrapper GIL_lock("PythonLogCallBack"); 
 
     adapter_obj = SWIG_NewPointerObj(SWIG_as_voidptr(adapter), SWIGTYPE_p_adapter_t, 0 |  0 );
     severity_obj = SWIG_From_int((int)(severity));
@@ -372,7 +400,7 @@ static void PythonLogCallBack(adapter_t *adapter, sd_rpc_log_severity_t severity
     message_obj = SWIG_Python_str_FromChar((const char *)log_message);
     arglist = Py_BuildValue("(OOO)", adapter_obj, severity_obj, message_obj);
 
-    result = PyEval_CallObject(func, arglist);
+    result = PyObject_Call(func, arglist, NULL);
 
     Py_XDECREF(result);
     Py_XDECREF(adapter_obj);
@@ -380,7 +408,7 @@ static void PythonLogCallBack(adapter_t *adapter, sd_rpc_log_severity_t severity
     Py_XDECREF(severity_obj);
     Py_DECREF(arglist);
 
-    PyGILState_Release(gstate);
+;
 }
 %}
 
@@ -396,30 +424,39 @@ PyObject* sd_rpc_open_py(PyObject *adapter, PyObject *py_status_handler, PyObjec
     uint32_t result;
     std::shared_ptr<adapter_context_t> ctx{nullptr};
 
-    res1 = SWIG_ConvertPtr(adapter, &argp1,SWIGTYPE_p_adapter_t, 0 |  0 );
-    if (!SWIG_IsOK(res1)) {
-      SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "sd_rpc_open" "', argument " "1"" of type '" "adapter_t *""'");
-    }
 
-    arg1 = (adapter_t * ) (argp1);
-
-    // Try to register adapter_context_t
-    ctx = adapter_context_add(arg1);
-    if (!ctx)
     {
-        SWIG_exception_fail(SWIG_ValueError, "Not able to register adapter_context_t for adapter");
+        GILStateWrapper GIL_lock("sd_rpc_open_py"); 
+
+
+        res1 = SWIG_ConvertPtr(adapter, &argp1,SWIGTYPE_p_adapter_t, 0 |  0 );
+        if (!SWIG_IsOK(res1)) {
+        SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "sd_rpc_open" "', argument " "1"" of type '" "adapter_t *""'");
+        }
+
+        arg1 = (adapter_t * ) (argp1);
+
+        // Try to register adapter_context_t
+        ctx = adapter_context_add(arg1);
+        if (!ctx)
+        {
+            SWIG_exception_fail(SWIG_ValueError, "Not able to register adapter_context_t for adapter");
+        }
+
     }
+        Py_XINCREF(py_log_handler);
+        Py_XINCREF(py_status_handler);
+        Py_XINCREF(py_evt_handler);
 
-    Py_XINCREF(py_log_handler);
-    Py_XINCREF(py_status_handler);
-    Py_XINCREF(py_evt_handler);
-
-    ctx->log_callback = py_log_handler;
-    ctx->status_callback = py_status_handler;
-    ctx->event_callback = py_evt_handler;
+        ctx->log_callback = py_log_handler;
+        ctx->status_callback = py_status_handler;
+        ctx->event_callback = py_evt_handler;
 
     result = sd_rpc_open(arg1, PythonStatusCallBack, PythonEvtCallBack, PythonLogCallBack);
-    resultobj = SWIG_From_unsigned_SS_int((unsigned int) (result));
+    {
+       GILStateWrapper GIL_lock("sd_rpc_open_py_2"); 
+       resultobj = SWIG_From_unsigned_SS_int((unsigned int) (result));
+    }
     return resultobj;
 
 fail:
@@ -433,17 +470,22 @@ PyObject *sd_rpc_close_py(PyObject *adapter) {
     int res1 = 0;
     uint32_t result;
     std::shared_ptr<adapter_context_t> ctx{nullptr};
-    PyGILState_STATE gstate;
 
-    res1 = SWIG_ConvertPtr(adapter, &argp1, SWIGTYPE_p_adapter_t, 0 |  0 );
-    if (!SWIG_IsOK(res1)) {
-        SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "sd_rpc_close" "', argument " "1"" of type '" "adapter_t *""'");
+
+
+
+    {
+        GILStateWrapper GIL_lock("sd_rpc_close_py_1"); 
+        res1 = SWIG_ConvertPtr(adapter, &argp1, SWIGTYPE_p_adapter_t, 0 |  0 );
+        if (!SWIG_IsOK(res1)) {
+            SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "sd_rpc_close" "', argument " "1"" of type '" "adapter_t *""'");
+        }
+
     }
+        arg1 = (adapter_t *)(argp1);
+        result = sd_rpc_close(arg1);
 
-    arg1 = (adapter_t *)(argp1);
-    result = sd_rpc_close(arg1);
-
-    ctx = adapter_context_find(arg1);
+        ctx = adapter_context_find(arg1);
 
     if(!ctx)
     {
@@ -452,19 +494,21 @@ PyObject *sd_rpc_close_py(PyObject *adapter) {
     else
     {
         // Make sure that callbacks are not running before decrementing the callback reference count
-        std::lock_guard<std::mutex> lck(ctx->callback_mutex);
+        {
+            std::lock_guard<std::mutex> lck(ctx->callback_mutex);
+            
+            GILStateWrapper GIL_lock("sd_rpc_close_py_2"); 
 
-        gstate = PyGILState_Ensure();
+            Py_XDECREF(ctx->event_callback);
+            Py_XDECREF(ctx->status_callback);
+            Py_XDECREF(ctx->log_callback);
 
-        Py_XDECREF(ctx->event_callback);
-        Py_XDECREF(ctx->status_callback);
-        Py_XDECREF(ctx->log_callback);
+            adapter_context_remove(arg1);
 
-        adapter_context_remove(arg1);
 
-        PyGILState_Release(gstate);
 
-        resultobj = SWIG_From_unsigned_SS_int((unsigned int)(result));
+            resultobj = SWIG_From_unsigned_SS_int((unsigned int)(result));
+        }
         return resultobj;
     }
 
