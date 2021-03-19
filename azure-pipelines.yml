@@ -308,7 +308,7 @@ jobs:
 
   - job: TestMacOS
 
-    # condition: eq(${{ parameters.RunMacOS }}, 'true') 
+    condition: eq(${{ parameters.RunMacOS }}, 'true') 
 
     dependsOn: [
       MacOS,
@@ -324,9 +324,6 @@ jobs:
 
       - template: .azure-pipelines/run-tests-mac.yml
         parameters:
-          # py_versions: '3.7.4'
-          # arch: 64 
           artifact: "artifact-py-$(wheel_platform)"
           package_name: artifact-py-$(python_lib)-x64-macOS
-            # artifact-py-$(python_lib)-$(python_arch)-macOS
 
