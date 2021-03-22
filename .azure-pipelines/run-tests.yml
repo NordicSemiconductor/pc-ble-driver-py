@@ -77,7 +77,7 @@ steps:
           dir
           echo display: $(Pipeline.Workspace)
           dir $(Pipeline.Workspace)
-      displayName: Display  artifact directories
+    displayName: Display  artifact directories
 
 
 
