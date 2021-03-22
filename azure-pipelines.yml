@@ -78,10 +78,10 @@ jobs:
       condition: ne(variables['Build.Reason'], 'PullRequest')
     
     - bash: |
-          echo "Displaying exported artifacts" 
-          ls "$(Build.ArtifactStagingDirectory)"
-          echo -------------------------------- 
-        displayName: Show artifacts 
+        echo "Displaying exported artifacts" 
+        ls "$(Build.ArtifactStagingDirectory)"
+        echo -------------------------------- 
+      displayName: Show artifacts 
     - task: PublishPipelineArtifact@1
       inputs:
         path: "$(Build.ArtifactStagingDirectory)"
