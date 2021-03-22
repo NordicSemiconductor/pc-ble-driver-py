@@ -61,6 +61,9 @@ steps:
     displayName: Pip install
 
 
+  - bash: | 
+      npm i nrf-device-lister
+    displayName: npm install
 
   - bash: |
         ports=(`nrf-device-lister -p PCA10056`) 
