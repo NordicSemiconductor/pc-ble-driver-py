@@ -1,0 +1,22 @@
+parameters:
+- name: nodeVersion
+  type: string
+
+steps:
+  - bash: |
+      echo "Setting up nodejs ${{ parameters.nodeVersion }}/32"
+    displayName: "Show requested nodejs version"
+  - bash: |
+      choco install -y nvm
+      set -o errexit -o pipefail
+      $NVM_HOME/nvm install $NODE_VERSION $NODE_ARCH
+      $NVM_HOME/nvm use $NODE_VERSION $NODE_ARCH
+      echo "##vso[task.prependpath]$NVM_SYMLINK"
+    env: {
+      NVM_HOME: "/C/ProgramData/nvm",
+      NVM_SYMLINK: "/C/ProgramData/nvm/v${{ parameters.nodeVersion }}",
+      NODE_VERSION: "${{ parameters.nodeVersion }}",
+      NODE_ARCH: 32,
+    }
+    displayName: "Setup Node.js ${{ parameters.nodeVersion }} 32-bit"
+    continueOnError: false

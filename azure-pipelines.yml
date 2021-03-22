@@ -36,6 +36,12 @@ parameters:
     type: boolean
     default: true
 
+  - name: nodeVersions
+    displayName: "Node versions"
+    type: object
+    default:
+      - 14.13.0
+      - 12.13.0
 variables:
   VCPKG_REPOSITORY: https://github.com/Microsoft/vcpkg.git
 

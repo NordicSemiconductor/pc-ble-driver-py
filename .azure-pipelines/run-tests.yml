@@ -1,12 +1,18 @@
 parameters:
   - name: artifact
     type: string
-  # - name: py_versions
-  #   type: object
-  # - name: arch
-  #   type: number
+  - name: nodeVersion
+    type: string
+  - name: nodeVersions
+    displayName: "Node versions"
+    type: object
+    default:
+      - 14.13.0
+      - 12.13.0
 
-  - name: package_name
+
+
+    - name: package_name
     type: string
 steps:
 
@@ -15,7 +21,7 @@ steps:
   - task: DownloadPipelineArtifact@2
     inputs:
       source: current
-      artifact: ${{parameters.artifact}}
+      artifact: ${{ parameters.artifact }}
 
   - script: "echo display: dir\ndir\necho display: $(Pipeline.Workspace)\ndir $(Pipeline.Workspace)\n"
     displayName: Display  artifact directories
@@ -60,8 +66,18 @@ steps:
       echo end python 36m
     displayName: Pip install
 
-
+  - ${{ each nodeVersion in parameters.nodeVersions }}:
+      - ${{ if eq(parameters.arch, 32) }}:
+          - template: setup-nodejs-32.yaml
+            parameters:
+              nodeVersion: ${{ parameters.nodeVersion }}
+  - ${{ each nodeVersion in parameters.nodeVersions }}:
+      - ${{ if eq(parameters.arch, 64) }}:
+          - template: setup-nodejs-64.yaml
+            parameters:
+           nodeVersion: ${{ parameters.nodeVersion }}
   - bash: | 
+
       npm i nrf-device-lister
     displayName: npm install
 
