@@ -77,7 +77,7 @@ steps:
       source: 'specific'
       pipeline: 5
       buildid: 10507
-      artifact: ${{ parameters.artifact }}
+      artifact: ${{ parameters.project }}
       project: pc-ble-driver-py 
 #      condition: failed()
   - script: | 
