@@ -285,7 +285,7 @@ jobs:
   # Run tests
   - job: TestLinux
 
-    condition: eq(${{parameters.RunLinux}}, 'true')
+    # condition: eq(${{parameters.RunLinux}}, 'true')
 
     variables:
       wheel_platform: 'manylinux2010_x86_64'
