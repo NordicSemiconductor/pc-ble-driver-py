@@ -62,7 +62,7 @@ steps:
             parameters:
               nodeVersion: ${{ nodeVersion }}
   - bash: | 
-
+      choco install npm 
       npm i nrf-device-lister
     displayName: npm install
 
