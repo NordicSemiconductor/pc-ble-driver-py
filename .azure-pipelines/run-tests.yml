@@ -78,6 +78,7 @@ steps:
       pipeline: 5
       buildid: 10507
       artifact: ${{ parameters.artifact }}
+      projectName: pc-ble-driver-py 
 #      condition: failed()
   - script: | 
           echo display: dir
