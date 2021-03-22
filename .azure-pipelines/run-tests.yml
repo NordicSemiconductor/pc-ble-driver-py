@@ -24,7 +24,6 @@ steps:
 
   
   - bash: | 
-      
       echo "--------" From: $(Pipeline.Workspace)
       dir $(Pipeline.Workspace)
       echo "--------" Install:  ${{ parameters.package_name }}

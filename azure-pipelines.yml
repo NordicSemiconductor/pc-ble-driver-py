@@ -77,9 +77,9 @@ jobs:
         addChangeLog: 'false'
       condition: ne(variables['Build.Reason'], 'PullRequest')
     
-    - bash: |
+    - script: |
         echo "Displaying exported artifacts" 
-        ls "$(Build.ArtifactStagingDirectory)"
+        dir "$(Build.ArtifactStagingDirectory)"
         echo -------------------------------- 
       displayName: Show artifacts 
     - task: PublishPipelineArtifact@1
