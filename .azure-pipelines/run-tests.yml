@@ -9,6 +9,9 @@ parameters:
     default:
       - 14.13.0
       - 12.13.0
+  - name: arch
+    type: string 
+    default: 64
 steps:
   
   - script: |
