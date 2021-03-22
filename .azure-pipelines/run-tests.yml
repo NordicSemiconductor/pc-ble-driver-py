@@ -10,9 +10,6 @@ parameters:
   - name: package_name
     type: string
 steps:
-
-
-
   - task: DownloadPipelineArtifact@2
     inputs:
       source: current
