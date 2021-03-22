@@ -1,14 +1,14 @@
 parameters:
   - name: artifact
     type: string
+  - name: package_name
+    type: string
   - name: nodeVersions
     displayName: "Node versions"
     type: object
     default:
       - 14.13.0
       - 12.13.0
-  - name: package_name
-    type: string
 steps:
   - task: DownloadPipelineArtifact@2
     inputs:
