@@ -66,19 +66,19 @@ steps:
   - bash: | 
       npm i nrf-device-lister
     displayName: npm install
-
-  - task: DownloadPipelineArtifact@2
-    inputs:
-      source: current
-      artifact: ${{ parameters.artifact }}
-
+#
+#  - task: DownloadPipelineArtifact@2
+#    inputs:
+#      source: current
+#      artifact: ${{ parameters.artifact }}
+#
   - task: DownloadPipelineArtifact@2
     inputs:
       source: 'specific'
       pipeline: 5
       buildid: 10507
       artifact: ${{ parameters.artifact }}
-      condition: failed()
+#      condition: failed()
   - script: | 
           echo display: dir
           dir
