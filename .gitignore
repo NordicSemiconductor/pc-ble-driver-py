@@ -26,3 +26,4 @@ _cmake_test_compile
 **/delete_me*
 **/.hidden/
 .vscode
+node_modules/

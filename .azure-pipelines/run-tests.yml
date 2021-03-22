@@ -73,8 +73,12 @@ steps:
       source: current
       artifact: ${{ parameters.artifact }}
 
-  - script: "echo display: dir\ndir\necho display: $(Pipeline.Workspace)\ndir $(Pipeline.Workspace)\n"
-    displayName: Display  artifact directories
+  - script: | 
+          echo display: dir
+          dir
+          echo display: $(Pipeline.Workspace)
+          dir $(Pipeline.Workspace)
+      displayName: Display  artifact directories
 
 
 
