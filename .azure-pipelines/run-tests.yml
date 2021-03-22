@@ -64,12 +64,14 @@ steps:
 
   - bash: |
         ports=(`nrf-device-lister -p PCA10056`) 
+        echo "Raw ports 1 : $ports"
         export PORT_A=${ports[0]}
         ports=(`nrf-device-lister -p PCA10040`)
+        echo "Raw ports 2 : $ports"
         export PORT_B=${ports[0]}
-        
-        echo "Port A $PORT_A"
-        echo "Port B $PORT_B"
+       
+        echo "Port A: ${PORT_A}"
+        echo "Port B: ${PORT_B}"
 
         LOG_LEVEL="debug"
         DRV_LOG_LEVEL="info"
