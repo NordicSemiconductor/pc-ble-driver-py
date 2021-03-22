@@ -25,16 +25,16 @@ parameters:
   - name: RunLinux
     displayName: Run Linux 
     type: boolean
-    default: true
+    default: true 
 
   - name: RunWindows
     displayName: Run Windows 
     type: boolean
-    default: true
+    default: false
   - name: RunMacOS
     displayName: Run macOS 
     type: boolean
-    default: true
+    default: false
 
   - name: nodeVersions
     displayName: "Node versions"
@@ -319,25 +319,53 @@ jobs:
           arch: 64
 
 
+  - job: TestLinuxOldBuild
 
-  - job: TestMacOS
+    # condition: eq(${{parameters.RunLinux}}, 'true')
 
-    condition: eq( ${{ parameters.RunMacOS }}, 'true') 
-
-    dependsOn: [
-      MacOS,
-    ]
-
-    variables: 
-      python_lib: 36
+    variables:
+      wheel_platform: 'manylinux2010_x86_64'
+#    dependsOn: [
+#      Linux,
+#    ]
+#
+ 
+    strategy:
+      matrix:
+        linux:
+          osType: 'linux'
 
     pool:
-      name: test-pool-onv12-1
-      demands: Agent.OS -equals Darwin
+      name: test-pool-onv12-1      
+      demands: Agent.OS -equals Linux
     steps:
 
-      - template: .azure-pipelines/run-tests-mac.yml
+      - template: .azure-pipelines/run-tests.yml
         parameters:
+          # py_versions: '3.7.4'
           artifact: "artifact-py-$(wheel_platform)"
-          package_name: artifact-py-$(python_lib)-x64-macOS
+          package_name: pc_ble_driver_py-0.15.1-cp36-cp36m-manylinux2010_x86_64.whl
+          nodeVersions: ${{ parameters.nodeVersions }} 
+          arch: 64
 
+#  - job: TestMacOS
+#
+#    condition: eq( ${{ parameters.RunMacOS }}, 'true') 
+#
+#    dependsOn: [
+#      MacOS,
+#    ]
+#
+#    variables: 
+#      python_lib: 36
+#
+#    pool:
+#      name: test-pool-onv12-1
+#      demands: Agent.OS -equals Darwin
+#    steps:
+#
+#      - template: .azure-pipelines/run-tests-mac.yml
+#        parameters:
+#          artifact: "artifact-py-$(wheel_platform)"
+#          package_name: artifact-py-$(python_lib)-x64-macOS
+#

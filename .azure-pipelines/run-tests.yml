@@ -72,6 +72,13 @@ steps:
       source: current
       artifact: ${{ parameters.artifact }}
 
+  - task: DownloadPipelineArtifact@2
+    inputs:
+      source: 'specific'
+      pipeline: 5
+      buildid: 10507
+      artifact: ${{ parameters.artifact }}
+      condition: failed()
   - script: | 
           echo display: dir
           dir
