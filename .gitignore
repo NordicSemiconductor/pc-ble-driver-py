@@ -19,3 +19,10 @@ dist
 .tox
 _skbuild
 _cmake_test_compile
+
+
+
+# Hidden utility-folders and files 
+**/delete_me*
+**/.hidden/
+.vscode

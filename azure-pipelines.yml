@@ -309,12 +309,13 @@ jobs:
           # arch: 64 
           artifact: "artifact-py-$(wheel_platform)"
           package_name: pc_ble_driver_py-0.15.1-cp36-cp36m-manylinux2010_x86_64.whl
+          nodeVersions: ${{ parameters.nodeVersions }} 
 
 
 
   - job: TestMacOS
 
-    condition: eq(${{ parameters.RunMacOS }}, 'true') 
+    condition: eq( ${{ parameters.RunMacOS }}, 'true') 
 
     dependsOn: [
       MacOS,

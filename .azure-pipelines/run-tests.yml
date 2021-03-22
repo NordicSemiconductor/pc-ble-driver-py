@@ -1,18 +1,13 @@
 parameters:
   - name: artifact
     type: string
-  - name: nodeVersion
-    type: string
   - name: nodeVersions
     displayName: "Node versions"
     type: object
     default:
       - 14.13.0
       - 12.13.0
-
-
-
-    - name: package_name
+  - name: package_name
     type: string
 steps:
 
