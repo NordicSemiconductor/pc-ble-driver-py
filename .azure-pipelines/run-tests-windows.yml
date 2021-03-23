@@ -51,7 +51,7 @@ steps:
 
   - task: UsePythonVersion@0
     inputs:
-      versionSpec: '3.6'
+      versionSpec: '3.7'
       architecture: '$(python_arch)' 
 
   - ${{ each pythonVersion in parameters.pythonVersions }}:
