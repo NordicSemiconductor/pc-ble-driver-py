@@ -398,7 +398,7 @@ jobs:
 
     pool:
       name: test-pool-onv12-1
-      demands: Agent.OS -equals Windows NT
+      demands: Agent.OS -equals Windows_NT
     steps:
 
       - template: .azure-pipelines/run-tests-windows.yml
