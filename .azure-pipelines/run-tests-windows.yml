@@ -15,7 +15,7 @@ parameters:
 
   - name: arch
     type: string 
-    default: 64
+    default: x64
 steps:
   
   - bash: |
@@ -68,16 +68,16 @@ steps:
 
       displayName: Pip install
   
-      
+    
 
 
   - ${{ each nodeVersion in parameters.nodeVersions }}:
-      - ${{ if eq(parameters.arch, 32) }}:
+      - ${{ if eq(parameters.arch, x32) }}:
           - template: setup-nodejs-32.yaml
             parameters:
               nodeVersion: ${{ nodeVersion }}
   - ${{ each nodeVersion in parameters.nodeVersions }}:
-      - ${{ if eq(parameters.arch, 64) }}:
+      - ${{ if eq(parameters.arch, x64) }}:
           - template: setup-nodejs-64.yaml
             parameters:
               nodeVersion: ${{ nodeVersion }}
