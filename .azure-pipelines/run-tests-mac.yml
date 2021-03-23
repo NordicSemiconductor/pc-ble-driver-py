@@ -21,7 +21,7 @@ steps:
   - script: |
       echo Displaying Python versions in $(Agent.ToolsDirectory)
       echo begin---------------------------
-      dir $(Agent.ToolsDirectory)
+      ls $(Agent.ToolsDirectory)
       echo end-----------------------------
     displayName: Show python versions
     
@@ -40,11 +40,11 @@ steps:
       project: Wayland 
       allowFailedBuilds: true
 
-  - script: | 
-          echo display: dir
-          dir
+  - bash: | 
+          echo display: ls
+          ls
           echo display: $(Pipeline.Workspace)
-          dir $(Pipeline.Workspace)
+          ls $(Pipeline.Workspace)
     displayName: Display  artifact directories
 
 
@@ -52,7 +52,7 @@ steps:
   - ${{ each pythonVersion in parameters.pythonVersions }}:
     - bash: | 
         echo "--------" From: $(Pipeline.Workspace)
-        dir $(Pipeline.Workspace)
+        ls $(Pipeline.Workspace)
         echo "--------" Install:  ${{ parameters.package_name }}
 
         
