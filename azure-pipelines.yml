@@ -385,7 +385,7 @@ jobs:
           artifact: artifact-py-$(python_lib)-$(python_arch)-macOS
           package_name: pc_ble_driver_py-0.15.1-cp36-cp36m-manylinux2010_x86_64.whl
           nodeVersions: ${{ parameters.nodeVersions }} 
-          arch: 64
+          arch: x64
 
   - job: TestWindows
 
@@ -406,5 +406,5 @@ jobs:
           artifact: "artifact-py-$(python_lib)-$(python_arch)-windows"
           package_name: pc_ble_driver_py-0.15.1-cp36-cp36m-manylinux2010_x86_64.whl
           nodeVersions: ${{ parameters.nodeVersions }} 
-          arch: 64
+          arch: x64
 
