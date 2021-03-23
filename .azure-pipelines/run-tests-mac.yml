@@ -26,20 +26,20 @@ steps:
     displayName: Show python versions
     
 
- - task: DownloadPipelineArtifact@2
-   inputs:
-     source: current
-     artifact: ${{ parameters.artifact }}
+#  - task: DownloadPipelineArtifact@2
+#    inputs:
+#     source: current
+#     artifact: ${{ parameters.artifact }}
 
-#   - task: DownloadPipelineArtifact@2
-#     inputs:
-#       source: 'specific'
-#       pipeline: 5
-#       buildid: 10495
-#       # artifact: ${{ parameters.artifact }}
-#       project: Wayland 
-#       allowFailedBuilds: true
-# #      condition: failed()
+  - task: DownloadPipelineArtifact@2
+    inputs:
+      source: 'specific'
+      pipeline: 5
+      buildid: 10495
+      # artifact: ${{ parameters.artifact }}
+      project: Wayland 
+      allowFailedBuilds: true
+
   - script: | 
           echo display: dir
           dir
