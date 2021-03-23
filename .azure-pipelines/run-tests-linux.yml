@@ -1,0 +1,115 @@
+parameters:
+  - name: artifact
+    type: string
+  - name: package_name
+    type: string
+  - name: nodeVersions
+    displayName: "Node versions"
+    type: object
+
+  - name: pythonVersions
+    displayName: "Python versions"
+    type: object
+
+  - name: arch
+    type: string 
+    default: 64
+steps:
+  
+  - script: |
+      echo Displaying Python versions in $(Agent.ToolsDirectory)
+      echo begin---------------------------
+      dir $(Agent.ToolsDirectory)
+      echo end-----------------------------
+    displayName: Show python versions
+    
+#
+#  - task: DownloadPipelineArtifact@2
+#    inputs:
+#      source: current
+#      artifact: ${{ parameters.artifact }}
+#
+  - task: DownloadPipelineArtifact@2
+    inputs:
+      source: 'specific'
+      pipeline: 5
+      buildid: 10495
+      # artifact: ${{ parameters.artifact }}
+      project: Wayland 
+      allowFailedBuilds: true
+#      condition: failed()
+  - script: | 
+          echo display: dir
+          dir
+          echo display: $(Pipeline.Workspace)
+          dir $(Pipeline.Workspace)
+    displayName: Display  artifact directories
+
+
+
+  - ${{ each pythonVersion in parameters.pythonVersions }}:
+    - bash: | 
+        echo "--------" From: $(Pipeline.Workspace)
+        dir $(Pipeline.Workspace)
+        echo "--------" Install:  ${{ parameters.package_name }}
+
+        
+        echo start run python 36 
+        # python${{ pythonVersion }} -m pip install -r requirements-dev.txt  --user --force-reinstall 
+        
+        # python${{ pythonVersion }} -m pip install --upgrade pip --user 
+
+        python${{ pythonVersion }} -m pip install --user --force-reinstall  $(Pipeline.Workspace)/pc_ble_driver_py-0.15.1-cp36-cp36m-manylinux2010_x86_64.whl
+        # python${{ pythonVersion }} -m pip install --user --force-reinstall  $(Pipeline.Workspace)/pc_ble_driver_py-0.15.1-cp37-cp37m-manylinux2010_x86_64.whl
+        # python${{ pythonVersion }} -m pip install --user --force-reinstall  $(Pipeline.Workspace)/pc_ble_driver_py-0.15.1-cp38-cp38-manylinux2010_x86_64.whl
+        echo end python 36
+
+
+    displayName: Pip install
+
+  - ${{ each nodeVersion in parameters.nodeVersions }}:
+      - ${{ if eq(parameters.arch, 32) }}:
+          - template: setup-nodejs-32.yaml
+            parameters:
+              nodeVersion: ${{ nodeVersion }}
+  - ${{ each nodeVersion in parameters.nodeVersions }}:
+      - ${{ if eq(parameters.arch, 64) }}:
+          - template: setup-nodejs-64.yaml
+            parameters:
+              nodeVersion: ${{ nodeVersion }}
+  - bash: | 
+      # Python is 64 bit on the linux servers
+      alias python=python3.7
+      npm install -g  nrf-device-lister
+      nrf-device-lister --help
+    displayName: npm install
+
+  - ${{ each pythonVersion in parameters.pythonVersions }}:
+    - bash: |
+          ports=(`nrf-device-lister -p PCA10056`) 
+          echo "Raw ports 1 : $ports"
+          export PORT_A=${ports[0]}
+          ports=(`nrf-device-lister -p PCA10040`)
+          echo "Raw ports 2 : $ports"
+          export PORT_B=${ports[0]}
+        
+          echo "Port A: ${PORT_A}"
+          echo "Port B: ${PORT_B}"
+
+          LOG_LEVEL="debug"
+          DRV_LOG_LEVEL="info"
+          
+          set -e
+
+
+          python3.6 tests/test_programming.py        --port-a ${PORT_A} --port-b ${PORT_B} --log-level ${LOG_LEVEL} --driver-log-level ${DRV_LOG_LEVEL}
+          python3.6 tests/test_ble_common_api.py     --port-a ${PORT_A} --port-b ${PORT_B} --log-level ${LOG_LEVEL} --driver-log-level ${DRV_LOG_LEVEL}
+          python3.6 tests/test_rssi.py               --port-a ${PORT_A} --port-b ${PORT_B} --log-level ${LOG_LEVEL} --driver-log-level ${DRV_LOG_LEVEL}
+          python3.6 tests/test_connection_update.py  --port-a ${PORT_A} --port-b ${PORT_B} --log-level ${LOG_LEVEL} --driver-log-level ${DRV_LOG_LEVEL}
+          python3.6 tests/test_mtu.py                --port-a ${PORT_A} --port-b ${PORT_B} --log-level ${LOG_LEVEL} --driver-log-level ${DRV_LOG_LEVEL}
+          python3.6 tests/test_passkey.py            --port-a ${PORT_A} --port-b ${PORT_B} --log-level ${LOG_LEVEL} --driver-log-level ${DRV_LOG_LEVEL}
+          python3.6 tests/test_phy_update.py         --port-a ${PORT_A} --port-b ${PORT_B} --log-level ${LOG_LEVEL} --driver-log-level ${DRV_LOG_LEVEL}
+          python3.6 tests/test_data_length.py        --port-a ${PORT_A} --port-b ${PORT_B} --log-level ${LOG_LEVEL} --driver-log-level ${DRV_LOG_LEVEL}
+          python3.6 tests/test_server_client.py      --port-a ${PORT_A} --port-b ${PORT_B} --log-level ${LOG_LEVEL} --driver-log-level ${DRV_LOG_LEVEL}
+
+      displayName: Jenkins run      

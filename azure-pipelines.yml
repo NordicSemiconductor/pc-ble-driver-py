@@ -25,7 +25,7 @@ parameters:
   - name: RunLinux
     displayName: Run Linux 
     type: boolean
-    default: true 
+    default: false 
 
   - name: RunWindows
     displayName: Run Windows 
@@ -42,6 +42,13 @@ parameters:
     default:
       - 12.13.0
       # - 14.13.0
+  - name: pythonVersions
+    displayName: "Python versions"
+    type: object
+    default:
+      - 3.6
+      - 3.8
+      - 3.9
 variables:
   VCPKG_REPOSITORY: https://github.com/Microsoft/vcpkg.git
 
@@ -309,10 +316,9 @@ jobs:
       demands: Agent.OS -equals Linux
     steps:
 
-      - template: .azure-pipelines/run-tests.yml
+      - template: .azure-pipelines/run-tests-linux.yml
         parameters:
-          # py_versions: '3.7.4'
-          # arch: 64 
+          py_versions: ${{ parameters.pythonVersions }}
           artifact: "artifact-py-$(wheel_platform)"
           package_name: pc_ble_driver_py-0.15.1-cp36-cp36m-manylinux2010_x86_64.whl
           nodeVersions: ${{ parameters.nodeVersions }} 
@@ -340,7 +346,7 @@ jobs:
       demands: Agent.OS -equals Linux
     steps:
 
-      - template: .azure-pipelines/run-tests.yml
+      - template: .azure-pipelines/run-tests-linux.yml
         parameters:
           # py_versions: '3.7.4'
           artifact: "artifact-py-$(wheel_platform)"
