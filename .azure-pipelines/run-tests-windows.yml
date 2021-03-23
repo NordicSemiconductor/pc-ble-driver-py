@@ -72,12 +72,12 @@ steps:
 
 
   - ${{ each nodeVersion in parameters.nodeVersions }}:
-      - ${{ if eq(parameters.arch, x32) }}:
+      - ${{ if eq(parameters.arch, "x32") }}:
           - template: setup-nodejs-32.yaml
             parameters:
               nodeVersion: ${{ nodeVersion }}
   - ${{ each nodeVersion in parameters.nodeVersions }}:
-      - ${{ if eq(parameters.arch, x64) }}:
+      - ${{ if eq(parameters.arch, "x64") }}:
           - template: setup-nodejs-64.yaml
             parameters:
               nodeVersion: ${{ nodeVersion }}
