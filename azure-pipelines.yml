@@ -174,11 +174,11 @@ jobs:
         isDraft: 'true'
         addChangeLog: 'false'
       condition: ne(variables['Build.Reason'], 'PullRequest')
-
     - task: PublishPipelineArtifact@1
       inputs:
         path: "$(Build.ArtifactStagingDirectory)"
         artifact: artifact-py-$(python_bin)-$(python_arch)-macOS
+
   # Windows
   - job: Windows
     condition: eq(${{parameters.BuildWindows}}, 'true')
@@ -189,32 +189,32 @@ jobs:
         py36_win64:
           python_version: '3.6'
           python_lib: '36'
-          python_arch: 'x64'
+          python_arch: "x64"
           generator: 'Visual Studio 15 2017 Win64'
         py36_win32:
           python_version: '3.6'
           python_lib: '36'
-          python_arch: 'x86'
+          python_arch: "x86"
           generator: 'Visual Studio 15 2017'
         py37_win64:
           python_version: '3.7'
           python_lib: '37'
-          python_arch: 'x64'
+          python_arch: "x64"
           generator: 'Visual Studio 15 2017 Win64'
         py37_win32:
           python_version: '3.7'
           python_lib: '37'
-          python_arch: 'x86'
+          python_arch: "x86"
           generator: 'Visual Studio 15 2017'
         py38_win64:
           python_version: '3.8'
           python_lib: '38'
-          python_arch: 'x64'
+          python_arch: "x64"
           generator: 'Visual Studio 15 2017 Win64'
         py38_win32:
           python_version: '3.8'
           python_lib: '38'
-          python_arch: 'x86'
+          python_arch: "x86"
           generator: 'Visual Studio 15 2017'
     pool:
       vmImage: 'vs2017-win2016'
@@ -234,7 +234,7 @@ jobs:
     - task: UsePythonVersion@0
       inputs:
         versionSpec: '$(python_version)'
-        architecture: '$(python_arch)'
+        architecture: $(python_arch)
     - bash: |
         set -o errexit -o pipefail
         rm -rf _skbuild

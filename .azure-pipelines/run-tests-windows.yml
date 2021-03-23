@@ -49,6 +49,11 @@ steps:
 
 
 
+  - task: UsePythonVersion@0
+    inputs:
+      versionSpec: '3.6'
+      architecture: '$(python_arch)' 
+
   - ${{ each pythonVersion in parameters.pythonVersions }}:
     - bash: | 
         echo "--------" From: $(Pipeline.Workspace)
@@ -57,17 +62,14 @@ steps:
 
         
         echo start run python 36 
-        # python${{ pythonVersion }} -m pip install -r requirements-dev.txt  --user --force-reinstall 
-        
-        # python${{ pythonVersion }} -m pip install --upgrade pip --user 
-
-        python${{ pythonVersion }} -m pip install --user --force-reinstall  $(Pipeline.Workspace)/pc_ble_driver_py-0.15.1-cp36-cp36m-manylinux2010_x86_64.whl
-        # python${{ pythonVersion }} -m pip install --user --force-reinstall  $(Pipeline.Workspace)/pc_ble_driver_py-0.15.1-cp37-cp37m-manylinux2010_x86_64.whl
-        # python${{ pythonVersion }} -m pip install --user --force-reinstall  $(Pipeline.Workspace)/pc_ble_driver_py-0.15.1-cp38-cp38-manylinux2010_x86_64.whl
+        python -m pip install --user --force-reinstall  $(Pipeline.Workspace)/pc_ble_driver_py-0.15.1-cp36-cp36m-manylinux2010_x86_64.whl
         echo end python 36
 
 
       displayName: Pip install
+  
+      
+
 
   - ${{ each nodeVersion in parameters.nodeVersions }}:
       - ${{ if eq(parameters.arch, 32) }}:
@@ -81,7 +83,6 @@ steps:
               nodeVersion: ${{ nodeVersion }}
   - bash: | 
       # Python is 64 bit on the linux servers
-      alias python=python3.7
       npm install -g  nrf-device-lister
       nrf-device-lister --help
     displayName: npm install
