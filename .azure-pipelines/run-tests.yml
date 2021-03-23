@@ -87,6 +87,8 @@ steps:
             parameters:
               nodeVersion: ${{ nodeVersion }}
   - bash: | 
+      # Python is 64 bit on the linux servers
+      alias python=python3.7
       npm install nrf-device-lister
       node node_modules/.bin/nrf-device-lister --help
     displayName: npm install
