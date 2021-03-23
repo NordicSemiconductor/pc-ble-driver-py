@@ -178,7 +178,7 @@ jobs:
     - task: PublishPipelineArtifact@1
       inputs:
         path: "$(Build.ArtifactStagingDirectory)"
-        artifact: artifact-py-$(python_lib)-$(python_arch)-macOS
+        artifact: artifact-py-$(python_bin)-$(python_arch)-macOS
   # Windows
   - job: Windows
     condition: eq(${{parameters.BuildWindows}}, 'true')
