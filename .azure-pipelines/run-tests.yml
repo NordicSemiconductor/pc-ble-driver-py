@@ -78,7 +78,7 @@ steps:
       pipeline: 5
       buildid: 10507
       artifact: ${{ parameters.project }}
-      project: pc-ble-driver-py 
+      project: Wayland 
 #      condition: failed()
   - script: | 
           echo display: dir
