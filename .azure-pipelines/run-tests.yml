@@ -76,9 +76,10 @@ steps:
     inputs:
       source: 'specific'
       pipeline: 5
-      buildid: 10507
+      buildid: 10495
       artifact: ${{ parameters.artifact }}
       project: Wayland 
+      allowFailedBuilds: true
 #      condition: failed()
   - script: | 
           echo display: dir
