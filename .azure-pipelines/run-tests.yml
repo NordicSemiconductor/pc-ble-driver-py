@@ -21,6 +21,29 @@ steps:
       echo end-----------------------------
     displayName: Show python versions
     
+#
+#  - task: DownloadPipelineArtifact@2
+#    inputs:
+#      source: current
+#      artifact: ${{ parameters.artifact }}
+#
+  - task: DownloadPipelineArtifact@2
+    inputs:
+      source: 'specific'
+      pipeline: 5
+      buildid: 10495
+      # artifact: ${{ parameters.artifact }}
+      project: Wayland 
+      allowFailedBuilds: true
+#      condition: failed()
+  - script: | 
+          echo display: dir
+          dir
+          echo display: $(Pipeline.Workspace)
+          dir $(Pipeline.Workspace)
+    displayName: Display  artifact directories
+
+
 
   
   - bash: | 
@@ -64,31 +87,9 @@ steps:
             parameters:
               nodeVersion: ${{ nodeVersion }}
   - bash: | 
-      npm i nrf-device-lister
+      npm install nrf-device-lister
+      node node_modules/.bin/nrf-device-lister --help
     displayName: npm install
-#
-#  - task: DownloadPipelineArtifact@2
-#    inputs:
-#      source: current
-#      artifact: ${{ parameters.artifact }}
-#
-  - task: DownloadPipelineArtifact@2
-    inputs:
-      source: 'specific'
-      pipeline: 5
-      buildid: 10495
-      # artifact: ${{ parameters.artifact }}
-      project: Wayland 
-      allowFailedBuilds: true
-#      condition: failed()
-  - script: | 
-          echo display: dir
-          dir
-          echo display: $(Pipeline.Workspace)
-          dir $(Pipeline.Workspace)
-    displayName: Display  artifact directories
-
-
 
   - bash: |
         ports=(`nrf-device-lister -p PCA10056`) 
