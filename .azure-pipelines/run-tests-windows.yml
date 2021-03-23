@@ -40,11 +40,11 @@ steps:
       project: Wayland 
       allowFailedBuilds: true
 
-  - bash: | 
+  - scrit: | 
           echo display: ls
-          ls
+          dir
           echo display: $(Pipeline.Workspace)
-          ls $(Pipeline.Workspace)
+          dir $(Pipeline.Workspace)
     displayName: Display  artifact directories
 
 
