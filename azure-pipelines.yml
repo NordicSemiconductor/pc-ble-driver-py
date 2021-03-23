@@ -375,9 +375,6 @@ jobs:
     #    MacOS,
     #  ]
 
-    variables: 
-      python_lib: 36
-
     pool:
       name: test-pool-onv12-1
       demands: Agent.OS -equals Darwin
@@ -385,7 +382,28 @@ jobs:
 
       - template: .azure-pipelines/run-tests-mac.yml
         parameters:
-          artifact: "artifact-py-$(wheel_platform)"
+          artifact: artifact-py-$(python_lib)-$(python_arch)-macOS
+          package_name: pc_ble_driver_py-0.15.1-cp36-cp36m-manylinux2010_x86_64.whl
+          nodeVersions: ${{ parameters.nodeVersions }} 
+          arch: 64
+
+  - job: TestWindows
+
+    condition: eq( ${{ parameters.TestWindows }}, 'true') 
+
+    #  dependsOn: [
+    #    Windows,
+    #  ]
+
+
+    pool:
+      name: test-pool-onv12-1
+      demands: Agent.OS -equals Windows NT
+    steps:
+
+      - template: .azure-pipelines/run-tests-windows.yml
+        parameters:
+          artifact: "artifact-py-$(python_lib)-$(python_arch)-windows"
           package_name: pc_ble_driver_py-0.15.1-cp36-cp36m-manylinux2010_x86_64.whl
           nodeVersions: ${{ parameters.nodeVersions }} 
           arch: 64
