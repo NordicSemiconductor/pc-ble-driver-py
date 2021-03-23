@@ -10,6 +10,8 @@ parameters:
   - name: pythonVersions
     displayName: "Python versions"
     type: object
+    default: 
+      - 3.6
 
   - name: arch
     type: string 

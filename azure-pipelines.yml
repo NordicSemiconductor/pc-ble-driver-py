@@ -47,8 +47,8 @@ parameters:
     type: object
     default:
       - 3.6
-      - 3.8
-      - 3.9
+      # - 3.8
+      # - 3.9
 variables:
   VCPKG_REPOSITORY: https://github.com/Microsoft/vcpkg.git
 
