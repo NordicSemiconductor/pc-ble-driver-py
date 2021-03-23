@@ -41,7 +41,7 @@ parameters:
     type: boolean
     default: false 
   - name: TestWindows
-    displayName: Build Windows 
+    displayName: Test Windows 
     type: boolean
     default: false
   - name: TestMacOS
