@@ -77,7 +77,7 @@ steps:
       source: 'specific'
       pipeline: 5
       buildid: 10495
-      artifact: ${{ parameters.artifact }}
+      # artifact: ${{ parameters.artifact }}
       project: Wayland 
       allowFailedBuilds: true
 #      condition: failed()
