@@ -15,7 +15,7 @@ parameters:
 
   - name: arch
     type: string 
-    default: x64
+    default: 64
 steps:
   
   - bash: |
@@ -52,7 +52,7 @@ steps:
   - task: UsePythonVersion@0
     inputs:
       versionSpec: '3.7.4'
-      architecture: ${{ parameters.arch }}
+      architecture: x${{ parameters.arch }}
 
   - ${{ each pythonVersion in parameters.pythonVersions }}:
     - bash: | 
@@ -72,12 +72,12 @@ steps:
 
 
   - ${{ each nodeVersion in parameters.nodeVersions }}:
-      - ${{ if eq(parameters.arch, "x32") }}:
+      - ${{ if eq(parameters.arch, 32) }}:
           - template: setup-nodejs-32.yaml
             parameters:
               nodeVersion: ${{ nodeVersion }}
   - ${{ each nodeVersion in parameters.nodeVersions }}:
-      - ${{ if eq(parameters.arch, "x64") }}:
+      - ${{ if eq(parameters.arch, 64) }}:
           - template: setup-nodejs-64.yaml
             parameters:
               nodeVersion: ${{ nodeVersion }}
