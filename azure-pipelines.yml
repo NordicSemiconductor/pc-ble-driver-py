@@ -22,19 +22,33 @@ parameters:
     - 2019.08
     - 2019.07
     - 2019.06
-  - name: RunLinux
-    displayName: Run Linux 
+  - name: BuildLinux
+    displayName: Build Linux 
     type: boolean
     default: false 
+  - name: BuildWindows
+    displayName: Windows 
+    type: boolean
+    default: false
+  - name: BuildMacOS
+    displayName: Build macOS 
+    type: boolean
+    default: false
 
-  - name: RunWindows
-    displayName: Run Windows 
+
+  - name: TestLinux
+    displayName: Test Linux 
+    type: boolean
+    default: false 
+  - name: TestWindows
+    displayName: Windows 
     type: boolean
     default: false
-  - name: RunMacOS
-    displayName: Run macOS 
+  - name: TestMacOS
+    displayName: Test macOS 
     type: boolean
     default: false
+
 
   - name: nodeVersions
     displayName: "Node versions"
@@ -55,7 +69,7 @@ variables:
 jobs:
   # Linux
   - job: Linux
-    condition: eq(${{parameters.RunLinux}}, 'true')
+    condition: eq(${{parameters.BuildLinux}}, 'true')
     variables:
       wheel_platform: 'manylinux2010_x86_64'
     pool:
@@ -96,7 +110,7 @@ jobs:
 
   # macOS
   - job: macOS
-    condition: eq(${{parameters.RunMacOS}}, 'true')
+    condition: eq(${{parameters.BuildMacOS}}, 'true')
     variables:
       VCPKG_ROOT: '$(Agent.HomeDirectory)/vcpkg'
       python_arch: 'x64'
@@ -167,7 +181,7 @@ jobs:
         artifact: artifact-py-$(python_lib)-$(python_arch)-macOS
   # Windows
   - job: Windows
-    condition: eq(${{parameters.RunWindows}}, 'true')
+    condition: eq(${{parameters.BuildWindows}}, 'true')
     variables:
       VCPKG_ROOT: '$(Agent.HomeDirectory)\vcpkg'
     strategy:
@@ -258,7 +272,7 @@ jobs:
 
   - job: TriggerTest
 
-    condition: and( eq(${{parameters.RunMacOS}}, 'true'), eq(${{parameters.RunWindows}}, 'true'))
+    condition: and( eq(${{parameters.BuildMacOS}}, 'true'), eq(${{parameters.BuildWindows}}, 'true'))
     dependsOn: [
       Windows,
       Linux,
@@ -297,7 +311,7 @@ jobs:
   # Run tests
   - job: TestLinux
 
-    # condition: eq(${{parameters.RunLinux}}, 'true')
+    # condition: eq(${{parameters.BuildLinux}}, 'true')
 
     variables:
       wheel_platform: 'manylinux2010_x86_64'
@@ -327,7 +341,7 @@ jobs:
 
   - job: TestLinuxOldBuild
 
-    # condition: eq(${{parameters.RunLinux}}, 'true')
+    condition: eq(${{parameters.TestLinux}}, 'true')
 
     variables:
       wheel_platform: 'manylinux2010_x86_64'
@@ -348,30 +362,31 @@ jobs:
 
       - template: .azure-pipelines/run-tests-linux.yml
         parameters:
-          # py_versions: '3.7.4'
           artifact: "artifact-py-$(wheel_platform)"
           package_name: pc_ble_driver_py-0.15.1-cp36-cp36m-manylinux2010_x86_64.whl
           nodeVersions: ${{ parameters.nodeVersions }} 
           arch: 64
 
-#  - job: TestMacOS
-#
-#    condition: eq( ${{ parameters.RunMacOS }}, 'true') 
-#
-#    dependsOn: [
-#      MacOS,
-#    ]
-#
-#    variables: 
-#      python_lib: 36
-#
-#    pool:
-#      name: test-pool-onv12-1
-#      demands: Agent.OS -equals Darwin
-#    steps:
-#
-#      - template: .azure-pipelines/run-tests-mac.yml
-#        parameters:
-#          artifact: "artifact-py-$(wheel_platform)"
-#          package_name: artifact-py-$(python_lib)-x64-macOS
-#
+  - job: TestMacOS
+
+    condition: eq( ${{ parameters.TestMacOS }}, 'true') 
+
+    #  dependsOn: [
+    #    MacOS,
+    #  ]
+
+    variables: 
+      python_lib: 36
+
+    pool:
+      name: test-pool-onv12-1
+      demands: Agent.OS -equals Darwin
+    steps:
+
+      - template: .azure-pipelines/run-tests-mac.yml
+        parameters:
+          artifact: "artifact-py-$(wheel_platform)"
+          package_name: pc_ble_driver_py-0.15.1-cp36-cp36m-manylinux2010_x86_64.whl
+          nodeVersions: ${{ parameters.nodeVersions }} 
+          arch: 64
+
