@@ -65,7 +65,7 @@ steps:
         echo end python 36
 
 
-    displayName: Pip install
+      displayName: Pip install
 
   - ${{ each nodeVersion in parameters.nodeVersions }}:
       - ${{ if eq(parameters.arch, 32) }}:
