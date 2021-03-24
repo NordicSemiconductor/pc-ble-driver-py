@@ -49,6 +49,10 @@ steps:
           dir
           echo display: $(Pipeline.Workspace)
           dir $(Pipeline.Workspace)
+
+          echo Display $(Pipeline.Workspace)\artifact-py-38-x64-windows
+
+          dir $(Pipeline.Workspace)\artifact-py-38-x64-windows
     failOnStderr: true 
     displayName: Display artifact directories
 

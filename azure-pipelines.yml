@@ -394,12 +394,15 @@ jobs:
       matrix:
         py36:
           python_version: '3.6.8'
+          artifact: artifact-py-36-x64-windows
           arch: 64
         py37:
           python_version: '3.7.5'
+          artifact: artifact-py-37-x64-windows
           arch: 64
         py38:
           python_version: '3.8.0'
+          artifact: artifact-py-38-x64-windows
           arch: 64
 
     condition: eq( ${{ parameters.TestWindows }}, 'true') 
