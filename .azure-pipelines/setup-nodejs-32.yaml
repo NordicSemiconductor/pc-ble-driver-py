@@ -1,8 +1,12 @@
 parameters:
 - name: nodeVersion
   type: string
+- name: condition
+  type: boolean
+
 
 steps:
+  condition: ${{ parameters.condition }}
   - bash: |
       echo "Setting up nodejs ${{ parameters.nodeVersion }}/32"
     displayName: "Show requested nodejs version"
