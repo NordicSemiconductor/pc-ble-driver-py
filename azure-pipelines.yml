@@ -392,18 +392,31 @@ jobs:
 
     strategy:
       matrix:
-        py36:
-          python_version: '3.6'
-          artifact: artifact-py-36-x64-windows\pc_ble_driver_py-0.15.1-cp36-cp36m-win_amd64.whl
-          arch: 64
-        py37:
+        ## x64
+
+        # py36x64:
+        #   python_version: '3.6'
+        #   artifact: artifact-py-36-x64-windows\pc_ble_driver_py-0.15.1-cp36-cp36m-win_amd64.whl
+        #   arch: 64
+        py37x64:
           python_version: '3.7'
           artifact: artifact-py-37-x64-windows\pc_ble_driver_py-0.15.1-cp37-cp37m-win_amd64.whl
           arch: 64
-        py38:
-          python_version: '3.8'
-          artifact: artifact-py-38-x64-windows\pc_ble_driver_py-0.15.1-cp38-cp38-win_amd64.whl
+        # py38x64:
+        #   python_version: '3.8'
+        #   artifact: artifact-py-38-x64-windows\pc_ble_driver_py-0.15.1-cp38-cp38-win_amd64.whl
+        #   arch: 64
+
+
+
+        ## x86
+        py37x84:
+          python_version: '3.7'
+          artifact: artifact-py-37-x86-windows\pc_ble_driver_py-0.15.1-cp37-cp37m-win32.whl
           arch: 64
+
+
+
 
     condition: eq( ${{ parameters.TestWindows }}, 'true') 
 
