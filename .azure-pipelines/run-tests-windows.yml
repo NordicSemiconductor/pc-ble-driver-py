@@ -63,9 +63,9 @@ steps:
       versionSpec: '3.7.4'
       architecture: x${{ parameters.arch }}
 
-  - bash: | 
+  - script: | 
       echo "--------" From: $(Pipeline.Workspace)
-      ls $(Pipeline.Workspace)
+      dir $(Pipeline.Workspace)
       echo "--------" Install:  ${{ parameters.package_name }}
 
       
