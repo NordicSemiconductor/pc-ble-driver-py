@@ -64,17 +64,17 @@ steps:
 
 
 
-  - ${{ if eq(${{ parameters.arch }}, 32) }}:
-    - task: UsePythonVersion@0
-      inputs:
-        versionSpec: ${{ parameters.python_version }}
-        architecture: x86
+  - task: UsePythonVersion@0
+    inputs:
+      versionSpec: ${{ parameters.python_version }}
+      architecture: x86
+    condition: eq( ${{ parameters.arch }}, 32) 
 
-  - ${{ if ne(${{ parameters.arch }}, 32) }}:
-    - task: UsePythonVersion@0
-      inputs:
-        versionSpec: ${{ parameters.python_version }}
-        architecture: x64
+  - task: UsePythonVersion@0
+    inputs:
+      versionSpec: ${{ parameters.python_version }}
+      architecture: x64
+    condition: ne( ${{ parameters.arch }}, 32) 
 
   - script: | 
       echo "--------" From: $(Pipeline.Workspace)
