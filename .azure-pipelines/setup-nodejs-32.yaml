@@ -1,8 +1,11 @@
 parameters:
 - name: nodeVersion
   type: string
+  default: false
+
 - name: condition
   type: boolean
+  default: false
 
 
 steps:
