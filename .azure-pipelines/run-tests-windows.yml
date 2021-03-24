@@ -80,11 +80,14 @@ steps:
       - template: setup-nodejs-32.yaml
         parameters:
           nodeVersion: ${{ nodeVersion }}
+        displayName: "Use 32 bit node"
 
-  - ${{ if eq(parameters.arch, 64) }}:
+
+  - ${{ if ne(parameters.arch, 32) }}:
       - template: setup-nodejs-64.yaml
         parameters:
           nodeVersion: ${{ nodeVersion }}
+        displayName: "Use 64 bit node"
           
 
   - bash: | 
