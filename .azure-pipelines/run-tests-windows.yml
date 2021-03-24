@@ -16,8 +16,7 @@ parameters:
     default: 3.6.8
       
   - name: arch
-    # type: number
-    type: string
+    type: number
     default: 64
 
 steps:

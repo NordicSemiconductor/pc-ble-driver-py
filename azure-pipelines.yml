@@ -387,7 +387,7 @@ jobs:
           nodeVersion: ${{ parameters.nodeVersion }} 
           arch: 64
 
-  - job: TestWindows
+  - job: TestWindows_x86
 
 
     strategy:
@@ -415,7 +415,6 @@ jobs:
         py37x84:
           python_version: '3.7'
           artifact: artifact-py-37-x86-windows\pc_ble_driver_py-0.15.1-cp37-cp37m-win32.whl
-          arch: 32
 
 
 
@@ -436,6 +435,6 @@ jobs:
           artifact: $(artifact)
           # package_name: pc_ble_driver_py-0.15.1-cp36-cp36m-manylinux2010_x86_64.whl
           nodeVersion: ${{ parameters.nodeVersion }} 
-          arch: $(arch)
+          arch: 32
           python_version: $(python_version)
 
