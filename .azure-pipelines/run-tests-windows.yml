@@ -21,13 +21,13 @@ parameters:
 
 steps:
   
-  - bash: |
-      echo Displaying Python versions in $(Agent.ToolsDirectory)
-      echo begin---------------------------
-      ls $(Agent.ToolsDirectory)
-      echo end-----------------------------
-    failOnStderr: true 
-    displayName: Show python versions
+  # - bash: |
+  #     echo Displaying Python versions in $(Agent.ToolsDirectory)
+  #     echo begin---------------------------
+  #     ls $(Agent.ToolsDirectory)
+  #     echo end-----------------------------
+  #   failOnStderr: true 
+  #   displayName: Show python versions
     
 
 #  - task: DownloadPipelineArtifact@2
