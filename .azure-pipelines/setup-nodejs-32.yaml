@@ -6,10 +6,11 @@ parameters:
 
 
 steps:
-  condition: ${{ parameters.condition }}
   - bash: |
       echo "Setting up nodejs ${{ parameters.nodeVersion }}/32"
     displayName: "Show requested nodejs version"
+    condition: ${{ parameters.condition }}
+
   - bash: |
       choco install -y nvm
       set -o errexit -o pipefail
@@ -24,3 +25,4 @@ steps:
     }
     displayName: "Setup Node.js ${{ parameters.nodeVersion }} 32-bit"
     continueOnError: false
+    condition: ${{ parameters.condition }}
