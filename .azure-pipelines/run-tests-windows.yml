@@ -66,9 +66,8 @@ steps:
 
   - script: | 
       echo    ${{ parameters.arch }}
+      echo    "${{ parameters.arch }}"
 
-      echo ${{ eq('${{ parameters.arch }}', "32") }}
-      echo ${{ eq('${{ parameters.arch }}', "64") }}
 
 
       echo ${{ eq('${{ parameters.arch }}', 32) }}
@@ -76,6 +75,7 @@ steps:
 
       echo ${{ eq('${{ parameters.arch }}', '32') }}
       echo ${{ eq('${{ parameters.arch }}', '64') }}
+
     failOnStderr: true 
     displayName: Trying to understand the derefferenging
 
