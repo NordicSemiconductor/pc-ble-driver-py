@@ -16,7 +16,8 @@ parameters:
     default: 3.6.8
       
   - name: arch
-    type: number
+    # type: number
+    type: string
     default: 64
 
 steps:
@@ -69,9 +70,12 @@ steps:
       echo ${{ eq(parameters.arch, 64) }}
 
 
+      echo ${{ eq('${{ parameters.arch }}', "32") }}
+      echo ${{ eq('${{ parameters.arch }}', "64") }}
+
+
       echo ${{ eq('${{ parameters.arch }}', 32) }}
       echo ${{ eq('${{ parameters.arch }}', 64) }}
-
 
       echo ${{ eq('${{ parameters.arch }}', '32') }}
       echo ${{ eq('${{ parameters.arch }}', '64') }}
