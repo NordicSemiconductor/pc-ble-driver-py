@@ -38,7 +38,7 @@ steps:
     inputs:
       source: 'specific'
       pipeline: 5
-      buildid: 10550
+      buildid: 10595
       # artifact: ${{ parameters.artifact }}
       project: Wayland 
       allowFailedBuilds: true
@@ -90,6 +90,7 @@ steps:
       npm install -g  nrf-device-lister
       nrf-device-lister --help
     displayName: npm install
+
 
   - bash: |
         ports=(`nrf-device-lister -p PCA10056`) 
