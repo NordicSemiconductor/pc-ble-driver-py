@@ -3,16 +3,15 @@ parameters:
   type: string
   default: false
 
-- name: condition
-  type: boolean
-  default: false
+# - name: condition
+#   type: boolean
+#   default: false
 
 
 steps:
   - bash: |
       echo "Setting up nodejs ${{ parameters.nodeVersion }}/32"
     displayName: "Show requested nodejs version"
-    condition: ${{ parameters.condition }}
 
   - bash: |
       choco install -y nvm
@@ -28,6 +27,5 @@ steps:
     }
     displayName: "Setup Node.js ${{ parameters.nodeVersion }} 32-bit"
     continueOnError: false
-    condition: ${{ parameters.condition }}
 
 
