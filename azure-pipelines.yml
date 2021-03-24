@@ -389,29 +389,9 @@ jobs:
 
   - job: TestWindows_x86
 
-
     strategy:
       matrix:
-        ## x64
-
-        # py36x64:
-        #   python_version: '3.6'
-        #   artifact: artifact-py-36-x64-windows\pc_ble_driver_py-0.15.1-cp36-cp36m-win_amd64.whl
-        #   arch: 64
-
-        # py37x64:
-        #   python_version: '3.7'
-        #   artifact: artifact-py-37-x64-windows\pc_ble_driver_py-0.15.1-cp37-cp37m-win_amd64.whl
-        #   arch: 64
-
-        # py38x64:
-        #   python_version: '3.8'
-        #   artifact: artifact-py-38-x64-windows\pc_ble_driver_py-0.15.1-cp38-cp38-win_amd64.whl
-        #   arch: 64
-
-
-
-        ## x86
+      
         py37x84:
           python_version: '3.7'
           artifact: artifact-py-37-x86-windows\pc_ble_driver_py-0.15.1-cp37-cp37m-win32.whl
@@ -433,8 +413,47 @@ jobs:
       - template: .azure-pipelines/run-tests-windows.yml
         parameters:
           artifact: $(artifact)
-          # package_name: pc_ble_driver_py-0.15.1-cp36-cp36m-manylinux2010_x86_64.whl
           nodeVersion: ${{ parameters.nodeVersion }} 
           arch: 32
+          python_version: $(python_version)
+
+
+
+
+
+
+  - job: TestWindows_x64
+
+    strategy:
+      matrix:
+
+        # py36x64:
+        #   python_version: '3.6'
+        #   artifact: artifact-py-36-x64-windows\pc_ble_driver_py-0.15.1-cp36-cp36m-win_amd64.whl
+
+        py37x64:
+          python_version: '3.7'
+          artifact: artifact-py-37-x64-windows\pc_ble_driver_py-0.15.1-cp37-cp37m-win_amd64.whl
+
+        # py38x64:
+        #   python_version: '3.8'
+        #   artifact: artifact-py-38-x64-windows\pc_ble_driver_py-0.15.1-cp38-cp38-win_amd64.whl
+
+    condition: eq( ${{ parameters.TestWindows }}, 'true') 
+
+    #  dependsOn: [
+    #    Windows,
+    #  ]
+
+    pool:
+      name: test-pool-onv12-1
+      demands: Agent.OS -equals Windows_NT
+    steps:
+
+      - template: .azure-pipelines/run-tests-windows.yml
+        parameters:
+          artifact: $(artifact)
+          nodeVersion: ${{ parameters.nodeVersion }} 
+          arch: 64
           python_version: $(python_version)
 

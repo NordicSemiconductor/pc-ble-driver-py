@@ -109,22 +109,23 @@ steps:
     
 
 
-  - ${{ if eq( parameters.arch , 32) }}:
+  - ${{ if eq( '${{ parameters.arch }}', 32) }}:
       - template: setup-nodejs-32.yaml
         parameters:
           nodeVersion: ${{ parameters.nodeVersion }}
 
 
-  - ${{ if ne( parameters.arch , 32) }}:
+  - ${{ if eq( '${{ parameters.arch }}' , 64) }}:
       - template: setup-nodejs-64.yaml
         parameters:
           nodeVersion: ${{ parameters.nodeVersion }}
           
 
   - bash: | 
-      # Python is 64 bit on the linux servers
+
       npm install -g  nrf-device-lister
       nrf-device-lister --help
+
     # failOnStderr: true 
     displayName: npm install
 
