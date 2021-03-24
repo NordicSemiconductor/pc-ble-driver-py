@@ -3,9 +3,9 @@ parameters:
     type: string
   - name: package_name
     type: string
-  - name: nodeVersions
-    displayName: "Node versions"
-    type: object
+  - name: nodeVersion
+    displayName: "Node version"
+    type: string
 
   - name: pythonVersions
     displayName: "Python versions"
@@ -66,16 +66,14 @@ steps:
 
 
 
-  - ${{ each nodeVersion in parameters.nodeVersions }}:
-      - ${{ if eq(parameters.arch, 32) }}:
-          - template: setup-nodejs-32.yaml
-            parameters:
-              nodeVersion: ${{ nodeVersion }}
-  - ${{ each nodeVersion in parameters.nodeVersions }}:
-      - ${{ if eq(parameters.arch, 64) }}:
-          - template: setup-nodejs-64.yaml
-            parameters:
-              nodeVersion: ${{ nodeVersion }}
+  - ${{ if eq(parameters.arch, 32) }}:
+      - template: setup-nodejs-32.yaml
+        parameters:
+          nodeVersion: ${{ parameters.nodeVersion }}
+  - ${{ if eq(parameters.arch, 64) }}:
+      - template: setup-nodejs-64.yaml
+        parameters:
+          nodeVersion: ${{ parameters.nodeVersion }}
   - bash: | 
       # Python is 64 bit on the linux servers
       alias python=python3.7
