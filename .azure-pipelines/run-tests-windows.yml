@@ -1,8 +1,8 @@
 parameters:
   - name: artifact
     type: string
-  - name: package_name
-    type: string
+  # - name: package_name
+  #   type: string
 
 
   - name: nodeVersion
@@ -66,13 +66,13 @@ steps:
 
   - task: UsePythonVersion@0
     inputs:
-      versionSpec: '3.7.4'
+      versionSpec: ${{ parameters.python_version }}
       architecture: x${{ parameters.arch }}
 
   - script: | 
       echo "--------" From: $(Pipeline.Workspace)
       dir $(Pipeline.Workspace)
-      echo "--------" Install:  ${{ parameters.package_name }}
+      echo "--------" Install:  $(Pipeline.Workspace)/${{ parameters.artifact }}
 
       
       python -m pip install --upgrade pip

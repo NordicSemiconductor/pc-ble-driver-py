@@ -419,7 +419,7 @@ jobs:
       - template: .azure-pipelines/run-tests-windows.yml
         parameters:
           artifact: $(artifact)
-          package_name: pc_ble_driver_py-0.15.1-cp36-cp36m-manylinux2010_x86_64.whl
+          # package_name: pc_ble_driver_py-0.15.1-cp36-cp36m-manylinux2010_x86_64.whl
           nodeVersion: ${{ parameters.nodeVersion }} 
           arch: $(arch)
           python_version: $(python_version)
