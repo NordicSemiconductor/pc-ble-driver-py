@@ -65,8 +65,10 @@ steps:
 
   - script: | 
       echo ${{ parameters.arch }}
+      echo ${{ eq(paramters.arch, 32) }}
+      echo ${{ eq(paramters.arch, 64) }}
     failOnStderr: true 
-    displayName: Display artifact directories
+    displayName: Trying to understand the derefferenging
 
 
 
