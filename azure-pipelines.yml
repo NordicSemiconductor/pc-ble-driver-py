@@ -43,7 +43,7 @@ parameters:
   - name: TestWindows
     displayName: Test Windows 
     type: boolean
-    default: false
+    default: true
   - name: TestMacOS
     displayName: Test macOS 
     type: boolean

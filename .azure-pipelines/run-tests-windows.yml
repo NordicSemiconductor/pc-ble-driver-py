@@ -102,7 +102,7 @@ steps:
       # Python is 64 bit on the linux servers
       npm install -g  nrf-device-lister
       nrf-device-lister --help
-    failOnStderr: true 
+    # failOnStderr: true 
     displayName: npm install
 
 
