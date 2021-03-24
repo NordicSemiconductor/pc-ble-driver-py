@@ -7,15 +7,21 @@ parameters:
     displayName: "Node versions"
     type: object
 
-  - name: pythonVersions
-    displayName: "Python versions"
-    type: object
-    default: 
-      - 3.6
 
+  - name: node_version
+    displayName: "Node version"
+    type: string 
+    default: 12.13.0
+
+  - name: python_version
+    displayName: "Python versions"
+    type: string
+    default: 3.6.8
+      
   - name: arch
     type: string 
     default: 64
+
 steps:
   
   - bash: |
@@ -54,65 +60,64 @@ steps:
       versionSpec: '3.7.4'
       architecture: x${{ parameters.arch }}
 
-  - ${{ each pythonVersion in parameters.pythonVersions }}:
-    - bash: | 
-        echo "--------" From: $(Pipeline.Workspace)
-        ls $(Pipeline.Workspace)
-        echo "--------" Install:  ${{ parameters.package_name }}
+  - bash: | 
+      echo "--------" From: $(Pipeline.Workspace)
+      ls $(Pipeline.Workspace)
+      echo "--------" Install:  ${{ parameters.package_name }}
 
-        
-        echo start run python 36 
-        python -m pip install --user --force-reinstall  $(Pipeline.Workspace)/pc_ble_driver_py-0.15.1-cp36-cp36m-manylinux2010_x86_64.whl
-        echo end python 36
+      
+      echo start run python install artifact 
+      python -m pip install --user --force-reinstall  $(Pipeline.Workspace)/pc_ble_driver_py-0.15.1-cp36-cp36m-manylinux2010_x86_64.whl
+      echo end python install artifact 
 
 
-      displayName: Pip install
+    displayName: Pip install
   
     
 
 
-  - ${{ each nodeVersion in parameters.nodeVersions }}:
-      - ${{ if eq(parameters.arch, 32) }}:
-          - template: setup-nodejs-32.yaml
-            parameters:
-              nodeVersion: ${{ nodeVersion }}
-  - ${{ each nodeVersion in parameters.nodeVersions }}:
-      - ${{ if eq(parameters.arch, 64) }}:
-          - template: setup-nodejs-64.yaml
-            parameters:
-              nodeVersion: ${{ nodeVersion }}
+  - ${{ if eq(parameters.arch, 32) }}:
+      - template: setup-nodejs-32.yaml
+        parameters:
+          nodeVersion: ${{ nodeVersion }}
+
+  - ${{ if eq(parameters.arch, 64) }}:
+      - template: setup-nodejs-64.yaml
+        parameters:
+          nodeVersion: ${{ nodeVersion }}
+          
+
   - bash: | 
       # Python is 64 bit on the linux servers
       npm install -g  nrf-device-lister
       nrf-device-lister --help
     displayName: npm install
 
-  - ${{ each pythonVersion in parameters.pythonVersions }}:
-    - bash: |
-          ports=(`nrf-device-lister -p PCA10056`) 
-          echo "Raw ports 1 : $ports"
-          export PORT_A=${ports[0]}
-          ports=(`nrf-device-lister -p PCA10040`)
-          echo "Raw ports 2 : $ports"
-          export PORT_B=${ports[0]}
+  - bash: |
+        ports=(`nrf-device-lister -p PCA10056`) 
+        echo "Raw ports 1 : $ports"
+        export PORT_A=${ports[0]}
+        ports=(`nrf-device-lister -p PCA10040`)
+        echo "Raw ports 2 : $ports"
+        export PORT_B=${ports[0]}
+      
+        echo "Port A: ${PORT_A}"
+        echo "Port B: ${PORT_B}"
+
+        LOG_LEVEL="debug"
+        DRV_LOG_LEVEL="info"
         
-          echo "Port A: ${PORT_A}"
-          echo "Port B: ${PORT_B}"
-
-          LOG_LEVEL="debug"
-          DRV_LOG_LEVEL="info"
-          
-          set -e
+        set -e
 
 
-          python${{ pythonVersion }}  tests/test_programming.py        --port-a ${PORT_A} --port-b ${PORT_B} --log-level ${LOG_LEVEL} --driver-log-level ${DRV_LOG_LEVEL}
-          python${{ pythonVersion }}  tests/test_ble_common_api.py     --port-a ${PORT_A} --port-b ${PORT_B} --log-level ${LOG_LEVEL} --driver-log-level ${DRV_LOG_LEVEL}
-          python${{ pythonVersion }}  tests/test_rssi.py               --port-a ${PORT_A} --port-b ${PORT_B} --log-level ${LOG_LEVEL} --driver-log-level ${DRV_LOG_LEVEL}
-          python${{ pythonVersion }}  tests/test_connection_update.py  --port-a ${PORT_A} --port-b ${PORT_B} --log-level ${LOG_LEVEL} --driver-log-level ${DRV_LOG_LEVEL}
-          python${{ pythonVersion }}  tests/test_mtu.py                --port-a ${PORT_A} --port-b ${PORT_B} --log-level ${LOG_LEVEL} --driver-log-level ${DRV_LOG_LEVEL}
-          python${{ pythonVersion }}  tests/test_passkey.py            --port-a ${PORT_A} --port-b ${PORT_B} --log-level ${LOG_LEVEL} --driver-log-level ${DRV_LOG_LEVEL}
-          python${{ pythonVersion }}  tests/test_phy_update.py         --port-a ${PORT_A} --port-b ${PORT_B} --log-level ${LOG_LEVEL} --driver-log-level ${DRV_LOG_LEVEL}
-          python${{ pythonVersion }}  tests/test_data_length.py        --port-a ${PORT_A} --port-b ${PORT_B} --log-level ${LOG_LEVEL} --driver-log-level ${DRV_LOG_LEVEL}
-          python${{ pythonVersion }}  tests/test_server_client.py      --port-a ${PORT_A} --port-b ${PORT_B} --log-level ${LOG_LEVEL} --driver-log-level ${DRV_LOG_LEVEL}
+        python  tests/test_programming.py        --port-a ${PORT_A} --port-b ${PORT_B} --log-level ${LOG_LEVEL} --driver-log-level ${DRV_LOG_LEVEL}
+        python  tests/test_ble_common_api.py     --port-a ${PORT_A} --port-b ${PORT_B} --log-level ${LOG_LEVEL} --driver-log-level ${DRV_LOG_LEVEL}
+        python  tests/test_rssi.py               --port-a ${PORT_A} --port-b ${PORT_B} --log-level ${LOG_LEVEL} --driver-log-level ${DRV_LOG_LEVEL}
+        python  tests/test_connection_update.py  --port-a ${PORT_A} --port-b ${PORT_B} --log-level ${LOG_LEVEL} --driver-log-level ${DRV_LOG_LEVEL}
+        python  tests/test_mtu.py                --port-a ${PORT_A} --port-b ${PORT_B} --log-level ${LOG_LEVEL} --driver-log-level ${DRV_LOG_LEVEL}
+        python  tests/test_passkey.py            --port-a ${PORT_A} --port-b ${PORT_B} --log-level ${LOG_LEVEL} --driver-log-level ${DRV_LOG_LEVEL}
+        python  tests/test_phy_update.py         --port-a ${PORT_A} --port-b ${PORT_B} --log-level ${LOG_LEVEL} --driver-log-level ${DRV_LOG_LEVEL}
+        python  tests/test_data_length.py        --port-a ${PORT_A} --port-b ${PORT_B} --log-level ${LOG_LEVEL} --driver-log-level ${DRV_LOG_LEVEL}
+        python  tests/test_server_client.py      --port-a ${PORT_A} --port-b ${PORT_B} --log-level ${LOG_LEVEL} --driver-log-level ${DRV_LOG_LEVEL}
 
-      displayName: Jenkins run      
+    displayName: Jenkins run      
