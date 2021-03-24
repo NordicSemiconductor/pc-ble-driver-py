@@ -65,6 +65,7 @@ steps:
       echo "--------" Install:  ${{ parameters.package_name }}
 
       
+      python -m pip install --upgrade pip
       echo start run python install artifact 
       python -m pip install --user --force-reinstall  $(Pipeline.Workspace)/pc_ble_driver_py-0.15.1-cp36-cp36m-manylinux2010_x86_64.whl
       echo end python install artifact 
