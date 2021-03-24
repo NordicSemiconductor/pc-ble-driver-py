@@ -76,13 +76,13 @@ steps:
   - ${{ if eq(parameters.arch, 32) }}:
       - template: setup-nodejs-32.yaml
         parameters:
-          nodeVersion: ${{ nodeVersion }}
+          nodeVersion: ${{ parameters.nodeVersion }}
 
 
   - ${{ if ne(parameters.arch, 32) }}:
       - template: setup-nodejs-64.yaml
         parameters:
-          nodeVersion: ${{ nodeVersion }}
+          nodeVersion: ${{ parameters.nodeVersion }}
           
 
   - bash: | 
