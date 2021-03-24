@@ -416,6 +416,7 @@ jobs:
           python_version: '3.7'
           artifact: artifact-py-37-x86-windows\pc_ble_driver_py-0.15.1-cp37-cp37m-win32.whl
           arch: 32
+          type: Number
 
 
 
