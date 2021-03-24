@@ -66,9 +66,6 @@ steps:
 
   - script: | 
       echo    ${{ parameters.arch }}
-      echo ${{ eq(parameters.arch, 32) }}
-      echo ${{ eq(parameters.arch, 64) }}
-
 
       echo ${{ eq('${{ parameters.arch }}', "32") }}
       echo ${{ eq('${{ parameters.arch }}', "64") }}
