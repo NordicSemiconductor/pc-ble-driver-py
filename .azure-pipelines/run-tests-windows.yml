@@ -63,6 +63,12 @@ steps:
     displayName: Display artifact directories
 
 
+  - script: | 
+      echo ${{ parameters.arch }}
+    failOnStderr: true 
+    displayName: Display artifact directories
+
+
 
   - task: UsePythonVersion@0
     inputs:
