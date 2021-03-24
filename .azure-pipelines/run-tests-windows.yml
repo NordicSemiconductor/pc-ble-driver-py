@@ -64,13 +64,13 @@ steps:
 
 
 
-  - ${{ if eq(parameters.arch, 32) }}:
+  - ${{ if eq(${{ parameters.arch }}, 32) }}:
     - task: UsePythonVersion@0
       inputs:
         versionSpec: ${{ parameters.python_version }}
         architecture: x86
 
-  - ${{ if ne(parameters.arch, 32) }}:
+  - ${{ if ne(${{ parameters.arch }}, 32) }}:
     - task: UsePythonVersion@0
       inputs:
         versionSpec: ${{ parameters.python_version }}
@@ -93,13 +93,13 @@ steps:
     
 
 
-  - ${{ if eq(parameters.arch, 32) }}:
+  - ${{ if eq(${{ parameters.arch }}, 32) }}:
       - template: setup-nodejs-32.yaml
         parameters:
           nodeVersion: ${{ parameters.nodeVersion }}
 
 
-  - ${{ if ne(parameters.arch, 32) }}:
+  - ${{ if ne(${{ parameters.arch }}, 32) }}:
       - template: setup-nodejs-64.yaml
         parameters:
           nodeVersion: ${{ parameters.nodeVersion }}
