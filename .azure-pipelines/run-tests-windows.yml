@@ -63,16 +63,16 @@ steps:
     displayName: Display artifact directories
 
 
-  - script: | 
-      echo    ${{ parameters.arch }}
-      echo ${{ eq(parameters.arch, 32) }}
-      echo ${{ eq(parameters.arch, 64) }}
+  # - script: | 
+  #     echo    ${{ parameters.arch }}
+  #     echo ${{ eq(parameters.arch, 32) }}
+  #     echo ${{ eq(parameters.arch, 64) }}
 
 
-      echo eq(${{ parameters.arch }}, 32) 
-      echo eq(${{ parameters.arch }}, 64) 
-    failOnStderr: true 
-    displayName: Trying to understand the derefferenging
+  #     echo eq(${{ parameters.arch }}, 32) 
+  #     echo eq(${{ parameters.arch }}, 64) 
+  #   failOnStderr: true 
+  #   displayName: Trying to understand the derefferenging
 
 
 
@@ -80,13 +80,13 @@ steps:
     inputs:
       versionSpec: ${{ parameters.python_version }}
       architecture: x86
-    # condition: eq( ${{ parameters.arch }}, 32) 
+    condition: eq( ${{ parameters.arch }}, 32) 
 
   - task: UsePythonVersion@0
     inputs:
       versionSpec: ${{ parameters.python_version }}
       architecture: x64
-    # condition: ne( ${{ parameters.arch }}, 32) 
+    condition: ne( ${{ parameters.arch }}, 32) 
 
   - script: | 
       echo "--------" From: $(Pipeline.Workspace)
