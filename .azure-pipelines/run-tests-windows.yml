@@ -106,18 +106,28 @@ steps:
     failOnStderr: true 
     displayName: Pip install
   
+  
+  
     
-
-
   - ${{ if eq(parameters.arch, 32) }}:
-    - template: setup-nodejs-32.yaml
-      parameters:
-        nodeVersion: ${{ parameters.nodeVersion }}
+      - template: setup-nodejs-32.yaml
+        parameters:
+          nodeVersion: ${{ parameters.nodeVersion }}
 
   - ${{ if eq(parameters.arch, 64) }}:
-    - template: setup-nodejs-64.yaml
-      parameters:
-        nodeVersion: ${{ parameters.nodeVersion }}
+      - template: setup-nodejs-64.yaml
+        parameters:
+          nodeVersion: ${{ parameters.nodeVersion }}
+
+  # - ${{ if eq(parameters.arch, 32) }}:
+  #   - template: setup-nodejs-32.yaml
+  #     parameters:
+  #       nodeVersion: ${{ parameters.nodeVersion }}
+
+  # - ${{ if eq(parameters.arch, 64) }}:
+  #   - template: setup-nodejs-64.yaml
+  #     parameters:
+  #       nodeVersion: ${{ parameters.nodeVersion }}
 
   - bash: | 
 
