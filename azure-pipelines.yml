@@ -52,6 +52,7 @@ parameters:
 
   - name: nodeVersion
     displayName: "Node version"
+    type: string 
     default: 12.13.0
 
 
