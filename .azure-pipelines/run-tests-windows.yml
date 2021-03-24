@@ -3,12 +3,9 @@ parameters:
     type: string
   - name: package_name
     type: string
-  - name: nodeVersions
-    displayName: "Node versions"
-    type: object
 
 
-  - name: node_version
+  - name: nodeVersion
     displayName: "Node version"
     type: string 
     default: 12.13.0
