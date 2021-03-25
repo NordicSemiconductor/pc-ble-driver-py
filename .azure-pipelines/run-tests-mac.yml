@@ -43,7 +43,8 @@ steps:
           dir $(Pipeline.Workspace)
 
           echo Diplay $(Pipeline.Workspace)/artifact-py-3.7-x64-macOS
-          ls $(Pipeline.Workspace)/artifact-py-3.7-x64-macOS
+          dir $(Pipeline.Workspace)/artifact-py-3.7-x64-macOS
+
           echo Display the used artifact: $(Pipeline.Workspace)\${{ parameters.artifact }}
 
           dir $(Pipeline.Workspace)\${{ parameters.artifact }}
@@ -64,9 +65,9 @@ steps:
       architecture: x64
     condition: eq( '${{ parameters.arch }}', 64) 
 
-  - bash: | 
+  - powershell: | 
       echo "--------" From: $(Pipeline.Workspace)
-      ls $(Pipeline.Workspace)
+      dir  $(Pipeline.Workspace)
       echo "--------" Install:  $(Pipeline.Workspace)/${{ parameters.artifact }}
 
       

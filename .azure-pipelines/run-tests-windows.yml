@@ -42,6 +42,8 @@ steps:
           echo display: $(Pipeline.Workspace)
           dir $(Pipeline.Workspace)
 
+          echo Diplay $(Pipeline.Workspace)/artifact-py-3.7-x64-macOS
+          dir $(Pipeline.Workspace)/artifact-py-3.7-x64-macOS
 
           echo Display the used artifact: $(Pipeline.Workspace)\${{ parameters.artifact }}
 
@@ -63,7 +65,7 @@ steps:
       architecture: x64
     condition: eq( '${{ parameters.arch }}', 64) 
 
-  - script: | 
+  - powershell: | 
       echo "--------" From: $(Pipeline.Workspace)
       dir $(Pipeline.Workspace)
       echo "--------" Install:  $(Pipeline.Workspace)/${{ parameters.artifact }}
@@ -84,11 +86,11 @@ steps:
   - template: setup-nodejs-64.yaml
     parameters:
       nodeVersion: ${{ parameters.nodeVersion }}
+
   - bash: | 
       npm install -g  nrf-device-lister
       nrf-device-lister --help
     displayName: npm install
-
 
   - bash: |
         ports=(`nrf-device-lister -p PCA10056`) 
