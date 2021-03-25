@@ -42,11 +42,6 @@ steps:
           echo display: $(Pipeline.Workspace)
           dir $(Pipeline.Workspace)
 
-          echo Display an artifact directory: $(Pipeline.Workspace)\artifact-py-38-x64-windows\
-
-          dir $(Pipeline.Workspace)\artifact-py-38-x64-windows\
-
-
 
           echo Display the used artifact: $(Pipeline.Workspace)\${{ parameters.artifact }}
 
