@@ -362,8 +362,8 @@ jobs:
 
       - template: .azure-pipelines/run-tests-linux.yml
         parameters:
-          artifact: "artifact-py-$(wheel_platform)"
-          package_name: pc_ble_driver_py-0.15.1-cp36-cp36m-manylinux2010_x86_64.whl
+          artifact: "artifact-py-$(wheel_platform)" #TODO Correct this artifact name
+          # package_name: pc_ble_driver_py-0.15.1-cp36-cp36m-manylinux2010_x86_64.whl
           nodeVersion: ${{ parameters.nodeVersion }} 
           arch: 64
 
@@ -375,6 +375,13 @@ jobs:
     #    MacOS,
     #  ]
 
+    strategy:
+      matrix:
+      
+        py37x84:
+          python_version: '3.7'
+          artifact: artifact-py-3.7-x64-macOS\pc_ble_driver_py-0.15.1-cp37-cp37m-macosx_10_9_x86_64.whl
+
     pool:
       name: test-pool-onv12-1
       demands: Agent.OS -equals Darwin 
@@ -382,10 +389,10 @@ jobs:
 
       - template: .azure-pipelines/run-tests-mac.yml
         parameters:
-          artifact: artifact-py-$(python_lib)-$(python_arch)-macOS
-          package_name: pc_ble_driver_py-0.15.1-cp36-cp36m-manylinux2010_x86_64.whl
+          artifact: $(artifact)
           nodeVersion: ${{ parameters.nodeVersion }} 
           arch: 64
+          python_version: $(python_version)
 
   - job: TestWindows_x86
 
