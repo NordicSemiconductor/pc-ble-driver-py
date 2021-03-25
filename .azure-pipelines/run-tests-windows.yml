@@ -75,6 +75,8 @@ steps:
   - powershell: |
       echo "--------" From: $(Pipeline.Workspace)
       dir $(Pipeline.Workspace)
+      
+      alias python=python3
       echo "--------" Install:  $(Pipeline.Workspace)/${{ parameters.artifact_name }}
 
 
