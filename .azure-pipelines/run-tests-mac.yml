@@ -54,23 +54,23 @@ steps:
 
           echo Displaying  $(Pipeline.Workspace)
           dir $(Pipeline.Workspace)
-          
+
     failOnStderr: true 
     displayName: Display artifact directories
 
 
 
-  - task: UsePythonVersion@0
-    inputs:
-      versionSpec: ${{ parameters.python_version }}
-      architecture: x86
-    condition: eq( '${{ parameters.arch }}', 32) 
+  # - task: UsePythonVersion@0
+  #   inputs:
+  #     versionSpec: ${{ parameters.python_version }}
+  #     architecture: x86
+  #   condition: eq( '${{ parameters.arch }}', 32) 
 
-  - task: UsePythonVersion@0
-    inputs:
-      versionSpec: ${{ parameters.python_version }}
-      architecture: x64
-    condition: eq( '${{ parameters.arch }}', 64) 
+  # - task: UsePythonVersion@0
+  #   inputs:
+  #     versionSpec: ${{ parameters.python_version }}
+  #     architecture: x64
+  #   condition: eq( '${{ parameters.arch }}', 64) 
 
   - powershell: | 
       echo "--------" From: $(Pipeline.Workspace)
