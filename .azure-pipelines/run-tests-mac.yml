@@ -35,7 +35,7 @@ steps:
       # artifact: ${{ parameters.artifact }}
       project: Wayland 
       allowFailedBuilds: true
-      path: local_artifacts
+      path: $(System.DefaultWorkingDirectory)/local_artifacts
 
   - powershell: | 
           echo " Display .\"
@@ -70,6 +70,7 @@ steps:
       
       python -m pip install --upgrade pip
       echo start run python install artifact 
+      python -m pip uninstall pc-ble-driver-py
       python -m pip install --user --force-reinstall  $(Pipeline.Workspace)/${{ parameters.artifact }}
       echo end python install artifact 
 
