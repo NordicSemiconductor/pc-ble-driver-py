@@ -43,11 +43,11 @@ parameters:
   - name: TestWindows
     displayName: Test Windows 
     type: boolean
-    default: true
+    default: false
   - name: TestMacOS
     displayName: Test macOS 
     type: boolean
-    default: false
+    default: true
 
 
   - name: nodeVersion
