@@ -1,8 +1,10 @@
 parameters:
-  - name: artifact
+  - name: artifact_name
     type: string
 
 
+  - name: package_name
+    type: string
 
   - name: nodeVersion
     displayName: "Node version"
@@ -32,7 +34,7 @@ steps:
       source: 'specific'
       pipeline: 5
       buildid: 10595
-      # artifact: ${{ parameters.artifact }}
+      artifact: ${{ parameters.artifact_name }}
       project: Wayland
       allowFailedBuilds: true
       downloadPath: $(System.DefaultWorkingDirectory)/local_artifacts

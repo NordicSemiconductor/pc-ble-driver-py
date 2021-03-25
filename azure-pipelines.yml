@@ -380,7 +380,8 @@ jobs:
       
         py37x64:
           python_version: '3.7'
-          artifact: artifact-py-3.7-x64-macOS/pc_ble_driver_py-0.15.1-cp37-cp37m-macosx_10_9_x86_64.whl
+          package_name: pc_ble_driver_py-0.15.1-cp37-cp37m-macosx_10_9_x86_64.whl
+          artifact_name: artifact-py-3.7-x64-macOS
 
     pool:
       name: test-pool-onv12-1
@@ -389,10 +390,11 @@ jobs:
 
       - template: .azure-pipelines/run-tests-mac.yml
         parameters:
-          artifact: $(artifact)
-          nodeVersion: ${{ parameters.nodeVersion }} 
-          arch: 64
+          package_name:   $(package_name)
+          artifact_name:  $(artifact_name)
+          nodeVersion:    ${{ parameters.nodeVersion }} 
           python_version: $(python_version)
+          arch: 64
 
   - job: TestWindows_x86
 
@@ -401,7 +403,8 @@ jobs:
       
         py37x84:
           python_version: '3.7'
-          artifact: artifact-py-37-x86-windows\pc_ble_driver_py-0.15.1-cp37-cp37m-win32.whl
+          package_name: pc_ble_driver_py-0.15.1-cp37-cp37m-win32.whl
+          artifact_name: artifact-py-37-x86-windows
 
 
 
@@ -419,10 +422,11 @@ jobs:
 
       - template: .azure-pipelines/run-tests-windows.yml
         parameters:
-          artifact: $(artifact)
-          nodeVersion: ${{ parameters.nodeVersion }} 
-          arch: 32
+          package_name:   $(package_name)
+          artifact_name:  $(artifact_name)
+          nodeVersion:    ${{ parameters.nodeVersion }} 
           python_version: $(python_version)
+          arch: 32
 
 
 
@@ -440,7 +444,8 @@ jobs:
 
         py37x64:
           python_version: '3.7'
-          artifact: artifact-py-37-x64-windows\pc_ble_driver_py-0.15.1-cp37-cp37m-win_amd64.whl
+          artifact_name: artifact-py-37-x64-windows
+          package_name: pc_ble_driver_py-0.15.1-cp37-cp37m-win_amd64.whl
 
         # py38x64:
         #   python_version: '3.8'
@@ -459,8 +464,9 @@ jobs:
 
       - template: .azure-pipelines/run-tests-windows.yml
         parameters:
-          artifact: $(artifact)
-          nodeVersion: ${{ parameters.nodeVersion }} 
-          arch: 64
+          package_name:   $(package_name)
+          artifact_name:  $(artifact_name)
+          nodeVersion:    ${{ parameters.nodeVersion }} 
           python_version: $(python_version)
+          arch: 64
 
