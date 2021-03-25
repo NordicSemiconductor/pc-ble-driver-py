@@ -45,6 +45,9 @@ steps:
           echo "Display local artifacts"
           dir .\local_artifacts\
           echo "End display local_artifacts"
+          echo "Last attempt at displaying"
+          dir $(System.DefaultWorkingDirectory)/local_artifacts
+          echo "End of last attempt"
     failOnStderr: true
     displayName: Display artifact directories
 
