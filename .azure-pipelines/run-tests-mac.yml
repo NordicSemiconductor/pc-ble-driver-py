@@ -70,13 +70,13 @@ steps:
   - powershell: | 
       echo "--------" From: $(Pipeline.Workspace)
       dir $(Pipeline.Workspace)
-      echo "--------" Install:  $(Pipeline.Workspace)/${{ parameters.artifact }}
+      echo "--------" Install:  $(Pipeline.Workspace)/${{ parameters.artifact_name }}
 
       
       python -m pip install --upgrade pip
       echo start run python install artifact 
       python -m pip uninstall pc-ble-driver-py
-      python -m pip install --user --force-reinstall  $(Pipeline.Workspace)/${{ parameters.artifact }}
+      python -m pip install --user --force-reinstall  $(Pipeline.Workspace)/${{ parameters.artifact_name }}
       echo end python install artifact 
 
     failOnStderr: true 
