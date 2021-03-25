@@ -345,10 +345,10 @@ jobs:
 
     variables:
       wheel_platform: 'manylinux2010_x86_64'
-#    dependsOn: [
-#      Linux,
-#    ]
-#
+        #    dependsOn: [
+        #      Linux,
+        #    ]
+        #
  
     strategy:
       matrix:
@@ -363,7 +363,7 @@ jobs:
       - template: .azure-pipelines/run-tests-linux.yml
         parameters:
           artifact: "artifact-py-$(wheel_platform)" #TODO Correct this artifact name
-          # package_name: pc_ble_driver_py-0.15.1-cp36-cp36m-manylinux2010_x86_64.whl
+          package_name: pc_ble_driver_py-0.15.1-cp36-cp36m-manylinux2010_x86_64.whl
           nodeVersion: ${{ parameters.nodeVersion }} 
           arch: 64
 
