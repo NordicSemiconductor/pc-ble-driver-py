@@ -52,6 +52,7 @@ steps:
           
           echo "Display local artifacts"
           dir local_artifacts
+          echo "End display local_artifacts"
     failOnStderr: true 
     displayName: Display artifact directories
 
@@ -71,7 +72,7 @@ steps:
 
   - powershell: | 
       echo "--------" From: $(Pipeline.Workspace)
-      dir  $(Pipeline.Workspace)
+      dir $(Pipeline.Workspace)
       echo "--------" Install:  $(Pipeline.Workspace)/${{ parameters.artifact }}
 
       
@@ -86,6 +87,7 @@ steps:
 
 
 
+  #TODO Select the correct node version 
   - template: setup-nodejs-64.yaml
     parameters:
       nodeVersion: ${{ parameters.nodeVersion }}

@@ -6,21 +6,21 @@ parameters:
 
   - name: nodeVersion
     displayName: "Node version"
-    type: string 
+    type: string
     default: 12.13.0
 
   - name: python_version
     displayName: "Python versions"
     type: string
     default: 3.6.8
-      
+
   - name: arch
     type: number
     default: 64
 
 steps:
-  
-   
+
+
 
 #  - task: DownloadPipelineArtifact@2
 #    inputs:
@@ -33,11 +33,11 @@ steps:
       pipeline: 5
       buildid: 10595
       # artifact: ${{ parameters.artifact }}
-      project: Wayland 
+      project: Wayland
       allowFailedBuilds: true
       path: local_artifacts
 
-  - powershell: | 
+  - powershell: |
           echo display: ls
           dir
           # echo display: $(Pipeline.Workspace)
@@ -49,10 +49,11 @@ steps:
           # echo Display the used artifact: $(Pipeline.Workspace)\${{ parameters.artifact }}
 
           # dir $(Pipeline.Workspace)\${{ parameters.artifact }}
-          
+
           echo "Display local artifacts"
           dir local_artifacts
-    failOnStderr: true 
+          echo "End display local_artifacts"
+    failOnStderr: true
     displayName: Display artifact directories
 
 
@@ -61,55 +62,55 @@ steps:
     inputs:
       versionSpec: ${{ parameters.python_version }}
       architecture: x86
-    condition: eq( '${{ parameters.arch }}', 32) 
+    condition: eq( '${{ parameters.arch }}', 32)
 
   - task: UsePythonVersion@0
     inputs:
       versionSpec: ${{ parameters.python_version }}
       architecture: x64
-    condition: eq( '${{ parameters.arch }}', 64) 
+    condition: eq( '${{ parameters.arch }}', 64)
 
-  - powershell: | 
+  - powershell: |
       echo "--------" From: $(Pipeline.Workspace)
       dir $(Pipeline.Workspace)
       echo "--------" Install:  $(Pipeline.Workspace)/${{ parameters.artifact }}
 
-      
+
       python -m pip install --upgrade pip
-      echo start run python install artifact 
+      echo start run python install artifact
       python -m pip install --user --force-reinstall  $(Pipeline.Workspace)/${{ parameters.artifact }}
-      echo end python install artifact 
+      echo end python install artifact
 
-    failOnStderr: true 
+    failOnStderr: true
     displayName: Pip install
-  
-  
 
- 
-  #TODO Select the correct node version 
+
+
+
+  #TODO Select the correct node version
   - template: setup-nodejs-64.yaml
     parameters:
       nodeVersion: ${{ parameters.nodeVersion }}
 
-  - bash: | 
+  - bash: |
       npm install -g  nrf-device-lister
       nrf-device-lister --help
     displayName: npm install
 
   - bash: |
-        ports=(`nrf-device-lister -p PCA10056`) 
+        ports=(`nrf-device-lister -p PCA10056`)
         echo "Raw ports 1 : $ports"
         export PORT_A=${ports[0]}
         ports=(`nrf-device-lister -p PCA10040`)
         echo "Raw ports 2 : $ports"
         export PORT_B=${ports[0]}
-      
+
         echo "Port A: ${PORT_A}"
         echo "Port B: ${PORT_B}"
 
         LOG_LEVEL="debug"
         DRV_LOG_LEVEL="info"
-        
+
         set -e
 
 
@@ -123,4 +124,4 @@ steps:
         python  tests/test_data_length.py        --port-a ${PORT_A} --port-b ${PORT_B} --log-level ${LOG_LEVEL} --driver-log-level ${DRV_LOG_LEVEL}
         python  tests/test_server_client.py      --port-a ${PORT_A} --port-b ${PORT_B} --log-level ${LOG_LEVEL} --driver-log-level ${DRV_LOG_LEVEL}
 
-    displayName: Jenkins run      
+    displayName: Jenkins run
