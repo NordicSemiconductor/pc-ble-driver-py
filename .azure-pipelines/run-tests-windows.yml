@@ -38,18 +38,10 @@ steps:
       path: local_artifacts
 
   - powershell: |
-          echo display: ls
+          echo " Display .\"
+          dir .\
+          echo "Display no keyword"
           dir
-          # echo display: $(Pipeline.Workspace)
-          # dir $(Pipeline.Workspace)
-
-          # echo Diplay $(Pipeline.Workspace)/artifact-py-3.7-x64-macOS
-          # dir $(Pipeline.Workspace)/artifact-py-3.7-x64-macOS
-
-          # echo Display the used artifact: $(Pipeline.Workspace)\${{ parameters.artifact }}
-
-          # dir $(Pipeline.Workspace)\${{ parameters.artifact }}
-
           echo "Display local artifacts"
           dir .\local_artifacts\
           echo "End display local_artifacts"
