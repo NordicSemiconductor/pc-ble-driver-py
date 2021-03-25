@@ -51,7 +51,7 @@ steps:
           # dir $(Pipeline.Workspace)\${{ parameters.artifact }}
 
           echo "Display local artifacts"
-          dir local_artifacts
+          dir .\local_artifacts\
           echo "End display local_artifacts"
     failOnStderr: true
     displayName: Display artifact directories
