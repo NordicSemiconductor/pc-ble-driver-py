@@ -37,7 +37,7 @@ steps:
       artifact: ${{ parameters.artifact_name }}
       project: Wayland 
       allowFailedBuilds: true
-      downloadPath: $(System.DefaultWorkingDirectory)/local_artifacts
+      # downloadPath: $(System.DefaultWorkingDirectory)/local_artifacts
 
   - powershell: | 
           echo " Display .\"
