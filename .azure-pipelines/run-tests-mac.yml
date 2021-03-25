@@ -32,10 +32,11 @@ steps:
   - task: DownloadPipelineArtifact@2
     inputs:
       source: 'specific'
+      project: Wayland 
       pipeline: 5
+      runVersion: 'latest'
       runId: 10595
       artifact: ${{ parameters.artifact_name }}
-      project: Wayland 
       allowFailedBuilds: true
       # downloadPath: $(System.DefaultWorkingDirectory)/local_artifacts
 
