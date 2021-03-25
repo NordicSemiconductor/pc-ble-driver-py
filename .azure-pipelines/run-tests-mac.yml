@@ -36,14 +36,14 @@ steps:
       project: Wayland 
       allowFailedBuilds: true
 
-  - pwsh: | 
+  - powershell: | 
           echo display: ls
           dir
           echo display: $(Pipeline.Workspace)
           dir $(Pipeline.Workspace)
 
-          # echo Diplay $(Pipeline.Workspace)/artifact-py-3.7-x64-macOS
-          # ls $(Pipeline.Workspace)/artifact-py-3.7-x64-macOS
+          echo Diplay $(Pipeline.Workspace)/artifact-py-3.7-x64-macOS
+          ls $(Pipeline.Workspace)/artifact-py-3.7-x64-macOS
           echo Display the used artifact: $(Pipeline.Workspace)\${{ parameters.artifact }}
 
           dir $(Pipeline.Workspace)\${{ parameters.artifact }}

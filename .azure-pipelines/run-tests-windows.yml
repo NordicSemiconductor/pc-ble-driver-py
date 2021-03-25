@@ -36,7 +36,7 @@ steps:
       project: Wayland 
       allowFailedBuilds: true
 
-  - pwsh: | 
+  - powershell: | 
           echo display: ls
           dir
           echo display: $(Pipeline.Workspace)
