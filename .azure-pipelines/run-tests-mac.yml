@@ -45,7 +45,7 @@ steps:
 
           echo Display the used artifact: $(Pipeline.Workspace)\${{ parameters.artifact }}
 
-          ls $(Pipeline.Workspace)\${{ parameters.artifact }}
+          ls $(Pipeline.Workspace)/${{ parameters.artifact }}
     failOnStderr: true 
     displayName: Display artifact directories
 
