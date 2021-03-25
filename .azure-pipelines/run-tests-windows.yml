@@ -34,7 +34,7 @@ steps:
       source: 'specific'
       project: Wayland
       pipeline: 5
-      runVersion: 10595
+      runVersion: 'specific'
       runId: 10595
       artifact: ${{ parameters.artifact_name }}
       allowFailedBuilds: true
