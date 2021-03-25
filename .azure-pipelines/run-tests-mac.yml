@@ -60,17 +60,17 @@ steps:
 
 
 
-  # - task: UsePythonVersion@0
-  #   inputs:
-  #     versionSpec: ${{ parameters.python_version }}
-  #     architecture: x86
-  #   condition: eq( '${{ parameters.arch }}', 32) 
+  - task: UsePythonVersion@0
+    inputs:
+      versionSpec: ${{ parameters.python_version }}
+      architecture: x86
+    condition: eq( '${{ parameters.arch }}', 32) 
 
-  # - task: UsePythonVersion@0
-  #   inputs:
-  #     versionSpec: ${{ parameters.python_version }}
-  #     architecture: x64
-  #   condition: eq( '${{ parameters.arch }}', 64) 
+  - task: UsePythonVersion@0
+    inputs:
+      versionSpec: ${{ parameters.python_version }}
+      architecture: x64
+    condition: eq( '${{ parameters.arch }}', 64) 
 
   - powershell: | 
       echo "--------" From: $(Pipeline.Workspace)
@@ -79,7 +79,6 @@ steps:
       python -m pip --version
       python3 --version 
       python3 -m pip --version
-      alias python=python3
       echo "--------" Install:  $(Pipeline.Workspace)/${{ parameters.artifact_name }}
 
       
