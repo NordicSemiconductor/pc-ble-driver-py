@@ -30,7 +30,7 @@ steps:
 #    inputs:
 #     source: current
 #     artifact: ${{ parameters.artifact }}
-
+    
   - task: DownloadPipelineArtifact@2
     inputs:
       source: 'specific'

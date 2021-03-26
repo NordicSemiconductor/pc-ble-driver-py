@@ -94,8 +94,8 @@ jobs:
         tagSource: 'Git tag'
         tag: '$(Build.SourceBranchName)'
         assetUploadMode: 'replace'
-        isDraft: 'true'
-        addChangeLog: 'false'
+        isDraft: true
+        addChangeLog: false
       condition: ne(variables['Build.Reason'], 'PullRequest')
     
     - script: |
@@ -258,8 +258,8 @@ jobs:
         tagSource: 'Git tag'
         tag: '$(Build.SourceBranchName)'
         assetUploadMode: 'replace'
-        isDraft: 'true'
-        addChangeLog: 'false'
+        isDraft: true
+        addChangeLog: false
       condition: ne(variables['Build.Reason'], 'PullRequest')
     - task: PublishPipelineArtifact@1
       inputs:
