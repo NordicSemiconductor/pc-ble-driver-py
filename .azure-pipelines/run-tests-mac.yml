@@ -85,11 +85,12 @@ steps:
     displayName: Show python versions
   - powershell: 
 
-      python3 -m pip install --upgrade pip
+      python -m pip install --upgrade pip
+      
       echo "start run python install artifact"
-      python3 -m pip uninstall -y --quiet --quiet pc-ble-driver-py
-      python3 -m pip install -r requirements-dev.txt
-      python3 -m pip install  --force-reinstall  $(Pipeline.Workspace)/${{ parameters.package_name }}
+      python -m pip uninstall -y --quiet --quiet pc-ble-driver-py
+      # python -m pip install -r requirements-dev.txt
+      python -m pip install  --force-reinstall  $(Pipeline.Workspace)/${{ parameters.package_name }}
       echo "end python install artifact"
     condition: always()
     failOnStderr: true 
@@ -124,14 +125,14 @@ steps:
         set -e
 
 
-        python3  tests/test_programming.py        --port-a ${PORT_A} --port-b ${PORT_B} --log-level ${LOG_LEVEL} --driver-log-level ${DRV_LOG_LEVEL}
-        python3  tests/test_ble_common_api.py     --port-a ${PORT_A} --port-b ${PORT_B} --log-level ${LOG_LEVEL} --driver-log-level ${DRV_LOG_LEVEL}
-        python3  tests/test_rssi.py               --port-a ${PORT_A} --port-b ${PORT_B} --log-level ${LOG_LEVEL} --driver-log-level ${DRV_LOG_LEVEL}
-        python3  tests/test_connection_update.py  --port-a ${PORT_A} --port-b ${PORT_B} --log-level ${LOG_LEVEL} --driver-log-level ${DRV_LOG_LEVEL}
-        python3  tests/test_mtu.py                --port-a ${PORT_A} --port-b ${PORT_B} --log-level ${LOG_LEVEL} --driver-log-level ${DRV_LOG_LEVEL}
-        python3  tests/test_passkey.py            --port-a ${PORT_A} --port-b ${PORT_B} --log-level ${LOG_LEVEL} --driver-log-level ${DRV_LOG_LEVEL}
-        python3  tests/test_phy_update.py         --port-a ${PORT_A} --port-b ${PORT_B} --log-level ${LOG_LEVEL} --driver-log-level ${DRV_LOG_LEVEL}
-        python3  tests/test_data_length.py        --port-a ${PORT_A} --port-b ${PORT_B} --log-level ${LOG_LEVEL} --driver-log-level ${DRV_LOG_LEVEL}
-        python3  tests/test_server_client.py      --port-a ${PORT_A} --port-b ${PORT_B} --log-level ${LOG_LEVEL} --driver-log-level ${DRV_LOG_LEVEL}
+        python  tests/test_programming.py        --port-a ${PORT_A} --port-b ${PORT_B} --log-level ${LOG_LEVEL} --driver-log-level ${DRV_LOG_LEVEL}
+        python  tests/test_ble_common_api.py     --port-a ${PORT_A} --port-b ${PORT_B} --log-level ${LOG_LEVEL} --driver-log-level ${DRV_LOG_LEVEL}
+        python  tests/test_rssi.py               --port-a ${PORT_A} --port-b ${PORT_B} --log-level ${LOG_LEVEL} --driver-log-level ${DRV_LOG_LEVEL}
+        python  tests/test_connection_update.py  --port-a ${PORT_A} --port-b ${PORT_B} --log-level ${LOG_LEVEL} --driver-log-level ${DRV_LOG_LEVEL}
+        python  tests/test_mtu.py                --port-a ${PORT_A} --port-b ${PORT_B} --log-level ${LOG_LEVEL} --driver-log-level ${DRV_LOG_LEVEL}
+        python  tests/test_passkey.py            --port-a ${PORT_A} --port-b ${PORT_B} --log-level ${LOG_LEVEL} --driver-log-level ${DRV_LOG_LEVEL}
+        python  tests/test_phy_update.py         --port-a ${PORT_A} --port-b ${PORT_B} --log-level ${LOG_LEVEL} --driver-log-level ${DRV_LOG_LEVEL}
+        python  tests/test_data_length.py        --port-a ${PORT_A} --port-b ${PORT_B} --log-level ${LOG_LEVEL} --driver-log-level ${DRV_LOG_LEVEL}
+        python  tests/test_server_client.py      --port-a ${PORT_A} --port-b ${PORT_B} --log-level ${LOG_LEVEL} --driver-log-level ${DRV_LOG_LEVEL}
 
     displayName: Jenkins run      

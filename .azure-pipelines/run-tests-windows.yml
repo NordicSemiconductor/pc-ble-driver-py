@@ -85,9 +85,11 @@ steps:
     displayName: Show python versions
   - powershell: 
 
-      python3 -m pip install --upgrade pip
+      python -m pip install --upgrade pip
+      
       echo "start run python install artifact"
       python -m pip uninstall -y --quiet --quiet pc-ble-driver-py
+      # python -m pip install -r requirements-dev.txt
       python -m pip install  --force-reinstall  $(Pipeline.Workspace)/${{ parameters.package_name }}
       echo "end python install artifact"
     condition: always()
