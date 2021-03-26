@@ -71,7 +71,7 @@ steps:
         parameters:
           nodeVersion: ${{ parameters.nodeVersion }}
   - ${{ if eq(parameters.arch, 64) }}:
-      - template: setup-nodejs-64.yaml
+      - template: unix_setup-nodejs-64.yaml
         parameters:
           nodeVersion: ${{ parameters.nodeVersion }}
   - bash: | 

@@ -92,7 +92,7 @@ steps:
 
 
   #TODO Select the correct node version
-  - template: setup-nodejs-64.yaml
+  - template: win_setup-nodejs-64.yaml
     parameters:
       nodeVersion: ${{ parameters.nodeVersion }}
 
