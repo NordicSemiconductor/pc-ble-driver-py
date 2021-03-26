@@ -87,7 +87,7 @@ steps:
       python3 -m pip install --upgrade pip
       echo start run python install artifact 
       python3 -m pip uninstall -y pc-ble-driver-py
-      python3 -m pip install  --force-reinstall  $(Pipeline.Workspace)/${{ parameters.artifact_name }}
+      python3 -m pip install  --force-reinstall  $(Pipeline.Workspace)/${{ parameters.package_name }}
       echo end python install artifact 
 
     failOnStderr: true 
