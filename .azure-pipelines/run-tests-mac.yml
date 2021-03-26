@@ -83,7 +83,7 @@ steps:
       python3 -m pip --version
       echo "--------" Install:  $(Pipeline.Workspace)/${{ parameters.artifact_name }}
     displayName: Show python versions
-  - powershell: 
+  - powershell: |
 
       python -m pip install --upgrade pip
       
