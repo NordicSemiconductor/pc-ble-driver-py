@@ -75,29 +75,29 @@ steps:
   - powershell: | 
       echo "--------" From: $(Pipeline.Workspace)
       dir $(Pipeline.Workspace)
-      # echo "Python ?"
-      # python --version 
-      # python -m pip --version
-      # echo "Python 3"
-      # python3 --version 
-      # python3 -m pip --version
+      echo "Python ?"
+      python --version 
+      python -m pip --version
+      echo "Python 3"
+      python3 --version 
+      python3 -m pip --version
       echo "--------" Install:  $(Pipeline.Workspace)/${{ parameters.artifact_name }}
+    displayName: Show python versions
+  - powershell: 
 
-      
       python3 -m pip install --upgrade pip
       echo "start run python install artifact"
       python3 -m pip uninstall -y --quiet --quiet pc-ble-driver-py
       python3 -m pip install -r requirements-dev.txt
       python3 -m pip install  --force-reinstall  $(Pipeline.Workspace)/${{ parameters.package_name }}
       echo "end python install artifact"
-
+    condition: always()
     failOnStderr: true 
     displayName: Pip install
 
 
 
 
-  #TODO Select the correct node version 
   - template: unix_setup-nodejs-64.yaml
     parameters:
       nodeVersion: ${{ parameters.nodeVersion }}
