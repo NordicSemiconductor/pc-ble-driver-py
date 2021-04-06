@@ -30,7 +30,7 @@ steps:
       project: Wayland 
       pipeline: 73
       runVersion: 'specific'
-      runId: 10819
+      runId: 10979
       artifact: artifact-py-macOSX
       allowFailedBuilds: true
 
