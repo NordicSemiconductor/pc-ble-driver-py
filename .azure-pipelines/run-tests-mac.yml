@@ -23,15 +23,15 @@ parameters:
 steps:
   
    
-
+    #Downlad a python artifact
   - task: DownloadPipelineArtifact@2
     inputs:
       source: 'specific'
       project: Wayland 
       pipeline: 73
       runVersion: 'specific'
-      runId: 10979
-      artifact: artifact-py-macOSX
+      runId: 10984
+      artifact: artifact-py-dependencies-macOSX
       allowFailedBuilds: true
 
 
