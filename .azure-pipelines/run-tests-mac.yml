@@ -24,6 +24,17 @@ steps:
   
    
 
+  - task: DownloadPipelineArtifact@2
+    inputs:
+      source: 'specific'
+      project: Wayland 
+      pipeline: 73
+      runVersion: 'specific'
+      runId: 10819
+      artifact: artifact-py-macOSX
+      allowFailedBuilds: true
+
+
 #  - task: DownloadPipelineArtifact@2
 #    inputs:
 #     source: current
@@ -39,7 +50,7 @@ steps:
       artifact: ${{ parameters.artifact_name }}
       allowFailedBuilds: true
       # downloadPath: $(System.DefaultWorkingDirectory)/local_artifacts
-
+      
   - powershell: | 
           echo " Display .\"
           dir .\
