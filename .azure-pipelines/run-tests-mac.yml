@@ -126,16 +126,16 @@ steps:
   - powershell: |
         $ports=nrf-device-lister -p PCA10056 
         echo "Raw ports 1 : $ports"
-        $PORT_A=${ports[0]}
+        $PORT_A=$ports.Split(" ")[0]
         $ports=nrf-device-lister -p PCA10040
         echo "Raw ports 2 : $ports"
-        $PORT_B=${ports[0]}
+        $PORT_B=$ports.Split(" ")[0]
       
         echo "Port A: ${PORT_A}"
         echo "Port B: ${PORT_B}"
 
-        LOG_LEVEL="debug"
-        DRV_LOG_LEVEL="info"
+        $LOG_LEVEL="debug"
+        $DRV_LOG_LEVEL="info"
         
         set -e
 
