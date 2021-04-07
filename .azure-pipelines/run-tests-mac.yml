@@ -20,8 +20,8 @@ parameters:
     type: number
     default: 64
 variables:
-    - name: python_name
-      $(python_name) \usr\bin\python3
+    - python_name: \usr\bin\python3
+#    - python_name: python3
 
 steps:
   
