@@ -136,7 +136,6 @@ steps:
 
         $LOG_LEVEL="debug"
         $DRV_LOG_LEVEL="info"
-        $ErrorActionPreference="Stop"
     
 
         Get-ChildItem .\tests\test_*.py
