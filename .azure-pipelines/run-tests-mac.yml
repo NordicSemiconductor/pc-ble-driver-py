@@ -136,9 +136,7 @@ steps:
 
         $LOG_LEVEL="debug"
         $DRV_LOG_LEVEL="info"
-        
-        set -e
-
+        $ErrorActionPreference="Stop"
 
         ${{ parameters.python_name }}   tests/test_programming.py        --port-a ${PORT_A} --port-b ${PORT_B} --log-level ${LOG_LEVEL} --driver-log-level ${DRV_LOG_LEVEL}
         ${{ parameters.python_name }}   tests/test_ble_common_api.py     --port-a ${PORT_A} --port-b ${PORT_B} --log-level ${LOG_LEVEL} --driver-log-level ${DRV_LOG_LEVEL}
