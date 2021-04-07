@@ -22,18 +22,18 @@ parameters:
 
 steps:
   
-   
-    #Downlad a python artifact
-  - task: DownloadPipelineArtifact@2
-    inputs:
-      source: 'specific'
-      project: Wayland 
-      pipeline: 73
-      runVersion: 'specific'
-      runId: 10984
-      artifact: artifact-py-dependencies-macOSX
-      allowFailedBuilds: true
-
+#   
+#    #Downlad a python artifact
+#  - task: DownloadPipelineArtifact@2
+#    inputs:
+#      source: 'specific'
+#      project: Wayland 
+#      pipeline: 73
+#      runVersion: 'specific'
+#      runId: 10984
+#      artifact: artifact-py-dependencies-macOSX
+#      allowFailedBuilds: true
+#
 
 #  - task: DownloadPipelineArtifact@2
 #    inputs:
@@ -49,10 +49,9 @@ steps:
       runId: 10595
       artifact: ${{ parameters.artifact_name }}
       allowFailedBuilds: true
-      # downloadPath: $(System.DefaultWorkingDirectory)/local_artifacts
-      
+
   - powershell: | 
-          echo " Display .\"
+          echo " Display .\ "
           dir .\
           echo "Display no keyword"
           dir
@@ -70,25 +69,25 @@ steps:
     displayName: Display artifact directories
 
 
-
-  - task: UsePythonVersion@0
-    inputs:
-      versionSpec: ${{ parameters.python_version }}
-      architecture: x86
-    condition: eq( '${{ parameters.arch }}', 32) 
-
-  - task: UsePythonVersion@0
-    inputs:
-      versionSpec: ${{ parameters.python_version }}
-      architecture: x64
-    condition: eq( '${{ parameters.arch }}', 64) 
-
+#
+#  - task: UsePythonVersion@0
+#    inputs:
+#      versionSpec: ${{ parameters.python_version }}
+#      architecture: x86
+#    condition: eq( '${{ parameters.arch }}', 32) 
+#
+#  - task: UsePythonVersion@0
+#    inputs:
+#      versionSpec: ${{ parameters.python_version }}
+#      architecture: x64
+#    condition: eq( '${{ parameters.arch }}', 64) 
+#
   - powershell: | 
       echo "--------" From: $(Pipeline.Workspace)
       dir $(Pipeline.Workspace)
       echo "Python ?"
-      python --version 
-      python -m pip --version
+      \usr\bin\python3  --version 
+      \usr\bin\python3  -m pip --version
       # echo "Python 3"
       # python3 --version 
       # python3 -m pip --version
@@ -96,12 +95,12 @@ steps:
     displayName: Show python versions
   - powershell: |
 
-      python -m pip install --upgrade pip
+      \usr\bin\python3  -m pip install --upgrade pip
       
       echo "start run python install artifact"
-      python -m pip uninstall -y --quiet --quiet pc-ble-driver-py
-      # python -m pip install -r requirements-dev.txt
-      python -m pip install  --force-reinstall  $(Pipeline.Workspace)/${{ parameters.package_name }}
+      \usr\bin\python3  -m pip uninstall -y --quiet --quiet pc-ble-driver-py
+      # \usr\bin\python3  -m pip install -r requirements-dev.txt
+      \usr\bin\python3  -m pip install  --force-reinstall  $(Pipeline.Workspace)/${{ parameters.package_name }}
       echo "end python install artifact"
     condition: always()
     failOnStderr: true 
@@ -136,14 +135,14 @@ steps:
         set -e
 
 
-        python  tests/test_programming.py        --port-a ${PORT_A} --port-b ${PORT_B} --log-level ${LOG_LEVEL} --driver-log-level ${DRV_LOG_LEVEL}
-        python  tests/test_ble_common_api.py     --port-a ${PORT_A} --port-b ${PORT_B} --log-level ${LOG_LEVEL} --driver-log-level ${DRV_LOG_LEVEL}
-        python  tests/test_rssi.py               --port-a ${PORT_A} --port-b ${PORT_B} --log-level ${LOG_LEVEL} --driver-log-level ${DRV_LOG_LEVEL}
-        python  tests/test_connection_update.py  --port-a ${PORT_A} --port-b ${PORT_B} --log-level ${LOG_LEVEL} --driver-log-level ${DRV_LOG_LEVEL}
-        python  tests/test_mtu.py                --port-a ${PORT_A} --port-b ${PORT_B} --log-level ${LOG_LEVEL} --driver-log-level ${DRV_LOG_LEVEL}
-        python  tests/test_passkey.py            --port-a ${PORT_A} --port-b ${PORT_B} --log-level ${LOG_LEVEL} --driver-log-level ${DRV_LOG_LEVEL}
-        python  tests/test_phy_update.py         --port-a ${PORT_A} --port-b ${PORT_B} --log-level ${LOG_LEVEL} --driver-log-level ${DRV_LOG_LEVEL}
-        python  tests/test_data_length.py        --port-a ${PORT_A} --port-b ${PORT_B} --log-level ${LOG_LEVEL} --driver-log-level ${DRV_LOG_LEVEL}
-        python  tests/test_server_client.py      --port-a ${PORT_A} --port-b ${PORT_B} --log-level ${LOG_LEVEL} --driver-log-level ${DRV_LOG_LEVEL}
+        \usr\bin\python3   tests/test_programming.py        --port-a ${ PORT_A } --port-b ${ PORT_B } --log-level ${ LOG_LEVEL } --driver-log-level ${ DRV_LOG_LEVEL }
+        \usr\bin\python3   tests/test_ble_common_api.py     --port-a ${ PORT_A } --port-b ${ PORT_B } --log-level ${ LOG_LEVEL } --driver-log-level ${ DRV_LOG_LEVEL }
+        \usr\bin\python3   tests/test_rssi.py               --port-a ${ PORT_A } --port-b ${ PORT_B } --log-level ${ LOG_LEVEL } --driver-log-level ${ DRV_LOG_LEVEL }
+        \usr\bin\python3   tests/test_connection_update.py  --port-a ${ PORT_A } --port-b ${ PORT_B } --log-level ${ LOG_LEVEL } --driver-log-level ${ DRV_LOG_LEVEL }
+        \usr\bin\python3   tests/test_mtu.py                --port-a ${ PORT_A } --port-b ${ PORT_B } --log-level ${ LOG_LEVEL } --driver-log-level ${ DRV_LOG_LEVEL }
+        \usr\bin\python3   tests/test_passkey.py            --port-a ${ PORT_A } --port-b ${ PORT_B } --log-level ${ LOG_LEVEL } --driver-log-level ${ DRV_LOG_LEVEL }
+        \usr\bin\python3   tests/test_phy_update.py         --port-a ${ PORT_A } --port-b ${ PORT_B } --log-level ${ LOG_LEVEL } --driver-log-level ${ DRV_LOG_LEVEL }
+        \usr\bin\python3   tests/test_data_length.py        --port-a ${ PORT_A } --port-b ${ PORT_B } --log-level ${ LOG_LEVEL } --driver-log-level ${ DRV_LOG_LEVEL }
+        \usr\bin\python3   tests/test_server_client.py      --port-a ${ PORT_A } --port-b ${ PORT_B } --log-level ${ LOG_LEVEL } --driver-log-level ${ DRV_LOG_LEVEL }
 
     displayName: Jenkins run      
