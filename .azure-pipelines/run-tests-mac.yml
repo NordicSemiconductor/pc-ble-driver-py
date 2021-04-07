@@ -19,9 +19,11 @@ parameters:
   - name: arch
     type: number
     default: 64
-variables:
-    - python_name: \usr\bin\python3
-#    - python_name: python3
+
+
+  - name: python_name 
+    type: string 
+    default: \usr\bin\python3
 
 steps:
   
@@ -89,8 +91,8 @@ steps:
       echo "--------" From: $(Pipeline.Workspace)
       dir $(Pipeline.Workspace)
       echo "Python ?"
-      $(python_name)  --version 
-      $(python_name)  -m pip --version 
+      ${{ python_name }}  --version 
+      ${{ python_name }}  -m pip --version 
       # echo "Python 3"
       # python3 --version 
       # python3 -m pip --version
@@ -98,12 +100,12 @@ steps:
     displayName: Show python versions
   - powershell: |
 
-      $(python_name)  -m pip install --upgrade pip --user
+      ${{ python_name }}  -m pip install --upgrade pip --user
       
       echo "start run python install artifact"
-      $(python_name)  -m pip uninstall  -y --quiet --quiet pc-ble-driver-py
-        #      $(python_name) -m pip install --user -r requirements-dev.txt
-      $(python_name)  -m pip install  --user --force-reinstall  $(Pipeline.Workspace)/${{ parameters.package_name }}
+      ${{ python_name }}  -m pip uninstall  -y --quiet --quiet pc-ble-driver-py
+        #      ${{ python_name }} -m pip install --user -r requirements-dev.txt
+      ${{ python_name }}  -m pip install  --user --force-reinstall  $(Pipeline.Workspace)/${{ parameters.package_name }}
       echo "end python install artifact"
     condition: always()
     failOnStderr: true 
@@ -138,14 +140,14 @@ steps:
         set -e
 
 
-        $(python_name)   tests/test_programming.py        --port-a ${PORT_A} --port-b ${PORT_B} --log-level ${LOG_LEVEL} --driver-log-level ${DRV_LOG_LEVEL}
-        $(python_name)   tests/test_ble_common_api.py     --port-a ${PORT_A} --port-b ${PORT_B} --log-level ${LOG_LEVEL} --driver-log-level ${DRV_LOG_LEVEL}
-        $(python_name)   tests/test_rssi.py               --port-a ${PORT_A} --port-b ${PORT_B} --log-level ${LOG_LEVEL} --driver-log-level ${DRV_LOG_LEVEL}
-        $(python_name)   tests/test_connection_update.py  --port-a ${PORT_A} --port-b ${PORT_B} --log-level ${LOG_LEVEL} --driver-log-level ${DRV_LOG_LEVEL}
-        $(python_name)   tests/test_mtu.py                --port-a ${PORT_A} --port-b ${PORT_B} --log-level ${LOG_LEVEL} --driver-log-level ${DRV_LOG_LEVEL}
-        $(python_name)   tests/test_passkey.py            --port-a ${PORT_A} --port-b ${PORT_B} --log-level ${LOG_LEVEL} --driver-log-level ${DRV_LOG_LEVEL}
-        $(python_name)   tests/test_phy_update.py         --port-a ${PORT_A} --port-b ${PORT_B} --log-level ${LOG_LEVEL} --driver-log-level ${DRV_LOG_LEVEL}
-        $(python_name)   tests/test_data_length.py        --port-a ${PORT_A} --port-b ${PORT_B} --log-level ${LOG_LEVEL} --driver-log-level ${DRV_LOG_LEVEL}
-        $(python_name)   tests/test_server_client.py      --port-a ${PORT_A} --port-b ${PORT_B} --log-level ${LOG_LEVEL} --driver-log-level ${DRV_LOG_LEVEL}
+        ${{ python_name }}   tests/test_programming.py        --port-a ${PORT_A} --port-b ${PORT_B} --log-level ${LOG_LEVEL} --driver-log-level ${DRV_LOG_LEVEL}
+        ${{ python_name }}   tests/test_ble_common_api.py     --port-a ${PORT_A} --port-b ${PORT_B} --log-level ${LOG_LEVEL} --driver-log-level ${DRV_LOG_LEVEL}
+        ${{ python_name }}   tests/test_rssi.py               --port-a ${PORT_A} --port-b ${PORT_B} --log-level ${LOG_LEVEL} --driver-log-level ${DRV_LOG_LEVEL}
+        ${{ python_name }}   tests/test_connection_update.py  --port-a ${PORT_A} --port-b ${PORT_B} --log-level ${LOG_LEVEL} --driver-log-level ${DRV_LOG_LEVEL}
+        ${{ python_name }}   tests/test_mtu.py                --port-a ${PORT_A} --port-b ${PORT_B} --log-level ${LOG_LEVEL} --driver-log-level ${DRV_LOG_LEVEL}
+        ${{ python_name }}   tests/test_passkey.py            --port-a ${PORT_A} --port-b ${PORT_B} --log-level ${LOG_LEVEL} --driver-log-level ${DRV_LOG_LEVEL}
+        ${{ python_name }}   tests/test_phy_update.py         --port-a ${PORT_A} --port-b ${PORT_B} --log-level ${LOG_LEVEL} --driver-log-level ${DRV_LOG_LEVEL}
+        ${{ python_name }}   tests/test_data_length.py        --port-a ${PORT_A} --port-b ${PORT_B} --log-level ${LOG_LEVEL} --driver-log-level ${DRV_LOG_LEVEL}
+        ${{ python_name }}   tests/test_server_client.py      --port-a ${PORT_A} --port-b ${PORT_B} --log-level ${LOG_LEVEL} --driver-log-level ${DRV_LOG_LEVEL}
 
     displayName: Jenkins run      
