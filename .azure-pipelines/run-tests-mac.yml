@@ -144,7 +144,7 @@ steps:
                 echo "Running test: $_.Name"
                 ${{ parameters.python_name }} $_.FullName --port-a ${PORT_A} --port-b ${PORT_B} --log-level ${LOG_LEVEL} --driver-log-level ${DRV_LOG_LEVEL}
                 if ( -not $? ){
-                    exit
+                    throw $Error[0]
                 }
             }
 
