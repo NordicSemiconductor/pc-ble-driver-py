@@ -139,7 +139,7 @@ steps:
     
 
         Get-ChildItem .\tests\test_*.py
-            | sort Name
+            | Sort-Object Name
             | ForEach-object{
                 echo "Running test: $_.Name"
                 ${{ parameters.python_name }} $_.FullName --port-a ${PORT_A} --port-b ${PORT_B} --log-level ${LOG_LEVEL} --driver-log-level ${DRV_LOG_LEVEL}
