@@ -377,17 +377,17 @@ jobs:
 
     strategy:
       matrix:
-#      
-#        py37x64:
-#          python_version: '3.7'
-#          package_name: pc_ble_driver_py-0.15.1-cp37-cp37m-macosx_10_9_x86_64.whl
-#          artifact_name: artifact-py-3.7-x64-macOS
+      
+        py37x64:
+          python_version: '3.7'
+          package_name: pc_ble_driver_py-0.15.1-cp37-cp37m-macosx_10_9_x86_64.whl
+          artifact_name: artifact-py-3.7-x64-macOS
 #
-        py36x64:
-          python_version: '3.6'
-          package_name: pc_ble_driver_py-0.15.1-cp36-cp36m-macosx_10_9_x86_64.whl
-          artifact_name: artifact-py-3.6-x64-macOS
-
+#        py36x64:
+#          python_version: '3.6'
+#          package_name: pc_ble_driver_py-0.15.1-cp36-cp36m-macosx_10_9_x86_64.whl
+#          artifact_name: artifact-py-3.6-x64-macOS
+#
 
 
     pool:
