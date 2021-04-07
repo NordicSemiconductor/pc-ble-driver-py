@@ -98,9 +98,9 @@ steps:
       \usr\bin\python3  -m pip install --upgrade pip
       
       echo "start run python install artifact"
-      \usr\bin\python3  -m pip uninstall -y --quiet --quiet pc-ble-driver-py
-      # \usr\bin\python3  -m pip install -r requirements-dev.txt
-      \usr\bin\python3  -m pip install  --force-reinstall  $(Pipeline.Workspace)/${{ parameters.package_name }}
+      \usr\bin\python3  -m pip uninstall --user -y --quiet --quiet pc-ble-driver-py
+      # \usr\bin\python3  -m pip install --user -r requirements-dev.txt
+      \usr\bin\python3  -m pip install  --user --force-reinstall  $(Pipeline.Workspace)/${{ parameters.package_name }}
       echo "end python install artifact"
     condition: always()
     failOnStderr: true 
