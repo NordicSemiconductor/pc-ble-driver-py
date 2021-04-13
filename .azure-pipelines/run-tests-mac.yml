@@ -123,14 +123,32 @@ steps:
       nrf-device-lister --help
     displayName: npm install
 
+ - task: DownloadPipelineArtifact@2
+    inputs:
+      source: 'specific'
+      project: '2e9dc8f5-526c-47f3-8753-881022a0c2b1'
+      buildId: '11181'
+      pipeline: 'NordicPlayground.nrftc'
+      artifact: 'nrftc-Darwin'
+      path: $(System.ArtifactsDirectory)
+    displayName: Download nrftc
+
   - powershell: |
-        $ports=nrf-device-lister -p PCA10056 
-        echo "Raw ports 1 : $ports"
-        $PORT_A=$ports.Split(" ")[0]
-        $ports=nrf-device-lister -p PCA10040
-        echo "Raw ports 2 : $ports"
-        $PORT_B=$ports.Split(" ")[0]
+        $(System.ArtifactsDirectory)/nrftc install arm-toolchain -a $(Agent.BuildDirectory)\toolchain -i armgcc:${{ parameters.ARMGCC_VERSION }} -e $(Agent.BuildDirectory)\tcenv.bat
+    displayName: Use nrftc instead of the nrf-device-lister(Old)
+  - powershell: |
+#        $ports=nrf-device-lister -p PCA10056 
+#        echo "Raw ports 1 : $ports"
+#        $PORT_A=$ports.Split(" ")[0]
+#        $ports=nrf-device-lister -p PCA10040
+#        echo "Raw ports 2 : $ports"
+#        $PORT_B=$ports.Split(" ")[0]
       
+    # New method for finding ports 
+        $ports=$(System.ArtifactsDirectory)/nrftc devices list -b PCA10056 
+        $PORT_A=$ports.Split(" ")[0]
+        $ports=$(System.ArtifactsDirectory)/nrftc devices list -b PCA10040
+        $PORT_B=$ports.Split(" ")[0]
         echo "Port A: ${PORT_A}"
         echo "Port B: ${PORT_B}"
 
@@ -143,7 +161,7 @@ steps:
             | ForEach-object{
                 echo "Running test: $_.Name"
                 ${{ parameters.python_name }} $_.FullName --port-a ${PORT_A} --port-b ${PORT_B} --log-level ${LOG_LEVEL} --driver-log-level ${DRV_LOG_LEVEL}
-                if ( -not $? ){
+                if ( -not $? ){ # Exit if an error is thrown
                     throw $Error[0]
                 }
             }
