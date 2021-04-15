@@ -55,6 +55,19 @@ steps:
       artifact: ${{ parameters.artifact_name }}
       allowFailedBuilds: true
 
+
+  - task: DownloadPipelineArtifact@2
+    inputs:
+      source: 'specific'
+      project: Wayland 
+      pipeline: 64
+      runVersion: 'specific'
+      runId: 11329
+      artifact: nrftc-Windows_NT
+      allowFailedBuilds: false
+
+
+
   - powershell: | 
           echo " Display .\ "
           dir .\
@@ -98,10 +111,9 @@ steps:
       # python3 -m pip --version
       echo "--------" Install:  $(Pipeline.Workspace)/${{ parameters.artifact_name }}
     displayName: Show python versions
-  - powershell: |
 
+  - powershell: |
       ${{ parameters.python_name }}  -m pip install --upgrade pip --user
-      
       echo "start run python install artifact"
       ${{ parameters.python_name }}  -m pip uninstall  -y --quiet --quiet pc-ble-driver-py
         #      ${{ parameters.python_name }} -m pip install --user -r requirements-dev.txt
@@ -111,32 +123,16 @@ steps:
     failOnStderr: true 
     displayName: Pip install
  
-    
-
-
-  - template: unix_setup-nodejs-64.yaml
-    parameters:
-      nodeVersion: ${{ parameters.nodeVersion }}
-
-  - powershell: | 
-      npm install -g  nrf-device-lister
-      nrf-device-lister --help
-    displayName: npm install
-
   - powershell: |
-        $ports=nrf-device-lister -p PCA10056 
-        echo "Raw ports 1 : $ports"
-        $PORT_A=$ports.Split(" ")[0]
-        $ports=nrf-device-lister -p PCA10040
-        echo "Raw ports 2 : $ports"
-        $PORT_B=$ports.Split(" ")[0]
+
+        $PORT_A='$(Pipeline.Workspace)'/nrftc list -b PCA10056 | Select-Object -first 1 
+        $PORT_B='$(Pipeline.Workspace)'/nrftc list -b PCA10040 | Select-Object -first 1 
       
         echo "Port A: ${PORT_A}"
         echo "Port B: ${PORT_B}"
 
         $LOG_LEVEL="debug"
         $DRV_LOG_LEVEL="info"
-    
 
         Get-ChildItem .\tests\test_*.py
             | Sort-Object Name
