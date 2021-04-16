@@ -132,8 +132,10 @@ steps:
         echo "Showing contents of System.ArtifactsDirectory"      
         ls $(System.ArtifactsDirectory)
         $ports=$(System.ArtifactsDirectory)/nrftc list -b PCA10056 
+        echo "Ports: $ports"
         $PORT_A= $ports | Select-Object -first 1 
         $ports=$(System.ArtifactsDirectory)/nrftc list -b PCA10040 
+        echo "Ports: $ports"
         $PORT_B= $ports | Select-Object -first 1 
       
         echo "Port A: ${PORT_A}"
