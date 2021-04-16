@@ -118,10 +118,11 @@ steps:
       source: 'specific'
       project: '2e9dc8f5-526c-47f3-8753-881022a0c2b1'
       buildId: '11329' 
-      pipeline: 'NordicPlayground.nrftc'
+      pipeline: 64
+      # pipeline: 'NordicPlayground.nrftc'
       artifact: 'nrftc-Darwin'
       path: $(System.ArtifactsDirectory)
-    # displayName: Download nrftc
+    displayName: Download nrftc
 
 
 
