@@ -472,6 +472,11 @@ class BLEAdapter(BLEDriverObserver):
 
     @NordicSemiErrorCheck(expected=BLEGattStatusCode.success)
     def write_req(self, conn_handle, uuid, data, attr_handle=None):
+        assert isinstance(uuid, BLEUUID), "Invalid argument type"
+
+        if uuid.base.base is not None and uuid.base.type is None:
+            self.driver.ble_uuid_decode(uuid.base.base, uuid)
+
         if attr_handle is None:
             attr_handle = self.db_conns[conn_handle].get_char_value_handle(uuid)
         if attr_handle is None:
@@ -489,6 +494,11 @@ class BLEAdapter(BLEDriverObserver):
 
     @NordicSemiErrorCheck(expected=BLEGattStatusCode.success)
     def write_prep(self, conn_handle, uuid, data, offset, attr_handle=None):
+        assert isinstance(uuid, BLEUUID), "Invalid argument type"
+
+        if uuid.base.base is not None and uuid.base.type is None:
+            self.driver.ble_uuid_decode(uuid.base.base, uuid)
+
         if attr_handle is None:
             attr_handle = self.db_conns[conn_handle].get_char_value_handle(uuid)
         if attr_handle is None:
@@ -518,6 +528,11 @@ class BLEAdapter(BLEDriverObserver):
         return result["status"]
 
     def read_req(self, conn_handle, uuid, offset=0, attr_handle=None):
+        assert isinstance(uuid, BLEUUID), "Invalid argument type"
+
+        if uuid.base.base is not None and uuid.base.type is None:
+            self.driver.ble_uuid_decode(uuid.base.base, uuid)
+
         if attr_handle is None:
             attr_handle = self.db_conns[conn_handle].get_char_value_handle(uuid)
         if attr_handle is None:
@@ -531,6 +546,11 @@ class BLEAdapter(BLEDriverObserver):
             return gatt_res, None
 
     def write_cmd(self, conn_handle, uuid, data, attr_handle=None):
+        assert isinstance(uuid, BLEUUID), "Invalid argument type"
+
+        if uuid.base.base is not None and uuid.base.type is None:
+            self.driver.ble_uuid_decode(uuid.base.base, uuid)
+
         try:
             tx_complete = BLEEvtID.evt_tx_complete
         except Exception:
