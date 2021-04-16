@@ -2417,6 +2417,8 @@ class BLEDriver(object):
     @NordicSemiErrorCheck
     @wrapt.synchronized(api_lock)
     def ble_uuid_decode(self, uuid_list, uuid):
+        """ uud_list is expected to be in big endian order.
+        """
         uuid_len = len(uuid_list)
         assert isinstance(uuid_list, list), "Invalid argument type"
         assert ((uuid_len == 2) or (uuid_len == 16)), "Invalid uuid length"
