@@ -134,6 +134,8 @@ steps:
 
 
         ls -l  $(System.ArtifactsDirectory)/nrftc 
+        chmod +x $(System.ArtifactsDirectory)/nrftc 
+        ls -l  $(System.ArtifactsDirectory)/nrftc 
 
 
         echo "Dry run" 
