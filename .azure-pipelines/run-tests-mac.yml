@@ -116,7 +116,7 @@ steps:
   - task: DownloadPipelineArtifact@2
     inputs:
       source: 'specific'
-      project: 'Wayland'
+      project: 'Wayland internal'
       buildId: '11329' 
       pipeline: 67
       # pipeline: 'NordicPlayground.nrftc'
