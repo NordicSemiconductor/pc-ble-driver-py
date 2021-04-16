@@ -142,9 +142,11 @@ steps:
         $(System.ArtifactsDirectory)/nrftc devices  list -b PCA10056 
 
 
-        if ( -not $? ){ # Exit if an error is thrown
-            throw $Error[0]
-        }
+        $ports=$(System.ArtifactsDirectory)/nrftc --help
+        $ports=$(System.ArtifactsDirectory)/nrftc devices --help
+        $ports=$(System.ArtifactsDirectory)/nrftc devices list --help
+        
+
 
 
         $ports=$(System.ArtifactsDirectory)/nrftc devices list -b PCA10056 
