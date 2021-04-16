@@ -113,7 +113,7 @@ steps:
     failOnStderr: true 
     displayName: Pip install
  
- - task: DownloadPipelineArtifact@2
+  - task: DownloadPipelineArtifact@2
     inputs:
       source: 'specific'
       project: '2e9dc8f5-526c-47f3-8753-881022a0c2b1'
@@ -121,7 +121,19 @@ steps:
       pipeline: 'NordicPlayground.nrftc'
       artifact: 'nrftc-Darwin'
       path: $(System.ArtifactsDirectory)
-    displayName: Download nrftc
+    # displayName: Download nrftc
+
+
+
+  # - task: DownloadPipelineArtifact@2
+  #   inputs:
+  #     source: 'specific'
+  #     project: Wayland 
+  #     pipeline: 5
+  #     runVersion: 'specific'
+  #     runId: 10595
+  #     artifact: ${{ parameters.artifact_name }}
+  #     allowFailedBuilds: true
 
 
 
