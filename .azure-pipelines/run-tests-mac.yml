@@ -131,6 +131,9 @@ steps:
   - powershell: |
         echo "Showing contents of System.ArtifactsDirectory"      
         ls $(System.ArtifactsDirectory)
+        echo "Dry run" 
+        $(System.ArtifactsDirectory)/nrftc list -b PCA10056 
+
         $ports=$(System.ArtifactsDirectory)/nrftc list -b PCA10056 
         echo "Ports: $ports"
         $PORT_A= $ports | Select-Object -first 1 
