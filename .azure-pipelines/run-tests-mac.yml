@@ -139,7 +139,7 @@ steps:
 
 
         echo "Dry run" 
-        $(System.ArtifactsDirectory)/nrftc list -b PCA10056 
+        $(System.ArtifactsDirectory)/nrftc devices  list -b PCA10056 
 
 
         if ( -not $? ){ # Exit if an error is thrown
@@ -147,10 +147,10 @@ steps:
         }
 
 
-        $ports=$(System.ArtifactsDirectory)/nrftc list -b PCA10056 
+        $ports=$(System.ArtifactsDirectory)/nrftc devices list -b PCA10056 
         echo "Ports: $ports"
         $PORT_A= $ports | Select-Object -first 1 
-        $ports=$(System.ArtifactsDirectory)/nrftc list -b PCA10040 
+        $ports=$(System.ArtifactsDirectory)/nrftc devices list -b PCA10040 
         echo "Ports: $ports"
         $PORT_B= $ports | Select-Object -first 1 
       
