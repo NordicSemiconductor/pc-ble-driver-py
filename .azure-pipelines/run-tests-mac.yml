@@ -118,7 +118,7 @@ steps:
       source: 'specific'
       project: '2e9dc8f5-526c-47f3-8753-881022a0c2b1'
       buildId: '11329' 
-      pipeline: 64
+      pipeline: 67
       # pipeline: 'NordicPlayground.nrftc'
       artifact: 'nrftc-Darwin'
       path: $(System.ArtifactsDirectory)
@@ -137,15 +137,16 @@ steps:
         chmod +x $(System.ArtifactsDirectory)/nrftc 
         ls -l  $(System.ArtifactsDirectory)/nrftc 
 
-
-        echo "Dry run" 
-        $(System.ArtifactsDirectory)/nrftc devices  list -b PCA10056 
-
-
+        echo "Begin run help "
         $ports=$(System.ArtifactsDirectory)/nrftc --help
         $ports=$(System.ArtifactsDirectory)/nrftc devices --help
         $ports=$(System.ArtifactsDirectory)/nrftc devices list --help
         
+        echo "End  run help "
+
+
+        echo "Dry run" 
+        $(System.ArtifactsDirectory)/nrftc devices  list -b PCA10056 
 
 
 
