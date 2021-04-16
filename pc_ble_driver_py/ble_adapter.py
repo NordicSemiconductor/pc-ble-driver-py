@@ -490,7 +490,7 @@ class BLEAdapter(BLEDriverObserver):
         )
         self.driver.ble_gattc_write(conn_handle, write_params)
         result = self.evt_sync[conn_handle].wait(evt=BLEEvtID.gattc_evt_write_rsp)
-        return result["status"]
+        return result.get("status") if result is not None else None
 
     @NordicSemiErrorCheck(expected=BLEGattStatusCode.success)
     def write_prep(self, conn_handle, uuid, data, offset, attr_handle=None):
