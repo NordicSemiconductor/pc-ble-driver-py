@@ -141,8 +141,8 @@ steps:
 
   - powershell: |
 
-        $PORT_A='$(System.ArtifactsDirectory)'/nrftc list -b PCA10056 | Select-Object -first 1 
-        $PORT_B='$(System.ArtifactsDirectory)'/nrftc list -b PCA10040 | Select-Object -first 1 
+        $PORT_A=$(System.ArtifactsDirectory)/nrftc list -b PCA10056 | Select-Object -first 1 
+        $PORT_B=$(System.ArtifactsDirectory)/nrftc list -b PCA10040 | Select-Object -first 1 
       
         echo "Port A: ${PORT_A}"
         echo "Port B: ${PORT_B}"
