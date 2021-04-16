@@ -102,16 +102,16 @@ steps:
       echo "--------" Install:  $(Pipeline.Workspace)/${{ parameters.artifact_name }}
     displayName: Show python versions
 
-  - powershell: |
-      ${{ parameters.python_name }}  -m pip install --upgrade pip --user
-      echo "start run python install artifact"
-      ${{ parameters.python_name }}  -m pip uninstall  -y --quiet --quiet pc-ble-driver-py
-        #      ${{ parameters.python_name }} -m pip install --user -r requirements-dev.txt
-      ${{ parameters.python_name }}  -m pip install  --user --force-reinstall  $(Pipeline.Workspace)/${{ parameters.package_name }}
-      echo "end python install artifact"
-    condition: always()
-    failOnStderr: true 
-    displayName: Pip install
+  # - powershell: |
+  #     ${{ parameters.python_name }}  -m pip install --upgrade pip --user
+  #     echo "start run python install artifact"
+  #     ${{ parameters.python_name }}  -m pip uninstall  -y --quiet --quiet pc-ble-driver-py
+  #       #      ${{ parameters.python_name }} -m pip install --user -r requirements-dev.txt
+  #     ${{ parameters.python_name }}  -m pip install  --user --force-reinstall  $(Pipeline.Workspace)/${{ parameters.package_name }}
+  #     echo "end python install artifact"
+  #   condition: always()
+  #   failOnStderr: true 
+  #   displayName: Pip install
  
   - task: DownloadPipelineArtifact@2
     inputs:
@@ -126,23 +126,13 @@ steps:
 
 
 
-  # - task: DownloadPipelineArtifact@2
-  #   inputs:
-  #     source: 'specific'
-  #     project: Wayland 
-  #     pipeline: 5
-  #     runVersion: 'specific'
-  #     runId: 10595
-  #     artifact: ${{ parameters.artifact_name }}
-  #     allowFailedBuilds: true
-
-
 
 
   - powershell: |
-
-        $PORT_A=$(System.ArtifactsDirectory)/nrftc list -b PCA10056 | Select-Object -first 1 
-        $PORT_B=$(System.ArtifactsDirectory)/nrftc list -b PCA10040 | Select-Object -first 1 
+        echo "Showing contents of System.ArtifactsDirectory"      
+        ls $(System.ArtifactsDirectory)
+        $PORT_A=$(System.ArtifactsDirectory)/nrftc.exe list -b PCA10056 | Select-Object -first 1 
+        $PORT_B=$(System.ArtifactsDirectory)/nrftc.exe list -b PCA10040 | Select-Object -first 1 
       
         echo "Port A: ${PORT_A}"
         echo "Port B: ${PORT_B}"
