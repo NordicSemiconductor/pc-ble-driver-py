@@ -44,6 +44,18 @@ steps:
 #    inputs:
 #     source: current
 #     artifact: ${{ parameters.artifact }}
+ 
+  - task: DownloadPipelineArtifact@2
+    inputs:
+      source: 'specific'
+      project: 'Wayland internal'
+      buildId: '11329' 
+      pipeline: 67
+      # pipeline: 'NordicPlayground.nrftc'
+      # artifact: 'nrftc-Darwin'
+      path: $(System.ArtifactsDirectory)
+    displayName: Download nrftc
+
 
   - task: DownloadPipelineArtifact@2
     inputs:
@@ -112,19 +124,6 @@ steps:
   #   condition: always()
   #   failOnStderr: true 
   #   displayName: Pip install
- 
-  - task: DownloadPipelineArtifact@2
-    inputs:
-
-      source: 'specific'
-      project: 'Wayland internal'
-      buildId: '11329' 
-      # pipeline: 67
-      pipeline: 'NordicPlayground.nrftc'
-      artifact: 'nrftc-Darwin'
-      path: $(System.ArtifactsDirectory)
-    displayName: Download nrftc
-
 
 
 
