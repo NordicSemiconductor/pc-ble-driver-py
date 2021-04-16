@@ -134,6 +134,12 @@ steps:
         echo "Dry run" 
         $(System.ArtifactsDirectory)/nrftc list -b PCA10056 
 
+
+        if ( -not $? ){ # Exit if an error is thrown
+            throw $Error[0]
+        }
+
+
         $ports=$(System.ArtifactsDirectory)/nrftc list -b PCA10056 
         echo "Ports: $ports"
         $PORT_A= $ports | Select-Object -first 1 
