@@ -1,4 +1,5 @@
 import logging
+logger = logging.getLogger(__name__)
 import time
 import unittest
 
@@ -6,7 +7,6 @@ import xmlrunner
 
 from driver_setup import *
 
-logger = logging.getLogger(__name__)
 
 from pc_ble_driver_py.ble_driver import (
     BLEAdvData,

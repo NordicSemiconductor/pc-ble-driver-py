@@ -1,3 +1,5 @@
+import logging
+logger = logging.getLogger(__name__)
 from pc_ble_driver_py.ble_driver import (
     BLEDriver,
     BLEEnableParams,
@@ -10,10 +12,8 @@ from pc_ble_driver_py.ble_driver import (
 import xmlrunner
 import unittest
 from driver_setup import *
-import logging
 from pprint import pformat
 
-logger = logging.getLogger(__name__)
 
 
 class BLECommonAPITest(unittest.TestCase):

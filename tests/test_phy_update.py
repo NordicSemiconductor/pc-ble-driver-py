@@ -35,8 +35,9 @@
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
-
 import logging
+logger = logging.getLogger(__name__)
+
 import random
 import string
 import unittest
@@ -48,7 +49,6 @@ from pc_ble_driver_py.observers import BLEAdapterObserver, BLEDriverObserver
 
 from driver_setup import Settings, setup_adapter
 
-logger = logging.getLogger(__name__)
 
 
 class Central(BLEDriverObserver, BLEAdapterObserver):

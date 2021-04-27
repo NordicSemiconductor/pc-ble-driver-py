@@ -36,6 +36,7 @@
 #
 
 import logging
+logger = logging.getLogger(__name__)
 import random
 import string
 import unittest
@@ -59,7 +60,6 @@ from pc_ble_driver_py.observers import BLEAdapterObserver, BLEDriverObserver
 
 from driver_setup import Settings, setup_adapter
 
-logger = logging.getLogger(__name__)
 
 UUID_HEART_RATE_SERVICE = 0x180D  # Heart Rate service UUID
 UUID_HEART_RATE_CHAR = 0x2A37  # Heart Rate Measurement characteristic UUID

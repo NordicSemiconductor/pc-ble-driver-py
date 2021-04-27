@@ -36,6 +36,7 @@
 #
 
 import logging
+logger = logging.getLogger(__name__)
 import random
 import string
 import time
@@ -55,7 +56,6 @@ from pc_ble_driver_py.ble_driver import (
 
 from driver_setup import Settings
 
-logger = logging.getLogger(__name__)
 
 
 class ProgramAdapter(unittest.TestCase):
