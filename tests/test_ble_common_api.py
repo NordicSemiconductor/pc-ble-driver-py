@@ -1,10 +1,3 @@
-import unittest
-from driver_setup import *
-import logging
-from pprint import pformat
-
-logger = logging.getLogger(__name__)
-
 from pc_ble_driver_py.ble_driver import (
     BLEDriver,
     BLEEnableParams,
@@ -14,6 +7,13 @@ from pc_ble_driver_py.ble_driver import (
     BLEGattStatusCode,
     driver,
 )
+import xmlrunner
+import unittest
+from driver_setup import *
+import logging
+from pprint import pformat
+
+logger = logging.getLogger(__name__)
 
 
 class BLECommonAPITest(unittest.TestCase):
@@ -93,4 +93,9 @@ if __name__ == "__main__":
         level=Settings.current().log_level,
         format="%(asctime)s [%(thread)d/%(threadName)s] %(message)s",
     )
-    unittest.main(argv=Settings.clean_args())
+    unittest.main(
+        testRunner=xmlrunner.XMLTestRunner(
+            output=Settings.current().test_output_directory
+        ),
+        argv=Settings.clean_args(),
+    )

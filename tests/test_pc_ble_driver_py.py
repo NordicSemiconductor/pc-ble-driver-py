@@ -39,7 +39,7 @@
 from pc_ble_driver_py.ble_driver import *
 
 logging.basicConfig()
-log = logging.getLogger('test')
+log = logging.getLogger("test")
 log.setLevel(logging.DEBUG)
 
 
@@ -49,8 +49,24 @@ def test_uuid_count(ble_tester):
     ble_tester.driver.ble_cfg_set(BLEConfig.uuid_count, ble_cfg)
     ble_tester.driver.ble_enable()
     for i in range(3):
-        base = [i, 0x01, 0x02, 0x03, 0x04, 0x05, 0x10, 0x00,
-                0x80, 0x00, 0x00, 0x80, 0x5F, 0x9B, 0x34, 0xFB]
+        base = [
+            i,
+            0x01,
+            0x02,
+            0x03,
+            0x04,
+            0x05,
+            0x10,
+            0x00,
+            0x80,
+            0x00,
+            0x00,
+            0x80,
+            0x5F,
+            0x9B,
+            0x34,
+            0xFB,
+        ]
         vs_uuid = BLEUUIDBase(base)
         ble_tester.driver.ble_vs_uuid_add(vs_uuid)
     base[0] = 5
@@ -154,7 +170,7 @@ def test_adv_start(ble_tester):
     cfg = BLEConfigGatts()
     cfg.service_changed = 1
     ble_tester.driver.ble_cfg_set(BLEConfig.service_changed, cfg)
-    adv_data = BLEAdvData(complete_local_name='test123')
+    adv_data = BLEAdvData(complete_local_name="test123")
     ble_tester.driver.ble_enable()
     ble_tester.driver.ble_gap_adv_data_set(adv_data)
     ble_tester.driver.ble_gap_adv_start(tag=1)

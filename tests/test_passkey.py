@@ -35,31 +35,31 @@
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
-
-import unittest
-from queue import Queue
-from threading import Thread, Condition
-import time
+import logging
 import random
 import string
-import logging
+import time
+import unittest
+from queue import Queue
+from threading import Condition, Thread
 
-from pc_ble_driver_py.observers import BLEDriverObserver, BLEAdapterObserver
-from driver_setup import Settings, setup_adapter
-
+import xmlrunner
 from pc_ble_driver_py.ble_driver import (
-    BLEDriver,
-    BLEEnableParams,
+    BLEAdvData,
     BLEConfig,
     BLEConfigConnGatt,
-    BLEAdvData,
+    BLEDriver,
+    BLEEnableParams,
     BLEGapIOCaps,
-    BLEGapSecStatus,
-    BLEGapSecParams,
     BLEGapSecKDist,
+    BLEGapSecParams,
+    BLEGapSecStatus,
+    driver,
     util,
-    driver
 )
+from pc_ble_driver_py.observers import BLEAdapterObserver, BLEDriverObserver
+
+from driver_setup import Settings, setup_adapter
 
 logger = logging.getLogger(__name__)
 passkeyQueue = Queue()
@@ -122,16 +122,14 @@ class Central(BLEDriverObserver, BLEAdapterObserver):
     ):
         self.conn_q.put(conn_handle)
 
-    def on_gap_evt_auth_key_request(
-        self, ble_driver, conn_handle, **kwargs
-    ):
+    def on_gap_evt_auth_key_request(self, ble_driver, conn_handle, **kwargs):
         passkey = passkeyQueue.get(timeout=10)
         pk = util.list_to_uint8_array(passkey)
 
         driver.sd_ble_gap_auth_key_reply(
             ble_driver.rpc_adapter,
             conn_handle,
-            kwargs['key_type'],
+            kwargs["key_type"],
             pk.cast(),
         )
 
@@ -157,9 +155,7 @@ class Peripheral(BLEDriverObserver, BLEAdapterObserver):
         self.conn_q.put(conn_handle)
 
     def on_gap_evt_sec_params_request(self, ble_driver, conn_handle, **kwargs):
-        sec_params = BLEGapSecParams.from_c(
-            kwargs['peer_params']
-        )
+        sec_params = BLEGapSecParams.from_c(kwargs["peer_params"])
 
         sec_params.io_caps = BLEGapIOCaps.display_only
         sec_params.min_key_size = 7
@@ -174,17 +170,17 @@ class Peripheral(BLEDriverObserver, BLEAdapterObserver):
         passkeyQueue.put(passkey)
 
     def on_gap_evt_auth_status(
-                        self,
-                        ble_driver,
-                        conn_handle,
-                        error_src,
-                        bonded,
-                        sm1_levels,
-                        sm2_levels,
-                        kdist_own,
-                        kdist_peer,
-                        auth_status
-                    ):
+        self,
+        ble_driver,
+        conn_handle,
+        error_src,
+        bonded,
+        sm1_levels,
+        sm2_levels,
+        kdist_own,
+        kdist_peer,
+        auth_status,
+    ):
         authStatusQueue.put(auth_status)
 
 
@@ -239,4 +235,9 @@ if __name__ == "__main__":
         level=Settings.current().log_level,
         format="%(asctime)s [%(thread)d/%(threadName)s] %(message)s",
     )
-    unittest.main(argv=Settings.clean_args())
+    unittest.main(
+        testRunner=xmlrunner.XMLTestRunner(
+            output=Settings.current().test_output_directory
+        ),
+        argv=Settings.clean_args(),
+    )

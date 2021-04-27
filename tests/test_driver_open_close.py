@@ -1,18 +1,21 @@
-import unittest
-from driver_setup import *
 import logging
 import time
+import unittest
+
+import xmlrunner
+
+from driver_setup import *
 
 logger = logging.getLogger(__name__)
 
-from pc_ble_driver_py.observers import BLEDriverObserver, BLEAdapterObserver
 from pc_ble_driver_py.ble_driver import (
-    BLEDriver,
-    BLEEnableParams,
+    BLEAdvData,
     BLEConfig,
     BLEConfigConnGatt,
-    BLEAdvData,
+    BLEDriver,
+    BLEEnableParams,
 )
+from pc_ble_driver_py.observers import BLEAdapterObserver, BLEDriverObserver
 
 
 class Central(BLEDriverObserver, BLEAdapterObserver):
@@ -26,9 +29,7 @@ class Central(BLEDriverObserver, BLEAdapterObserver):
         self, ble_driver, conn_handle, peer_addr, rssi, adv_type, adv_data
     ):
         if BLEAdvData.Types.complete_local_name in adv_data.records:
-            dev_name_list = adv_data.records[
-                BLEAdvData.Types.complete_local_name
-            ]
+            dev_name_list = adv_data.records[BLEAdvData.Types.complete_local_name]
 
         elif BLEAdvData.Types.short_local_name in adv_data.records:
             dev_name_list = adv_data.records[BLEAdvData.Types.short_local_name]
@@ -104,4 +105,9 @@ if __name__ == "__main__":
         level=Settings.current().log_level,
         format="%(asctime)s [%(thread)d/%(threadName)s] %(message)s",
     )
-    unittest.main(argv=Settings.clean_args())
+    unittest.main(
+        testRunner=xmlrunner.XMLTestRunner(
+            output=Settings.current().test_output_directory
+        ),
+        argv=Settings.clean_args(),
+    )

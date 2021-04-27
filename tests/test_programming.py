@@ -35,25 +35,25 @@
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
-
-import unittest
-from queue import Queue
-from functools import reduce
-import time
+import logging
 import random
 import string
-import logging
+import time
+import unittest
+from functools import reduce
+from queue import Queue
 
-from driver_setup import Settings
-
+import xmlrunner
 from pc_ble_driver_py.ble_driver import (
-    BLEDriver,
-    BLEEnableParams,
+    BLEAdvData,
     BLEConfig,
     BLEConfigConnGatt,
-    BLEAdvData,
+    BLEDriver,
+    BLEEnableParams,
     Flasher,
 )
+
+from driver_setup import Settings
 
 logger = logging.getLogger(__name__)
 
@@ -77,16 +77,16 @@ class ProgramAdapter(unittest.TestCase):
         for serial_port in serial_ports:
             if serial_port.port in settings.serial_ports:
                 serial_number = serial_port.serial_number
-                logger.info("%s/%s deleting existing firmware", serial_port.port, serial_number)
+                logger.info(
+                    "%s/%s deleting existing firmware", serial_port.port, serial_number
+                )
 
                 flasher = Flasher(serial_port=serial_port.port)
                 flasher.erase()
 
                 self.assertFalse(
                     flasher.fw_check(),
-                    "#{} must be programmed because it is erased".format(
-                        serial_number
-                    ),
+                    "#{} must be programmed because it is erased".format(serial_number),
                 )
 
                 flasher.fw_flash()
@@ -100,10 +100,12 @@ class ProgramAdapter(unittest.TestCase):
                 )
 
                 # Try to use the device with leading zeroes in serial number removed
-                flasher = Flasher(snr=serial_port.serial_number.lstrip('0'))
+                flasher = Flasher(snr=serial_port.serial_number.lstrip("0"))
                 flasher.reset()
 
-                logger.info("%s/%s programmed successfully", serial_port.port, serial_number)
+                logger.info(
+                    "%s/%s programmed successfully", serial_port.port, serial_number
+                )
 
     def tearDown(self):
         pass
@@ -118,4 +120,9 @@ if __name__ == "__main__":
         level=Settings.current().log_level,
         format="%(asctime)s [%(thread)d/%(threadName)s] %(message)s",
     )
-    unittest.main(argv=Settings.clean_args())
+    unittest.main(
+        testRunner=xmlrunner.XMLTestRunner(
+            output=Settings.current().test_output_directory
+        ),
+        argv=Settings.clean_args(),
+    )

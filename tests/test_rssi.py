@@ -36,23 +36,24 @@
 #
 
 
-import unittest
-from queue import Queue
-import time
+import logging
 import random
 import string
-import logging
-import xmlrunner
-from pc_ble_driver_py.observers import BLEDriverObserver, BLEAdapterObserver
-from driver_setup import Settings, setup_adapter
+import time
+import unittest
+from queue import Queue
 
+import xmlrunner
 from pc_ble_driver_py.ble_driver import (
-    BLEDriver,
-    BLEEnableParams,
+    BLEAdvData,
     BLEConfig,
     BLEConfigConnGatt,
-    BLEAdvData,
+    BLEDriver,
+    BLEEnableParams,
 )
+from pc_ble_driver_py.observers import BLEAdapterObserver, BLEDriverObserver
+
+from driver_setup import Settings, setup_adapter
 
 logger = logging.getLogger(__name__)
 
@@ -60,9 +61,7 @@ logger = logging.getLogger(__name__)
 class Central(BLEDriverObserver, BLEAdapterObserver):
     def __init__(self, adapter):
         self.adapter = adapter
-        logger.info(
-            "Central adapter is %d", self.adapter.driver.rpc_adapter.internal
-        )
+        logger.info("Central adapter is %d", self.adapter.driver.rpc_adapter.internal)
         self.conn_q = Queue()
         self.rssi_q = Queue()
         self.adapter.observer_register(self)
@@ -85,9 +84,7 @@ class Central(BLEDriverObserver, BLEAdapterObserver):
         self, ble_driver, conn_handle, peer_addr, rssi, adv_type, adv_data
     ):
         if BLEAdvData.Types.complete_local_name in adv_data.records:
-            dev_name_list = adv_data.records[
-                BLEAdvData.Types.complete_local_name
-            ]
+            dev_name_list = adv_data.records[BLEAdvData.Types.complete_local_name]
 
         elif BLEAdvData.Types.short_local_name in adv_data.records:
             dev_name_list = adv_data.records[BLEAdvData.Types.short_local_name]
@@ -97,9 +94,7 @@ class Central(BLEDriverObserver, BLEAdapterObserver):
         dev_name = "".join(chr(e) for e in dev_name_list)
 
         if dev_name == self.connect_with:
-            address_string = "".join(
-                "{0:02X}".format(b) for b in peer_addr.addr
-            )
+            address_string = "".join("{0:02X}".format(b) for b in peer_addr.addr)
             logger.info(
                 "Trying to connect to peripheral advertising as %s, address: 0x%s",
                 dev_name,
@@ -166,8 +161,7 @@ class Rssi(unittest.TestCase):
         # Advertising name used by peripheral and central
         # to find peripheral and connect with it
         self.adv_name = "".join(
-            random.choice(string.ascii_uppercase + string.digits)
-            for _ in range(20)
+            random.choice(string.ascii_uppercase + string.digits) for _ in range(20)
         )
         self.peripheral = Peripheral(peripheral)
 
@@ -176,9 +170,7 @@ class Rssi(unittest.TestCase):
         self.central.start(self.adv_name)
 
         rssi = self.central.rssi_q.get(timeout=2)
-        logger.info(
-            "conn_handle: %d rssi: %d", rssi["conn_handle"], rssi["rssi"]
-        )
+        logger.info("conn_handle: %d rssi: %d", rssi["conn_handle"], rssi["rssi"])
 
         self.assertTrue(rssi["rssi"] < 0)
         self.assertEqual(self.central.conn_handle, rssi["conn_handle"])
@@ -199,6 +191,8 @@ if __name__ == "__main__":
         format="%(asctime)s [%(thread)d/%(threadName)s] %(message)s",
     )
     unittest.main(
-            testRunner=xmlrunner.XMLTestRunner(output=Settings.current().test_output_directory),
-            argv=Settings.clean_args()
-            )
+        testRunner=xmlrunner.XMLTestRunner(
+            output=Settings.current().test_output_directory
+        ),
+        argv=Settings.clean_args(),
+    )

@@ -36,20 +36,17 @@
 #
 
 
-import unittest
-from queue import Queue, Empty
+import logging
 import random
 import string
-import logging
+import unittest
+from queue import Empty, Queue
 
-from pc_ble_driver_py.observers import BLEDriverObserver, BLEAdapterObserver
+import xmlrunner
+from pc_ble_driver_py.ble_driver import BLEAdvData, BLEHci, driver
+from pc_ble_driver_py.observers import BLEAdapterObserver, BLEDriverObserver
+
 from driver_setup import Settings, setup_adapter
-
-from pc_ble_driver_py.ble_driver import (
-    BLEAdvData,
-    BLEHci,
-    driver,
-)
 
 logger = logging.getLogger(__name__)
 
@@ -82,7 +79,9 @@ class Central(BLEDriverObserver, BLEAdapterObserver):
             resp = self.adapter.phy_update(self.conn_handle, req_phys)
             self.new_phy = resp
         except Empty:
-            logger.info(f"No peripherial advertising with name {self.connect_with} found.")
+            logger.info(
+                f"No peripherial advertising with name {self.connect_with} found."
+            )
 
     def on_gap_evt_connected(
         self, ble_driver, conn_handle, peer_addr, role, conn_params
@@ -97,9 +96,7 @@ class Central(BLEDriverObserver, BLEAdapterObserver):
         self, ble_driver, conn_handle, peer_addr, rssi, adv_type, adv_data
     ):
         if BLEAdvData.Types.complete_local_name in adv_data.records:
-            dev_name_list = adv_data.records[
-                BLEAdvData.Types.complete_local_name
-            ]
+            dev_name_list = adv_data.records[BLEAdvData.Types.complete_local_name]
 
         elif BLEAdvData.Types.short_local_name in adv_data.records:
             dev_name_list = adv_data.records[BLEAdvData.Types.short_local_name]
@@ -143,7 +140,9 @@ class Peripheral(BLEDriverObserver, BLEAdapterObserver):
     ):
         self.conn_q.put(conn_handle)
 
-    def on_gap_evt_phy_update_request(self, ble_driver, conn_handle, peer_preferred_phys):
+    def on_gap_evt_phy_update_request(
+        self, ble_driver, conn_handle, peer_preferred_phys
+    ):
         self.phy_req_q.put(peer_preferred_phys)
 
     def on_gap_evt_phy_update(self, ble_driver, conn_handle, status, tx_phy, rx_phy):
@@ -151,7 +150,6 @@ class Peripheral(BLEDriverObserver, BLEAdapterObserver):
 
 
 class PHYUPDATE(unittest.TestCase):
-
     def setUp(self):
         settings = Settings.current()
 
@@ -178,8 +176,7 @@ class PHYUPDATE(unittest.TestCase):
         # Advertising name used by peripheral and central
         # to find peripheral and connect with it
         self.adv_name = "".join(
-            random.choice(string.ascii_uppercase + string.digits)
-            for _ in range(20)
+            random.choice(string.ascii_uppercase + string.digits) for _ in range(20)
         )
         self.peripheral = Peripheral(self, peripheral)
 
@@ -191,7 +188,9 @@ class PHYUPDATE(unittest.TestCase):
         self.central.start(self.adv_name, req_phys)
 
         phy_update_central = self.central.phy_q.get(timeout=2)
-        self.assertEqual(req_phys, [phy_update_central["tx_phy"], phy_update_central["rx_phy"]])
+        self.assertEqual(
+            req_phys, [phy_update_central["tx_phy"], phy_update_central["rx_phy"]]
+        )
 
         self.central.stop()
 
@@ -207,12 +206,16 @@ class PHYUPDATE(unittest.TestCase):
 
         phy_update_central = self.central.phy_q.get(timeout=2)
         logger.info(f"phy_update_central={phy_update_central}")
-        self.assertEqual(req_phys, [phy_update_central["tx_phy"], phy_update_central["rx_phy"]])
+        self.assertEqual(
+            req_phys, [phy_update_central["tx_phy"], phy_update_central["rx_phy"]]
+        )
         self.assertEqual(phy_update_central["status"], BLEHci.success)
 
         phy_update_periph = self.peripheral.phy_q.get(timeout=2)
         logger.info(f"phy_update_central={phy_update_periph}")
-        self.assertEqual(req_phys, [phy_update_periph["tx_phy"], phy_update_periph["rx_phy"]])
+        self.assertEqual(
+            req_phys, [phy_update_periph["tx_phy"], phy_update_periph["rx_phy"]]
+        )
         self.assertEqual(phy_update_periph["status"], BLEHci.success)
 
         self.central.stop()
@@ -231,15 +234,23 @@ class PHYUPDATE(unittest.TestCase):
         phy_update_central = self.central.phy_q.get(timeout=2)
         logger.info(f"phy_update_central={phy_update_central}")
         #  Use bitwise AND to check that the resulting PHYs match with the requested range of PHYs
-        self.assertTrue(req_phys[0] & phy_update_central["tx_phy"] == phy_update_central["tx_phy"])
-        self.assertTrue(req_phys[1] & phy_update_central["rx_phy"] == phy_update_central["rx_phy"])
+        self.assertTrue(
+            req_phys[0] & phy_update_central["tx_phy"] == phy_update_central["tx_phy"]
+        )
+        self.assertTrue(
+            req_phys[1] & phy_update_central["rx_phy"] == phy_update_central["rx_phy"]
+        )
         self.assertEqual(phy_update_central["status"], BLEHci.success)
 
         phy_update_periph = self.peripheral.phy_q.get(timeout=2)
         logger.info(f"phy_update_periph={phy_update_periph}")
         #  Use bitwise AND to check that the resulting PHYs match with the requested range of PHYs
-        self.assertTrue(req_phys[0] & phy_update_periph["tx_phy"] == phy_update_periph["tx_phy"])
-        self.assertTrue(req_phys[1] & phy_update_periph["rx_phy"] == phy_update_periph["rx_phy"])
+        self.assertTrue(
+            req_phys[0] & phy_update_periph["tx_phy"] == phy_update_periph["tx_phy"]
+        )
+        self.assertTrue(
+            req_phys[1] & phy_update_periph["rx_phy"] == phy_update_periph["rx_phy"]
+        )
         self.assertEqual(phy_update_periph["status"], BLEHci.success)
 
         self.central.stop()
@@ -259,4 +270,9 @@ if __name__ == "__main__":
         format="%(asctime)s [%(thread)d/%(threadName)s] %(message)s",
         # filename="phy_2mbps.log"
     )
-    unittest.main(argv=Settings.clean_args())
+    unittest.main(
+        testRunner=xmlrunner.XMLTestRunner(
+            output=Settings.current().test_output_directory
+        ),
+        argv=Settings.clean_args(),
+    )
