@@ -42,7 +42,7 @@ import time
 import random
 import string
 import logging
-
+import xmlrunner
 from pc_ble_driver_py.observers import BLEDriverObserver, BLEAdapterObserver
 from driver_setup import Settings, setup_adapter
 
@@ -198,4 +198,7 @@ if __name__ == "__main__":
         level=Settings.current().log_level,
         format="%(asctime)s [%(thread)d/%(threadName)s] %(message)s",
     )
-    unittest.main(argv=Settings.clean_args())
+    unittest.main(
+            testRunner=xmlrunner.XMLTestRunner(output=Settings.current().test_output_directory),
+            argv=Settings.clean_args()
+            )

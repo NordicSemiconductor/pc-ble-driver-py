@@ -33,8 +33,9 @@ class Settings(object):
         response_timeout,
         mtu,
         nrf_family,
+        test_output_directory,
     ):
-        # type: (List[str], int, str, str, int, int, int, int, str) -> Settings
+        # type: (List[str], int, str, str, int, int, int, int, str, str) -> Settings
         self.serial_ports = serial_ports  # type: List[str]
         self.number_of_iterations = number_of_iterations  # type: int
         self.log_level = getattr(logging, log_level.upper(), None)  # type: int
@@ -44,6 +45,7 @@ class Settings(object):
         self.response_timeout = response_timeout  # type: int
         self.mtu = mtu  # type: int
         self.nrf_family = nrf_family  # type: str
+        self.test_output_directory = test_output_directory  # type: str
 
     @classmethod
     def current(cls):
@@ -68,6 +70,7 @@ class Settings(object):
             "--log-level",
             "--driver-log-level",
             "--nrf-family",
+            "--test-output-directory",
         ]
 
         retval = list(sys.argv)
@@ -139,7 +142,12 @@ class Settings(object):
             choices=["NRF51", "NRF52"],
             default="NRF52",
         )
-
+        parser.add_argument(
+            "--test-output-directory",
+            help="Location to put unittest xml output files",
+            type=str,
+            default="test-reports",
+        )
         args = parser.parse_args()
 
         cls.settings = Settings(
@@ -152,6 +160,7 @@ class Settings(object):
             args.response_timeout,
             args.mtu,
             args.nrf_family,
+            args.test_output_directory,
         )
 
         return cls.settings
