@@ -46,14 +46,13 @@ steps:
 #     artifact: ${{ parameters.artifact }}
  
   - task: DownloadPipelineArtifact@2
-    # nrftc exists both in wayland and wayland internal. We will use the one in wayland
+    # nrftc exists both in wayland and wayland internal. We will use the one in wayland internal 
     inputs:
       source: 'specific'
       project: 'Wayland'
-      buildId: '11329' 
-      pipeline: 64
-      # pipeline: 'NordicPlayground.nrftc'
-      # artifact: 'nrftc-Darwin'
+      buildId: '11753' 
+      pipeline: 67
+#      artifact: 'nrftc-Darwin'
       path: $(System.ArtifactsDirectory)
     displayName: Download nrftc
 
