@@ -1,8 +1,6 @@
 parameters:
   - name: artifact_name
     type: string
-
-
   - name: package_name
     type: string
 
@@ -49,8 +47,8 @@ steps:
     # nrftc exists both in wayland and wayland internal. We will use the one in wayland internal 
     inputs:
       source: 'specific'
-      project: 'Wayland'
-      buildId: '11753' 
+      project: 'Wayland internal'
+      buildId: '11759' 
       pipeline: 67
 #      artifact: 'nrftc-Darwin'
       path: $(System.ArtifactsDirectory)
@@ -68,7 +66,14 @@ steps:
       allowFailedBuilds: true
 
 
+  - powershell: | 
+        
+        $wheel_dir = $(Pipeline.Workspace)/${{ parameters.package_name }}
+        $tests_dir = "$(Get-Location)/tests" | Resolve-Path
 
+        $(System.ArtifactsDirectory)/nrftc nrf-ble-driver run-py-tests 
+            
+      displayName : Short nrftc run 
 
   - powershell: | 
           echo " Display .\ "
@@ -143,7 +148,6 @@ steps:
         $ports=$(System.ArtifactsDirectory)/nrftc devices list --help
         
         echo "End  run help "
-
 
         echo "Dry run" 
         $(System.ArtifactsDirectory)/nrftc devices  list -b PCA10056 
