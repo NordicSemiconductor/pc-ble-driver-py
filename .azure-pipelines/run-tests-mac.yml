@@ -45,16 +45,25 @@ steps:
  
   - task: DownloadPipelineArtifact@2
     # nrftc exists both in wayland and wayland internal. We will use the one in wayland internal 
+#    inputs:
+#      source: 'specific'
+#      project: 'Wayland internal'
+#      runId: '11759' 
+#      pipeline: 67
+#      artifact: 'nrftc-Darwin'
+#      path: $(System.ArtifactsDirectory)
+#      allowFailedBuilds: true
+#    displayName: Download nrftc
+
+  - task: DownloadPipelineArtifact@2
     inputs:
       source: 'specific'
-      project: 'Wayland internal'
-      buildId: '11759' 
-      pipeline: 67
-      artifact: 'nrftc-Darwin'
+      project: '2e9dc8f5-526c-47f3-8753-881022a0c2b1'
+      runId: '11759' 
+      pipeline: 'NordicPlayground.nrftc'
+      artifact: 'nrftc-$(Agent.OS)'
       path: $(System.ArtifactsDirectory)
-      allowFailedBuilds: true
     displayName: Download nrftc
-
 
   - task: DownloadPipelineArtifact@2
     inputs:
