@@ -43,7 +43,7 @@ steps:
 #     source: current
 #     artifact: ${{ parameters.artifact }}
  
-  - task: DownloadPipelineArtifact@2
+#  - task: DownloadPipelineArtifact@2
     # nrftc exists both in wayland and wayland internal. We will use the one in wayland internal 
 #    inputs:
 #      source: 'specific'
