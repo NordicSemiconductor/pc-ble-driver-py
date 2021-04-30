@@ -50,8 +50,9 @@ steps:
       project: 'Wayland internal'
       buildId: '11759' 
       pipeline: 67
-#      artifact: 'nrftc-Darwin'
+      artifact: 'nrftc-Darwin'
       path: $(System.ArtifactsDirectory)
+      allowFailedBuilds: true
     displayName: Download nrftc
 
 
