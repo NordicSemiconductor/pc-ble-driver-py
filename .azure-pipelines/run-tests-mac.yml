@@ -67,13 +67,10 @@ steps:
 
 
   - powershell: | 
-        
         $wheel_dir = $(Pipeline.Workspace)/${{ parameters.package_name }}
         $tests_dir = "$(Get-Location)/tests" | Resolve-Path
-
         $(System.ArtifactsDirectory)/nrftc nrf-ble-driver run-py-tests 
-            
-      displayName : Short nrftc run 
+    displayName : Short nrftc run 
 
   - powershell: | 
           echo " Display .\ "
