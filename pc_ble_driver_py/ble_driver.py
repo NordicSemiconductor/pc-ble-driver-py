@@ -1466,6 +1466,24 @@ class BLEGattsCharMD(object):
             char_md.p_sccd_md = self.sccd_md.to_c()
         return char_md
 
+class BLEGattsValue(object):
+    def __init__(self, value=[0], offset=0):
+        self.offset = offset
+        self.value = value
+    
+    def __str__(self):
+        return str(self.__dict__)
+
+    def to_c(self):
+        self.value_array = util.list_to_uint8_array(self.value)
+        p_value = self.value_array.cast()
+            
+        ble_gatts_value = driver.ble_gatts_value_t()
+        ble_gatts_value.len = len(self.value)
+        ble_gatts_value.offset = self.offset
+        ble_gatts_value.p_value = p_value
+        return ble_gatts_value
+
 
 class BLEGapPhys(object):
     def __init__(self, tx_phys, rx_phys):
@@ -2540,6 +2558,13 @@ class BLEDriver(object):
         assert isinstance(hvx_params, BLEGattsHVXParams), "Invalid argument type"
         hvx_params = hvx_params.to_c()
         return driver.sd_ble_gatts_hvx(self.rpc_adapter, conn_handle, hvx_params)
+    
+    @NordicSemiErrorCheck
+    @wrapt.synchronized(api_lock)
+    def ble_gatts_value_set(self, conn_handle, handle, value):
+        assert isinstance(value, BLEGattsValue), "Invalid argument type"
+        p_value = value.to_c()
+        return driver.sd_ble_gatts_value_set(self.rpc_adapter, conn_handle, handle, p_value)
 
     def ble_gatts_sys_attr_set(self, conn_handle, sys_attr_data, length, flags):
         return driver.sd_ble_gatts_sys_attr_set(self.rpc_adapter, conn_handle,
