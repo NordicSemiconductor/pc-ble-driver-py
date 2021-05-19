@@ -19,7 +19,7 @@ dist
 .tox
 _skbuild
 _cmake_test_compile
-
+**/test-results/
 
 
 # Hidden utility-folders and files 
@@ -27,3 +27,4 @@ _cmake_test_compile
 **/.hidden/
 .vscode
 node_modules/
+
