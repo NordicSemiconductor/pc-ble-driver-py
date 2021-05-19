@@ -1,3 +1,4 @@
+from driver_setup import *
 import logging
 logger = logging.getLogger(__name__)
 from pc_ble_driver_py.ble_driver import (
@@ -11,7 +12,7 @@ from pc_ble_driver_py.ble_driver import (
 )
 import xmlrunner
 import unittest
-from driver_setup import *
+
 from pprint import pformat
 
 

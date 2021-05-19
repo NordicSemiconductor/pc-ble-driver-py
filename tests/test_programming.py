@@ -35,6 +35,8 @@
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
+from driver_setup import Settings
+
 import logging
 logger = logging.getLogger(__name__)
 import random
@@ -54,7 +56,6 @@ from pc_ble_driver_py.ble_driver import (
     Flasher,
 )
 
-from driver_setup import Settings
 
 
 

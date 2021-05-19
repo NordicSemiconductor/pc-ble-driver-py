@@ -35,6 +35,10 @@
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
+
+
+
+from driver_setup import Settings, setup_adapter
 import logging
 logger = logging.getLogger(__name__)
 
@@ -54,7 +58,6 @@ from pc_ble_driver_py.ble_driver import (
 )
 from pc_ble_driver_py.observers import BLEAdapterObserver, BLEDriverObserver
 
-from driver_setup import Settings, setup_adapter
 
 
 
