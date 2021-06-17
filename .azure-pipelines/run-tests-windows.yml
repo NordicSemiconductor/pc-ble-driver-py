@@ -35,7 +35,7 @@ steps:
       project: Wayland
       pipeline: 5
       runVersion: 'specific'
-      runId: 10595
+      runId: 14218
       artifact: ${{ parameters.artifact_name }}
       allowFailedBuilds: true
       # downloadPath: $(System.DefaultWorkingDirectory)/local_artifacts
