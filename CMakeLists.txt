@@ -1,15 +1,33 @@
-cmake_minimum_required(VERSION 3.13)
-
-if(DEFINED ENV{VCPKG_ROOT} AND NOT DEFINED CMAKE_TOOLCHAIN_FILE)
-    set(CMAKE_TOOLCHAIN_FILE "$ENV{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake"
         CACHE STRING "")
 endif()
 
 # Name of the project
 project (pc-ble-driver-py)
+#set(CMAKE_FIND_DEBUG_MODE 1)
 
+message("CMAKE executable path ${CMAKE_COMMAND}")
+message("CMAKE_MODULE_PATH before most other commands : ${CMAKE_MODULE_PATH}")
+message("The include directories are (before PythonExtensions): ${PYTHON_INCLUDE_DIR}")
+message("Start of finding python extension")
 find_package(PythonExtensions REQUIRED)
+message("end of finding python extension")
+message("The include directories are (after PythonExtensions): ${PYTHON_INCLUDE_DIR}")
 
+message("PythonExtension parameters")
+message("PYTHON_PREFIX                    :   ${PYTHON_PREFIX}                     ")
+message("PYTHON_SITE_PACKAGES_DIR         :   ${PYTHON_SITE_PACKAGES_DIR}          ")
+message("PYTHON_RELATIVE_SITE_PACKAGES_DIR:   ${PYTHON_RELATIVE_SITE_PACKAGES_DIR} ")
+message("PYTHON_SEPARATOR                 :   ${PYTHON_SEPARATOR}                  ")
+message("PYTHON_PATH_SEPARATOR            :   ${PYTHON_PATH_SEPARATOR}             ")
+message("PYTHON_EXTENSION_MODULE_SUFFIX   :   ${PYTHON_EXTENSION_MODULE_SUFFIX}    ")
+
+message("CMAKE_MODULE_PATH afterch most other commands : ${CMAKE_MODULE_PATH}")
+
+if(WIN32)
+    message("Bulding a win32 program")
+else()
+    message("Bulding a win64 program")
+endif()
 if(WIN32)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -D_hypot=hypot")
 endif()
@@ -31,6 +49,7 @@ find_package(nrf-ble-driver ${NRF_BLE_DRIVER_VERSION} EXACT CONFIG REQUIRED)
 
 # PYTHON_INCLUDE_DIR provided by scikit-build
 include_directories(${PYTHON_INCLUDE_DIR})
+message("The include directories are: ${PYTHON_INCLUDE_DIR}")
 
 set(SWIG_I_FILE ${CMAKE_CURRENT_LIST_DIR}/swig/pc_ble_driver.i.in)
 
@@ -99,6 +118,8 @@ foreach(SD_API_VER ${SD_API_VERS})
     set(LINK_LIBRARIES nrf::nrf_ble_driver_sd_api_v${SD_API_VER}_${NRF_BLE_DRIVER_LINKAGE_TYPE})
     if (WIN32 OR APPLE)
         set(LINK_LIBRARIES ${LINK_LIBRARIES} ${PYTHON_LIBRARY})
+        message("Python libbrary is : ${PYTHON_LIBRARY}")
+        message("link libraries are: ${LINK_LIBRARIES}")
     endif()
 
     message(STATUS "LINK_LIBRARIES are not ${LINK_LIBRARIES}")
