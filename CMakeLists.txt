@@ -1,11 +1,9 @@
-        CACHE STRING "")
-endif()
-
 # Name of the project
 project (pc-ble-driver-py)
 #set(CMAKE_FIND_DEBUG_MODE 1)
 
 message("CMAKE executable path ${CMAKE_COMMAND}")
+message("CMake Generator name: ${CMAKE_GENERATOR}")
 message("CMAKE_MODULE_PATH before most other commands : ${CMAKE_MODULE_PATH}")
 message("The include directories are (before PythonExtensions): ${PYTHON_INCLUDE_DIR}")
 message("Start of finding python extension")
