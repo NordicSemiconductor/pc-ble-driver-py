@@ -270,15 +270,16 @@ class LESCSecurity(unittest.TestCase):
 def test_suite():
     return unittest.TestLoader().loadTestsFromName(__name__)
 
-
+#TODO re-add this test
 if __name__ == "__main__":
-    logging.basicConfig(
-        level=Settings.current().log_level,
-        format="%(asctime)s [%(thread)d/%(threadName)s] %(message)s",
-    )
-    unittest.main(
-        testRunner=xmlrunner.XMLTestRunner(
-            output=Settings.current().test_output_directory
-        ),
-        argv=Settings.clean_args(),
-    )
+    pass
+#    logging.basicConfig(
+#        level=Settings.current().log_level,
+#        format="%(asctime)s [%(thread)d/%(threadName)s] %(message)s",
+#    )
+#    unittest.main(
+#        testRunner=xmlrunner.XMLTestRunner(
+#            output=Settings.current().test_output_directory
+#        ),
+#        argv=Settings.clean_args(),
+#    )

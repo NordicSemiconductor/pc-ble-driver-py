@@ -10,6 +10,7 @@ project (pc-ble-driver-py)
 
 message("CMAKE executable path ${CMAKE_COMMAND}")
 message("CMake Generator name: ${CMAKE_GENERATOR}")
+message("cmake generator path ${CMAKE_MAKE_PROGRAM}")
 message("CMAKE_MODULE_PATH before most other commands : ${CMAKE_MODULE_PATH}")
 message("The include directories are (before PythonExtensions): ${PYTHON_INCLUDE_DIR}")
 message("Start of finding python extension")
