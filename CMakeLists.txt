@@ -8,6 +8,8 @@ endif()
 project (pc-ble-driver-py)
 #set(CMAKE_FIND_DEBUG_MODE 1)
 
+# Use nont-debug version of python, even when building a debug version 
+add_definitions(-DSWIG_PYTHON_INTERPRETER_NO_DEBUG)
 message("CMAKE executable path ${CMAKE_COMMAND}")
 message("CMake Generator name: ${CMAKE_GENERATOR}")
 message("cmake generator path ${CMAKE_MAKE_PROGRAM}")
@@ -24,6 +26,7 @@ message("PYTHON_SITE_PACKAGES_DIR         :   ${PYTHON_SITE_PACKAGES_DIR}       
 message("PYTHON_RELATIVE_SITE_PACKAGES_DIR:   ${PYTHON_RELATIVE_SITE_PACKAGES_DIR} ")
 message("PYTHON_SEPARATOR                 :   ${PYTHON_SEPARATOR}                  ")
 message("PYTHON_PATH_SEPARATOR            :   ${PYTHON_PATH_SEPARATOR}             ")
+message("PYTHON_EXTENSION_MODULE_SUFFIX   :   ${PYTHON_EXTENSION_MODULE_SUFFIX}    ")
 message("PYTHON_EXTENSION_MODULE_SUFFIX   :   ${PYTHON_EXTENSION_MODULE_SUFFIX}    ")
 
 message("CMAKE_MODULE_PATH afterch most other commands : ${CMAKE_MODULE_PATH}")
@@ -58,9 +61,6 @@ message("The include directories are: ${PYTHON_INCLUDE_DIR}")
 
 set(SWIG_I_FILE ${CMAKE_CURRENT_LIST_DIR}/swig/pc_ble_driver.i.in)
 
-# Use release lib of Python even when building with DEBUG
-add_definitions(-DSWIG_PYTHON_INTERPRETER_NO_DEBUG)
-
 # Avoid warning on Windows
 if(WIN32)
     add_definitions(-DHAVE_ROUND)
@@ -72,6 +72,9 @@ foreach(SD_API_VER ${SD_API_VERS})
     # Copy SWIG-generated wrapper
     set(SWIG_I_FILE_${SD_API_VER} ${PC_BLE_DRIVER_PY_OUTDIR}/${PYTHON_MODULE_${SD_API_VER}}.i)
     set(SWIG_MODULE_NAME ${PYTHON_MODULE_${SD_API_VER}})
+    message("Disable python debug version")
+    # Use release lib of Python even when building with DEBUG
+    add_definitions(-DSWIG_PYTHON_INTERPRETER_NO_DEBUG)
     configure_file(${SWIG_I_FILE} ${SWIG_I_FILE_${SD_API_VER}})
     set_property(SOURCE ${SWIG_I_FILE_${SD_API_VER}} APPEND PROPERTY SWIG_FLAGS "-threads")
     set_property(SOURCE ${SWIG_I_FILE_${SD_API_VER}} APPEND PROPERTY SWIG_FLAGS "-Wall")
@@ -129,7 +132,9 @@ foreach(SD_API_VER ${SD_API_VERS})
 
     message(STATUS "LINK_LIBRARIES are not ${LINK_LIBRARIES}")
 
+    message("about to link libraies to target:  ${LINK_LIBRARIES}")
     target_link_libraries(${PYTHON_MODULE_${SD_API_VER}} PRIVATE ${LINK_LIBRARIES})
+    message("about to compile definitions")
     target_compile_definitions(${PYTHON_MODULE_${SD_API_VER}} PRIVATE NRF_SD_BLE_API_VERSION=${SD_API_VER})
 
     get_target_property(CONNECTIVITY_SD_API_V${SD_API_VER}_PATH nrf::nrf_ble_driver_sd_api_v${SD_API_VER}_${NRF_BLE_DRIVER_LINKAGE_TYPE} INTERFACE_INCLUDE_DIRECTORIES)
