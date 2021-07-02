@@ -37,3 +37,4 @@ testinfo
 test_results 
 .util
 buildinfo 
+repeatable_skbuild/
