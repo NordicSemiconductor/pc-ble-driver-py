@@ -28,3 +28,12 @@ _cmake_test_compile
 .vscode
 node_modules/
 
+
+
+# Directories for debugging
+test-reports
+repeatable_dist
+testinfo
+test_results 
+.util
+buildinfo 
