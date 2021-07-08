@@ -7,7 +7,7 @@ endif()
 # Name of the project
 project (pc-ble-driver-py)
 #set(CMAKE_FIND_DEBUG_MODE 1)
-
+set(PYTHON_LIBRARY_FROM_USER_FLAGS "${PYTHON_LIBRARY}")
 # Use nont-debug version of python, even when building a debug version 
 add_definitions(-DSWIG_PYTHON_INTERPRETER_NO_DEBUG)
 message("CMAKE executable path ${CMAKE_COMMAND}")
@@ -32,9 +32,9 @@ message("PYTHON_EXTENSION_MODULE_SUFFIX   :   ${PYTHON_EXTENSION_MODULE_SUFFIX} 
 message("CMAKE_MODULE_PATH afterch most other commands : ${CMAKE_MODULE_PATH}")
 
 if(WIN32)
-    message("Bulding a win32 program")
+    message("Building a win32 program")
 else()
-    message("Bulding a win64 program")
+    message("Building a win64 program")
 endif()
 if(WIN32)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -D_hypot=hypot")
@@ -125,8 +125,9 @@ foreach(SD_API_VER ${SD_API_VERS})
 
     set(LINK_LIBRARIES nrf::nrf_ble_driver_sd_api_v${SD_API_VER}_${NRF_BLE_DRIVER_LINKAGE_TYPE})
     if (WIN32 OR APPLE)
-        set(LINK_LIBRARIES ${LINK_LIBRARIES} ${PYTHON_LIBRARY})
-        message("Python libbrary is : ${PYTHON_LIBRARY}")
+        set(LINK_LIBRARIES ${LINK_LIBRARIES} ${PYTHON_LIBRARY_FROM_USER_FLAGS})
+        message("Python libbrary from the user flags is : ${PYTHON_LIBRARY_FROM_USER_FLAGS}")
+        message("Python found library (not used) is: ${PYTHON_LIBRARY}")
         message("link libraries are: ${LINK_LIBRARIES}")
     endif()
 
