@@ -183,6 +183,34 @@ class Mtu(unittest.TestCase):
         self.central.start(self.adv_name, requested_mtu)
 
         self.assertEqual(self.peripheral.mtu_req, requested_mtu)
+
+        # NOTE: this check sometimes fails with None != 200, might be due to a
+        # potential race condition:
+        #
+        #   A1. https://github.com/NordicSemiconductor/pc-ble-driver-py/blob/617123d88e813e37b0f66abdbb19b914a4c36275/pc_ble_driver_py/ble_driver.py#L3012
+        #       (event handler) runs
+        #       https://github.com/NordicSemiconductor/pc-ble-driver-py/blob/617123d88e813e37b0f66abdbb19b914a4c36275/pc_ble_driver_py/ble_adapter.py#L784
+        #       (ble_adapter.on_gattc_evt_exchange_mtu_rsp()).
+        #   A2. evt_sync is notified with gattc_evt_exchange_mtu_rsp.
+        #
+        #   Then:
+        #   B1. https://github.com/NordicSemiconductor/pc-ble-driver-py/blob/617123d88e813e37b0f66abdbb19b914a4c36275/pc_ble_driver_py/ble_adapter.py#L227
+        #       (evt_sync) goes out of waiting.
+        #   B2. https://github.com/NordicSemiconductor/pc-ble-driver-py/blob/617123d88e813e37b0f66abdbb19b914a4c36275/tests/test_mtu.py#L72
+        #       (ble_driver.att_mtu_exchange()) returns.
+        #   B3. https://github.com/NordicSemiconductor/pc-ble-driver-py/blob/617123d88e813e37b0f66abdbb19b914a4c36275/tests/test_mtu.py#L183
+        #       (test_mtu.central.start()) returns.
+        #   B4. Arrives at the current line, checks central.mtu_rsp.
+        #
+        #   Meanwhile:
+        #   A3. https://github.com/NordicSemiconductor/pc-ble-driver-py/blob/617123d88e813e37b0f66abdbb19b914a4c36275/pc_ble_driver_py/ble_driver.py#L3011
+        #       (event handler) continues, runs
+        #       https://github.com/NordicSemiconductor/pc-ble-driver-py/blob/617123d88e813e37b0f66abdbb19b914a4c36275/tests/test_mtu.py#L111
+        #       (test_mtu.central.on_gattc_evt_exchange_mtu_rsp()).
+        #   A4. central.mtu_rsp is set.
+        #
+        # Assert succeeds as long as A4 happens before B4. Potential for failure
+        # if A4 somehow is delayed due to timing issues.
         self.assertEqual(self.central.mtu_rsp, max_supported_mtu)
 
         common_supported_mtu = min(max_supported_mtu, requested_mtu)
