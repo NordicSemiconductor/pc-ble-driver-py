@@ -45,34 +45,3 @@ __version__ = "0.16.0"
 
 
 
-def clean_python_version():
-    """
-    On windows there is cross-contamination between python for the same versions of python
-    but for x64 and x86. This sould remove the bad elements from path. 
-
-    """
-    import os 
-    import sys
-    import re
-    # On the form Python3x-32 or Python3x depending on the architecture
-    python_name = os.path.split(sys.prefix)[1]
-    
-    # The prefix should end in Python3x or Python3x-32
-    pattern = re.compile("(Python3[0-9]+)(-32)?")
-    match = (pattern.match(python_name) )
-    if not match: 
-        return
-    prefix = match[1] # Python3x 
-    suffix = match[2] # "" or "-32"
-    inverse_suffix = { None :'-32', '-32' : ''}[suffix]
-    bad_python = prefix + inverse_suffix 
-    new_path = []
-    for minipath in sys.path: 
-        split_path = os.path.normpath(minipath).split(os.sep)
-        if bad_python in split_path: 
-            print("Bad element in python-path thrown out: " ,  minipath) 
-        else: 
-            new_path.append(minipath) 
-    sys.path=new_path
-
-clean_python_version()
