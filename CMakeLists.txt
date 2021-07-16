@@ -6,11 +6,12 @@ if(DEFINED ENV{VCPKG_ROOT} AND NOT DEFINED CMAKE_TOOLCHAIN_FILE)
 endif()
 # Name of the project
 project (pc-ble-driver-py)
+# PYTHON_LIBRARY is changed by the PythonExtensions package, so a different variable is required to keep the original user flag
 set(PYTHON_LIBRARY_FROM_USER_FLAGS "${PYTHON_LIBRARY}")
 # Use nont-debug version of python, even when building a debug version 
 add_definitions(-DSWIG_PYTHON_INTERPRETER_NO_DEBUG)
 message(VERBOSE "CMAKE executable path ${CMAKE_COMMAND}")
-message(VERBOSE "CMAKE Generator name: ${CMAKE_GENERATOR}")
+message(VERBOSE "CMAKE generator name: ${CMAKE_GENERATOR}")
 message(VERBOSE "CMAKE generator path ${CMAKE_MAKE_PROGRAM}")
 message(VERBOSE "CMAKE_MODULE_PATH before most other commands : ${CMAKE_MODULE_PATH}")
 message(VERBOSE "The include directories are (before PythonExtensions): ${PYTHON_INCLUDE_DIR}")
@@ -24,7 +25,7 @@ message(VERBOSE "PYTHON_SEPARATOR                 :   ${PYTHON_SEPARATOR}       
 message(VERBOSE "PYTHON_PATH_SEPARATOR            :   ${PYTHON_PATH_SEPARATOR}             ")
 message(VERBOSE "PYTHON_EXTENSION_MODULE_SUFFIX   :   ${PYTHON_EXTENSION_MODULE_SUFFIX}    ")
 message(VERBOSE "PYTHON_EXTENSION_MODULE_SUFFIX   :   ${PYTHON_EXTENSION_MODULE_SUFFIX}    ")
-message(VERBOSE "CMAKE_MODULE_PATH afterch most other commands : ${CMAKE_MODULE_PATH}")
+message(VERBOSE "CMAKE_MODULE_PATH after most other commands : ${CMAKE_MODULE_PATH}")
 
 if(WIN32)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -D_hypot=hypot")
@@ -115,7 +116,7 @@ foreach(SD_API_VER ${SD_API_VERS})
     set(LINK_LIBRARIES nrf::nrf_ble_driver_sd_api_v${SD_API_VER}_${NRF_BLE_DRIVER_LINKAGE_TYPE})
     if (WIN32 OR APPLE)
         set(LINK_LIBRARIES ${LINK_LIBRARIES} ${PYTHON_LIBRARY_FROM_USER_FLAGS})
-        message(VERBOSE "Python libbrary from the user flags is : ${PYTHON_LIBRARY_FROM_USER_FLAGS}")
+        message(VERBOSE "Python library from the user flags is : ${PYTHON_LIBRARY_FROM_USER_FLAGS}")
     endif()
 
     message(VERBOSE STATUS "LINK_LIBRARIES are ${LINK_LIBRARIES}")
