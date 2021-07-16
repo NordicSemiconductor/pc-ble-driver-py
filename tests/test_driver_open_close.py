@@ -3,11 +3,7 @@ import logging
 logger = logging.getLogger(__name__)
 import time
 import unittest
-
 import xmlrunner
-
-
-
 
 from pc_ble_driver_py.ble_driver import (
     BLEAdvData,
