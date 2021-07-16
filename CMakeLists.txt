@@ -8,7 +8,7 @@ endif()
 project (pc-ble-driver-py)
 # PYTHON_LIBRARY is changed by the PythonExtensions package, so a different variable is required to keep the original user flag
 set(PYTHON_LIBRARY_FROM_USER_FLAGS "${PYTHON_LIBRARY}")
-# Use nont-debug version of python, even when building a debug version 
+# Use non-debug version of python, even when building a debug version 
 add_definitions(-DSWIG_PYTHON_INTERPRETER_NO_DEBUG)
 message(VERBOSE "CMAKE executable path ${CMAKE_COMMAND}")
 message(VERBOSE "CMAKE generator name: ${CMAKE_GENERATOR}")
