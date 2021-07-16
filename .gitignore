@@ -19,3 +19,22 @@ dist
 .tox
 _skbuild
 _cmake_test_compile
+**/test-results/
+
+
+# Hidden utility-folders and files 
+**/delete_me*
+**/.hidden/
+.vscode
+node_modules/
+
+
+
+# Directories for debugging
+test-reports
+repeatable_dist
+testinfo
+test_results 
+.util
+buildinfo 
+repeatable_skbuild/
