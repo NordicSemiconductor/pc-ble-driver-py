@@ -4,17 +4,35 @@ if(DEFINED ENV{VCPKG_ROOT} AND NOT DEFINED CMAKE_TOOLCHAIN_FILE)
     set(CMAKE_TOOLCHAIN_FILE "$ENV{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake"
         CACHE STRING "")
 endif()
-
 # Name of the project
 project (pc-ble-driver-py)
-
+# PYTHON_LIBRARY is changed by the PythonExtensions package, so a different variable is required to keep the original user flag
+set(PYTHON_LIBRARY_FROM_USER_FLAGS "${PYTHON_LIBRARY}")
+# Use non-debug version of python, even when building a debug version 
+add_definitions(-DSWIG_PYTHON_INTERPRETER_NO_DEBUG)
+message(VERBOSE "CMAKE executable path ${CMAKE_COMMAND}")
+message(VERBOSE "CMAKE generator name: ${CMAKE_GENERATOR}")
+message(VERBOSE "CMAKE generator path ${CMAKE_MAKE_PROGRAM}")
+message(VERBOSE "CMAKE_MODULE_PATH before most other commands : ${CMAKE_MODULE_PATH}")
+message(VERBOSE "The include directories are (before PythonExtensions): ${PYTHON_INCLUDE_DIR}")
 find_package(PythonExtensions REQUIRED)
+message(VERBOSE "The include directories are (after PythonExtensions): ${PYTHON_INCLUDE_DIR}")
+message(VERBOSE "PythonExtension parameters")
+message(VERBOSE "PYTHON_PREFIX                    :   ${PYTHON_PREFIX}                     ")
+message(VERBOSE "PYTHON_SITE_PACKAGES_DIR         :   ${PYTHON_SITE_PACKAGES_DIR}          ")
+message(VERBOSE "PYTHON_RELATIVE_SITE_PACKAGES_DIR:   ${PYTHON_RELATIVE_SITE_PACKAGES_DIR} ")
+message(VERBOSE "PYTHON_SEPARATOR                 :   ${PYTHON_SEPARATOR}                  ")
+message(VERBOSE "PYTHON_PATH_SEPARATOR            :   ${PYTHON_PATH_SEPARATOR}             ")
+message(VERBOSE "PYTHON_EXTENSION_MODULE_SUFFIX   :   ${PYTHON_EXTENSION_MODULE_SUFFIX}    ")
+message(VERBOSE "PYTHON_EXTENSION_MODULE_SUFFIX   :   ${PYTHON_EXTENSION_MODULE_SUFFIX}    ")
+message(VERBOSE "CMAKE_MODULE_PATH after most other commands : ${CMAKE_MODULE_PATH}")
 
 if(WIN32)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -D_hypot=hypot")
 endif()
 
 set(PC_BLE_DRIVER_PY_OUTDIR ${CMAKE_BINARY_DIR}/outdir)
+set(NRF_BLE_DRIVER_VERSION "4.1.4")
 
 # There is no reason to compile more than two SoftDevice API versions
 # The Python module only supports one SoftDevice API
@@ -26,15 +44,13 @@ find_package(SWIG REQUIRED)
 include(${SWIG_USE_FILE})
 
 # nrf-ble-driver
-find_package(nrf-ble-driver 4.1.2 CONFIG REQUIRED)
+find_package(nrf-ble-driver ${NRF_BLE_DRIVER_VERSION} EXACT CONFIG REQUIRED)
 
 # PYTHON_INCLUDE_DIR provided by scikit-build
 include_directories(${PYTHON_INCLUDE_DIR})
+message(VERBOSE "The Python include directories are: ${PYTHON_INCLUDE_DIR}")
 
 set(SWIG_I_FILE ${CMAKE_CURRENT_LIST_DIR}/swig/pc_ble_driver.i.in)
-
-# Use release lib of Python even when building with DEBUG
-add_definitions(-DSWIG_PYTHON_INTERPRETER_NO_DEBUG)
 
 # Avoid warning on Windows
 if(WIN32)
@@ -47,6 +63,8 @@ foreach(SD_API_VER ${SD_API_VERS})
     # Copy SWIG-generated wrapper
     set(SWIG_I_FILE_${SD_API_VER} ${PC_BLE_DRIVER_PY_OUTDIR}/${PYTHON_MODULE_${SD_API_VER}}.i)
     set(SWIG_MODULE_NAME ${PYTHON_MODULE_${SD_API_VER}})
+    # Use release lib of Python even when building with DEBUG
+    add_definitions(-DSWIG_PYTHON_INTERPRETER_NO_DEBUG)
     configure_file(${SWIG_I_FILE} ${SWIG_I_FILE_${SD_API_VER}})
     set_property(SOURCE ${SWIG_I_FILE_${SD_API_VER}} APPEND PROPERTY SWIG_FLAGS "-threads")
     set_property(SOURCE ${SWIG_I_FILE_${SD_API_VER}} APPEND PROPERTY SWIG_FLAGS "-Wall")
@@ -97,10 +115,11 @@ foreach(SD_API_VER ${SD_API_VERS})
 
     set(LINK_LIBRARIES nrf::nrf_ble_driver_sd_api_v${SD_API_VER}_${NRF_BLE_DRIVER_LINKAGE_TYPE})
     if (WIN32 OR APPLE)
-        set(LINK_LIBRARIES ${LINK_LIBRARIES} ${PYTHON_LIBRARY})
+        set(LINK_LIBRARIES ${LINK_LIBRARIES} ${PYTHON_LIBRARY_FROM_USER_FLAGS})
+        message(VERBOSE "Python library from the user flags is : ${PYTHON_LIBRARY_FROM_USER_FLAGS}")
     endif()
 
-    message(STATUS "LINK_LIBRARIES are not ${LINK_LIBRARIES}")
+    message(VERBOSE STATUS "LINK_LIBRARIES are ${LINK_LIBRARIES}")
 
     target_link_libraries(${PYTHON_MODULE_${SD_API_VER}} PRIVATE ${LINK_LIBRARIES})
     target_compile_definitions(${PYTHON_MODULE_${SD_API_VER}} PRIVATE NRF_SD_BLE_API_VERSION=${SD_API_VER})

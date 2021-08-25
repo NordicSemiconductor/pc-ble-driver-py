@@ -352,7 +352,7 @@ class BLEAdapterObserver(object):
     def __init__(self, *args, **kwargs):
         super(BLEAdapterObserver, self).__init__()
 
-    def on_indication(self, ble_adpater, conn_handle, uuid, data):
+    def on_indication(self, ble_adapter, conn_handle, uuid, data):
         pass
 
     def on_indication_handle(self, ble_adapter, conn_handle, uuid, attr_handle, data):

@@ -29,7 +29,7 @@ class FlasherParserTestCase(unittest.TestCase):
             {
                 'len': 24,
                 'magic_number': ['17', 'A5', 'D8', '46'],
-                'version': '4.1.2',
+                'version': '4.1.4',
                 'baud_rate': 1000000,
                 'api_version': 5
             }
@@ -51,7 +51,7 @@ class FlasherVersionTestCase(unittest.TestCase):
         self.assertFalse(Flasher.is_valid_version('4.0.0'))
 
     def test_valid_version(self):
-        self.assertTrue(Flasher.is_valid_version('4.1.2'))
+        self.assertTrue(Flasher.is_valid_version('4.1.4'))
 
 
 class FlasherBaudRateTestCase(unittest.TestCase):

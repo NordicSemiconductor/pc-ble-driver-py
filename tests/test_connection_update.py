@@ -34,8 +34,8 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
-
-
+from driver_setup import Settings, setup_adapter
+import xmlrunner
 import unittest
 from queue import Queue
 import random
@@ -43,7 +43,7 @@ import string
 import logging
 
 from pc_ble_driver_py.observers import BLEDriverObserver, BLEAdapterObserver
-from driver_setup import Settings, setup_adapter
+
 from pc_ble_driver_py.ble_driver import BLEAdvData, BLEGapConnParams
 from pc_ble_driver_py.exceptions import NordicSemiException
 
@@ -77,9 +77,7 @@ class Central(BLEDriverObserver, BLEAdapterObserver):
         self, ble_driver, conn_handle, peer_addr, rssi, adv_type, adv_data
     ):
         if BLEAdvData.Types.complete_local_name in adv_data.records:
-            dev_name_list = adv_data.records[
-                BLEAdvData.Types.complete_local_name
-            ]
+            dev_name_list = adv_data.records[BLEAdvData.Types.complete_local_name]
 
         elif BLEAdvData.Types.short_local_name in adv_data.records:
             dev_name_list = adv_data.records[BLEAdvData.Types.short_local_name]
@@ -89,9 +87,7 @@ class Central(BLEDriverObserver, BLEAdapterObserver):
         dev_name = "".join(chr(e) for e in dev_name_list)
 
         if dev_name == self.connect_with:
-            address_string = "".join(
-                "{0:02X}".format(b) for b in peer_addr.addr
-            )
+            address_string = "".join("{0:02X}".format(b) for b in peer_addr.addr)
             logger.info(
                 "Trying to connect to peripheral advertising as %s, address: 0x%s",
                 dev_name,
@@ -157,8 +153,7 @@ class DataLength(unittest.TestCase):
         # Advertising name used by peripheral and central
         # to find peripheral and connect with it
         self.adv_name = "".join(
-            random.choice(string.ascii_uppercase + string.digits)
-            for _ in range(20)
+            random.choice(string.ascii_uppercase + string.digits) for _ in range(20)
         )
         self.peripheral = Peripheral(peripheral)
 
@@ -171,10 +166,7 @@ class DataLength(unittest.TestCase):
         slave_latency = 5
 
         conn_params = BLEGapConnParams(
-            min_conn_int,
-            max_conn_int,
-            conn_sup_timeout,
-            slave_latency
+            min_conn_int, max_conn_int, conn_sup_timeout, slave_latency
         )
 
         result = self.central.start(self.adv_name, conn_params)
@@ -201,4 +193,10 @@ if __name__ == "__main__":
         level=Settings.current().log_level,
         format="%(asctime)s [%(thread)d/%(threadName)s] %(message)s",
     )
-    unittest.main(argv=Settings.clean_args())
+
+    unittest.main(
+        testRunner=xmlrunner.XMLTestRunner(
+            output=Settings.current().test_output_directory
+        ),
+        argv=Settings.clean_args(),
+    )
