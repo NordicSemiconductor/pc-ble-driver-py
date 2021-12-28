@@ -353,14 +353,15 @@ class BLEGapAdvParams(object):
 
 
 class BLEGapScanParams(object):
-    def __init__(self, interval_ms, window_ms, timeout_s):
+    def __init__(self, interval_ms, window_ms, timeout_s, active=True):
         self.interval_ms = interval_ms
         self.window_ms = window_ms
         self.timeout_s = timeout_s
+        self.active = active
 
     def to_c(self):
         scan_params = driver.ble_gap_scan_params_t()
-        scan_params.active = True
+        scan_params.active = self.active
         scan_params.selective = False
         scan_params.p_whitelist = None
         scan_params.interval = util.msec_to_units(self.interval_ms, util.UNIT_0_625_MS)
