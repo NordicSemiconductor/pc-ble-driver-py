@@ -646,7 +646,7 @@ class BLEAdapter(BLEDriverObserver):
         ), "Invalid role. Encryption can only be initiated by a Central Device."
         master_id = BLEGapMasterId(ediv=ediv, rand=rand)
         enc_info = BLEGapEncInfo(ltk=ltk, auth=auth, lesc=lesc, ltk_len=ltk_len)
-        self.driver.ble_gap_encrypt(conn_handle, master_id, enc_info)
+        self.driver.ble_gap_encrypt(conn_handle, master_id, enc_info, lesc)
         result = self.evt_sync[conn_handle].wait(evt=BLEEvtID.gap_evt_conn_sec_update)
         return result["conn_sec"]
 
