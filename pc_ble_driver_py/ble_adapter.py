@@ -611,11 +611,12 @@ class BLEAdapter(BLEDriverObserver):
         )
 
         self.driver.ble_gap_authenticate(conn_handle, sec_params)
-        self.evt_sync[conn_handle].wait(evt=BLEEvtID.gap_evt_sec_params_request, timeout=10)
-        # sd_ble_gap_sec_params_reply ... In the central role, sec_params must be set to NULL,
-        # as the parameters have already been provided during a previous call to
-        # sd_ble_gap_authenticate.
-        if not sec_params.lesc:
+        result = self.evt_sync[conn_handle].wait(evt=BLEEvtID.gap_evt_sec_params_request, timeout=10)
+        # LE Secure Connections used only if both sides support it.
+        if not sec_params.lesc or not result["peer_params"].lesc:
+            # sd_ble_gap_sec_params_reply ... In the central role, sec_params must be set to NULL,
+            # as the parameters have already been provided during a previous call to
+            # sd_ble_gap_authenticate.
             sec_params = (
                 None
                 if self.db_conns[conn_handle].role == BLEGapRoles.central
@@ -649,7 +650,7 @@ class BLEAdapter(BLEDriverObserver):
         ), "Invalid role. Encryption can only be initiated by a Central Device."
         master_id = BLEGapMasterId(ediv=ediv, rand=rand)
         enc_info = BLEGapEncInfo(ltk=ltk, auth=auth, lesc=lesc, ltk_len=ltk_len)
-        self.driver.ble_gap_encrypt(conn_handle, master_id, enc_info)
+        self.driver.ble_gap_encrypt(conn_handle, master_id, enc_info, lesc)
         result = self.evt_sync[conn_handle].wait(evt=BLEEvtID.gap_evt_conn_sec_update)
         return result["conn_sec"]
 
