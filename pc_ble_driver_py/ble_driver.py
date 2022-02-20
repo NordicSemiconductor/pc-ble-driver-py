@@ -109,7 +109,8 @@ def NordicSemiErrorCheck(wrapped=None, expected=driver.NRF_SUCCESS):
                 ),
                 error_code=err_code,
             )
-
+        else:
+            return expected
     return wrapper(wrapped)
 
 
