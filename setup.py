@@ -42,24 +42,11 @@ import os
 from skbuild import setup
 from setuptools import find_packages
 
-py2 = sys.version_info[0] == 2
-py3 = sys.version_info[0] == 3
-
-py_version_old_message = "pc-ble-driver-py only supports Python version 3.6 and newer"
-requirements = []
-
-if py2:
-    print(py_version_old_message)
+if sys.version_info[0] < 3 or sys.version_info[1] < 6:
+    print("pc-ble-driver-py only supports Python version 3.6 and newer")
     sys.exit(-1)
-elif py3:
-    if sys.version_info[1] < 6:
-        print(py_version_old_message)
-        sys.exit(-1)
 
-    requirements = ["wrapt", "cryptography"]
-else:
-    print(py_version_old_message)
-    sys.exit(-1)
+requirements = ["wrapt", "cryptography"]
 
 if os.path.exists("MANIFEST"):
     os.remove("MANIFEST")
