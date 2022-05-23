@@ -42,7 +42,7 @@ import os
 from skbuild import setup
 from setuptools import find_packages
 
-if sys.version_info[0] < 3 or sys.version_info[1] < 6:
+if sys.version_info < (3, 6):
     print("pc-ble-driver-py only supports Python version 3.6 and newer")
     sys.exit(-1)
 
