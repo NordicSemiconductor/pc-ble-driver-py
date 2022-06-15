@@ -1498,6 +1498,11 @@ class BLEDescriptor(object):
     @classmethod
     def from_c(cls, gattc_desc):
         return cls(uuid=BLEUUID.from_c(gattc_desc.uuid), handle=gattc_desc.handle)
+    
+    def __eq__(self, other):
+        if isinstance(other, BLEDescriptor):
+            return self.uuid == other.uuid
+        return self.uuid == other
 
     def __str__(self):
         return "Descriptor uuid({0.uuid}) handle({0.handle})".format(self)
@@ -1540,6 +1545,11 @@ class BLECharacteristic(object):
             handle_decl=gattc_char.handle_decl,
             handle_value=gattc_char.handle_value,
         )
+    
+    def __eq__(self, other):
+        if isinstance(other, BLECharacteristic):
+            return self.uuid == other.uuid
+        return self.uuid == other
 
     def __repr__(self):
         return "<BLECharacteristic obj>"
@@ -1571,6 +1581,11 @@ class BLEService(object):
         self.chars.append(char)
         if len(self.chars) > 1:
             self.chars[-2].end_handle = char.handle_decl - 1
+    
+    def __eq__(self, other):
+        if isinstance(other, BLEService):
+            return self.uuid == other.uuid
+        return self.uuid == other
 
     def __str__(self):
         return "Service uuid({0.uuid}) start handle({0.start_handle}) end handle({0.end_handle})".format(
