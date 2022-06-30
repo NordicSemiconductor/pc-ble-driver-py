@@ -1468,7 +1468,9 @@ class BLEGattsCharMD(object):
         return char_md
 
 class BLEGattsValue(object):
-    def __init__(self, value=[0], offset=0):
+    def __init__(self, value=None, offset=0):
+        if value == None:
+            value = [0]
         self.offset = offset
         self.value = value
     
