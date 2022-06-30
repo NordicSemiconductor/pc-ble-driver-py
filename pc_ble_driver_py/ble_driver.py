@@ -2285,13 +2285,11 @@ class BLEDriver(object):
     def ble_gap_device_name_set(self, name, device_name_read_only=True):
         write_perm=BLEGapConnSecMode()
         if device_name_read_only:
-            write_perm.sm = 0
-            write_perm.lv = 0
+            write_perm.set_no_access()
         else:
-            write_perm.sm = 1
-            write_perm.lv = 1
+            write_perm.set_open()
         p_write_perm = write_perm.to_c()
-        p_dev_name = name
+
         p_dev_name = util.list_to_uint8_array([ord(x) for x in name])
         p_dev_name_cast = p_dev_name.cast()
         name_length = len(name)

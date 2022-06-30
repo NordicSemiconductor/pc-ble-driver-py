@@ -177,3 +177,8 @@ def test_adv_start(ble_tester):
     ble_tester.driver.ble_gap_adv_data_set(adv_data)
     ble_tester.driver.ble_gap_adv_start(tag=1)
     time.sleep(2)
+
+def test_ble_gap_device_name_set():
+    ble_tester.driver.ble_gap_device_name_set(name="Name 1")
+
+    ble_tester.driver.ble_gap_device_name_set(name="Name 2", device_name_read_only=False)
