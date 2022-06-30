@@ -2406,6 +2406,11 @@ class BLEDriver(object):
 
     @NordicSemiErrorCheck
     @wrapt.synchronized(api_lock)
+    def ble_gap_tx_power_set(self, tx_power):
+        return driver.sd_ble_gap_tx_power_set(self.rpc_adapter, tx_power)
+
+    @NordicSemiErrorCheck
+    @wrapt.synchronized(api_lock)
     def ble_gap_phy_update(self, conn_handle, gap_phys):
         assert nrf_sd_ble_api_ver >= 5, 'PHY Update requires SD API v5 or higher'
         assert isinstance(gap_phys, BLEGapPhys)
