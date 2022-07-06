@@ -273,7 +273,7 @@ class BLEAdapter(BLEDriverObserver):
     def service_discovery(self, conn_handle, uuid=None):
         # Don't add repeat handles
         # See: https://github.com/NordicSemiconductor/pc-ble-driver-py/issues/219
-        if uuid is not None and uuid in self.db_conns[conn_handle].services:
+        if uuid is not None and uuid in [service.uuid for service in self.db_conns[conn_handle].services]:
             return BLEGattStatusCode.success
         
         vendor_services = []
@@ -289,7 +289,7 @@ class BLEAdapter(BLEDriverObserver):
                         for s in response["services"]:
                             # Don't add repeat handles
                             # See: https://github.com/NordicSemiconductor/pc-ble-driver-py/issues/219
-                            if s not in self.db_conns[conn_handle].services:
+                            if s.uuid not in [service.uuid for service in self.db_conns[conn_handle].services]:
                                 if s.uuid.value == BLEUUID.Standard.unknown:
                                     vendor_services.append(s)
                                 else:
@@ -333,7 +333,7 @@ class BLEAdapter(BLEDriverObserver):
                     # Assign UUIDBase manually
                     # See:
                     #  https://github.com/NordicSemiconductor/pc-ble-driver-py/issues/38
-                    for s in response["services"]:
+                    for s.uuid in [service.uuid for service in response["services"]]:
                         s.uuid.base = base
                     self.db_conns[conn_handle].services.extend(response["services"])
 
@@ -348,7 +348,7 @@ class BLEAdapter(BLEDriverObserver):
                         for char in response["characteristics"]:
                             # Don't add repeat handles
                             # See: https://github.com/NordicSemiconductor/pc-ble-driver-py/issues/219
-                            if char not in s.chars:
+                            if char.uuid not in [c.uuid for c in s.chars]:
                                 s.char_add(char)
                     elif response["status"] == BLEGattStatusCode.attribute_not_found:
                         break
@@ -374,7 +374,7 @@ class BLEAdapter(BLEDriverObserver):
                             for desc in response["descriptors"]:
                                 # Don't add repeat handles
                                 # See: https://github.com/NordicSemiconductor/pc-ble-driver-py/issues/219
-                                if desc not in ch.descs:
+                                if desc not in [d.uuid for d in ch.descs]:
                                     ch.descs.append(desc)
                         elif response["status"] == BLEGattStatusCode.attribute_not_found:
                             break
