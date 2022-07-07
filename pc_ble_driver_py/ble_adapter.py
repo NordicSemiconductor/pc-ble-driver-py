@@ -305,6 +305,11 @@ class BLEAdapter(BLEDriverObserver):
                         self.driver.ble_gattc_prim_srvc_disc(
                             conn_handle, uuid, response["services"][-1].end_handle + 1
                         )
+            else:
+                raise NordicSemiException(
+                    "conn_handle not available. common cause is disconnect after"
+                    "starting service_discovery")
+
 
         for s in vendor_services:
             # Read service handle to obtain full 128-bit UUID.
