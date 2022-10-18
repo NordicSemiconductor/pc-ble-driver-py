@@ -42,8 +42,8 @@ import os
 from skbuild import setup
 from setuptools import find_packages
 
-if sys.version_info < (3, 6):
-    print("pc-ble-driver-py only supports Python version 3.6 and newer")
+if sys.version_info < (3, 7):
+    print("pc-ble-driver-py only supports Python version 3.7 and newer")
     sys.exit(-1)
 
 requirements = ["wrapt", "cryptography"]
