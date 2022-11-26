@@ -1225,7 +1225,7 @@ class BLEUUIDBase(object):
                 0x34,
                 0xFB,
             ]
-            self.type = driver.BLE_UUID_TYPE_BLE
+            self.type = driver.BLE_UUID_TYPE_VENDOR_BEGIN
 
         else:
             self.base = vs_uuid_base
