@@ -40,6 +40,7 @@ This module implements convenience methods on top of ble_driver
 """
 
 from threading import Condition
+from queue import Queue
 import logging
 
 from pc_ble_driver_py.ble_driver import *
@@ -170,27 +171,131 @@ class BLEAdapter(BLEDriverObserver):
         self.driver = ble_driver
         self.driver.observer_register(self)
 
-        self.conn_in_progress = False
+        self.is_opened = False
+        self.is_init_ok = False
+        self.is_scan_timeout = False
+        self.scan_q = Queue()
+        self.conn_handle = -1
+        self.is_connected = False
         self.observers = list()
         self.db_conns = dict()
         self.evt_sync = dict()
-        self.default_mtu = ATT_MTU_DEFAULT
+        self.default_mtu = ATT_MTU_DEFAULT    
+
+    def connect_required(func):
+        @functools.wraps(func)
+        def wrapper(self, *args, **kwargs):
+            if not self.is_connected:
+                raise NordicSemiException("Error! Disconnected from server.")
+            return func(self, *args, **kwargs)
+        return wrapper
+
 
     def get_version(self):
+        if not self.is_init_ok:
+            return None
         return self.driver.ble_version_get()
 
     def open(self):
-        self.driver.open()
+        try:
+            self.driver.open()
+            self.is_opened=True
+            return True
+        except NordicSemiException as e:
+            return False
 
     def close(self):
         self.driver.close()
-        self.conn_in_progress = False
+        self.is_opened = False
+        self.is_init_ok = False
+        self.is_connected = False
         self.db_conns = dict()
         self.evt_sync = dict()
+    
+    def ble_cfg_set(self,cfg_id,cfg):
+        if not self.is_opened:
+            return False
+        if nrf_sd_ble_api_ver == 5:
+            self.driver.ble_cfg_set(cfg_id, cfg)
 
+    def ble_stack_init(self,cfg=None):
+        if not self.is_opened:
+            return False
+        if nrf_sd_ble_api_ver == 2:
+            if not cfg:
+                cfg=BLEEnableParams(vs_uuid_count=1,
+                                service_changed=0,
+                                periph_conn_count=1,
+                                central_conn_count=1,
+                                central_sec_count=1)
+            self.driver.ble_enable(cfg)
+        elif nrf_sd_ble_api_ver == 5:
+            if not cfg:
+                cfg = BLEConfigConnGatt()
+                cfg.att_mtu = self.default_mtu
+            self.ble_cfg_set(BLEConfig.conn_gatt, cfg)
+            self.driver.ble_enable()
+        self.is_init_ok=True
+        return True
+
+    def scan(self, filter_by_name_or_address, value_to_find, scan_params=None):
+        if not self.is_init_ok:
+            return None
+        self.is_scan_timeout=False
+        self.is_connected = False
+        #clear 'scan_q'
+        while not self.scan_q.empty():
+            self.scan_q.get()
+        #get default 'scan_params'
+        if not scan_params:
+            scan_patams = BLEGapScanParams(interval_ms=200, window_ms=150, timeout_s=5)
+        self.driver.ble_gap_scan_start(scan_params=scan_params)
+        peer_addr=None
+        is_find=False
+        scan_duration=scan_patams.timeout_s #scan timeout
+        time_beg=time.time()
+        while 0<= time.time()-time_beg <= scan_duration*2:
+            if not self.scan_q.empty():
+                dict_data=self.scan_q.get()
+            else: #empty
+                if self.is_scan_timeout:
+                    return None
+                else:
+                    continue
+   
+            if filter_by_name_or_address.lower() == "name":
+                peer_addr = dict_data["peer_addr"]
+                dict_adv_records=dict_data["adv_data"].records
+                if BLEAdvData.Types.complete_local_name in dict_adv_records.keys():
+                    dev_name_list = dict_adv_records[BLEAdvData.Types.complete_local_name]
+                elif BLEAdvData.Types.short_local_name in dict_adv_records.keys():
+                    dev_name_list = dict_adv_records[BLEAdvData.Types.short_local_name]
+                else:
+                    continue
+                dev_name = "".join(chr(e) for e in dev_name_list)
+                if dev_name == value_to_find:
+                    is_find = True
+                    break
+                    
+            else:
+                peer_addr = dict_data["peer_addr"]
+                address_string = "".join("{0:02X}".format(b) for b in peer_addr.addr)
+              
+                if address_string == value_to_find.replace(":","").upper():
+                    is_find = True
+                    break
+        
+        if is_find:
+            self.driver.ble_gap_scan_stop()
+            return peer_addr
+        else:
+            return None
+    
     def connect(self, address, scan_params=None, conn_params=None, tag=0):
-        if self.conn_in_progress:
-            return
+        if not self.is_init_ok:
+            return False
+        if self.is_connected:
+            return True
         if nrf_sd_ble_api_ver == 2:
             self.driver.ble_gap_connect(
                 address=address, scan_params=scan_params, conn_params=conn_params
@@ -202,9 +307,19 @@ class BLEAdapter(BLEDriverObserver):
                 conn_params=conn_params,
                 tag=tag,
             )
-        self.conn_in_progress = True
+        if not conn_params:
+            conn_params=self.driver.conn_params_setup()
+        conn_timeout_s=conn_params.conn_sup_timeout_ms/1000
+        time_beg=time.time()
+        while 0<= time.time()-time_beg <= conn_timeout_s+2:
+            if self.is_connected:
+                break
+        return self.is_connected
 
-    def disconnect(self, conn_handle):
+    @connect_required
+    def disconnect(self, conn_handle=None):
+        if not conn_handle:
+            conn_handle = self.conn_handle
         self.driver.ble_gap_disconnect(conn_handle)
 
     @wrapt.synchronized(observer_lock)
@@ -215,7 +330,10 @@ class BLEAdapter(BLEDriverObserver):
     def observer_unregister(self, observer):
         self.observers.remove(observer)
 
-    def att_mtu_exchange(self, conn_handle, mtu):
+    @connect_required
+    def att_mtu_exchange(self, mtu, conn_handle=None):
+        if not conn_handle:
+            conn_handle = self.conn_handle
         try:
             self.driver.ble_gattc_exchange_mtu_req(conn_handle, mtu)
         except NordicSemiException as ex:
@@ -235,7 +353,10 @@ class BLEAdapter(BLEDriverObserver):
         self.db_conns[conn_handle].att_mtu = new_mtu
         return new_mtu
 
-    def phy_update(self, conn_handle, req_phys):
+    @connect_required
+    def phy_update(self, req_phys, conn_handle=None):
+        if not conn_handle:
+            conn_handle = self.conn_handle
         try:
             gap_phys = BLEGapPhys(*req_phys)
             self.driver.ble_gap_phy_update(conn_handle, gap_phys)
@@ -249,7 +370,10 @@ class BLEAdapter(BLEDriverObserver):
 
         return response
 
-    def data_length_update(self, conn_handle, data_length):
+    @connect_required
+    def data_length_update(self, data_length, conn_handle=None):
+        if not conn_handle:
+            conn_handle = self.conn_handle
         try:
             dl_params = BLEGapDataLengthParams()
             dl_params.max_tx_octets = data_length
@@ -269,8 +393,10 @@ class BLEAdapter(BLEDriverObserver):
 
         return response["data_length_params"]
 
-    @NordicSemiErrorCheck(expected=BLEGattStatusCode.success)
-    def service_discovery(self, conn_handle, uuid=None):
+    @connect_required
+    def service_discovery(self, uuid=None, conn_handle=None):
+        if not conn_handle:
+            conn_handle = self.conn_handle
         # Don't add repeat handles
         # See: https://github.com/NordicSemiconductor/pc-ble-driver-py/issues/219
         if uuid is not None and uuid in [service.uuid for service in self.db_conns[conn_handle].services]:
@@ -396,20 +522,15 @@ class BLEAdapter(BLEDriverObserver):
                             )
         return BLEGattStatusCode.success
 
-    @NordicSemiErrorCheck(expected=BLEGattStatusCode.success)
-    def enable_notification(self, conn_handle, uuid, attr_handle=None):
+    @connect_required
+    def cccd_ctrl(self, cccd_list, uuid, conn_handle=None, attr_handle=None):
+        if not conn_handle:
+            conn_handle = self.conn_handle
+        assert isinstance(cccd_list, list), "Invalid argument type"
         assert isinstance(uuid, BLEUUID), "Invalid argument type"
 
         if uuid.base.base is not None and uuid.base.type is None:
             self.driver.ble_uuid_decode(uuid.base.base, uuid)
-
-        assert isinstance(uuid, BLEUUID), "Invalid argument type"
-
-        if uuid.base.base is not None and uuid.base.type is None:
-            self.driver.ble_uuid_decode(uuid.base.base, uuid)
-
-        cccd_list = [1, 0]
-
         cccd_handle = self.db_conns[conn_handle].get_cccd_handle(uuid, attr_handle)
         if cccd_handle is None:
             raise NordicSemiException("CCCD not found")
@@ -425,77 +546,31 @@ class BLEAdapter(BLEDriverObserver):
         result = self.evt_sync[conn_handle].wait(evt=BLEEvtID.gattc_evt_write_rsp)
         return result["status"]
 
-    @NordicSemiErrorCheck(expected=BLEGattStatusCode.success)
-    def disable_notification(self, conn_handle, uuid, attr_handle=None):
-        assert isinstance(uuid, BLEUUID), "Invalid argument type"
 
-        if uuid.base.base is not None and uuid.base.type is None:
-            self.driver.ble_uuid_decode(uuid.base.base, uuid)
+    def enable_notification(self, uuid, conn_handle=None, attr_handle=None):
+        return self.cccd_ctrl([1, 0], uuid, conn_handle, attr_handle)
 
-        assert isinstance(uuid, BLEUUID), "Invalid argument type"
+    def disable_notification(self, uuid, conn_handle=None, attr_handle=None):
+        return self.cccd_ctrl([0, 0], uuid, conn_handle, attr_handle)
 
-        if uuid.base.base is not None and uuid.base.type is None:
-            self.driver.ble_uuid_decode(uuid.base.base, uuid)
+    def enable_indication(self, uuid, conn_handle=None, attr_handle=None):
+        return self.cccd_ctrl([2, 0], uuid, conn_handle, attr_handle)
 
-        cccd_list = [0, 0]
+    def disable_indication(self, uuid, conn_handle=None, attr_handle=None):
+        return self.cccd_ctrl([0, 0], uuid, conn_handle, attr_handle)
 
-        cccd_handle = self.db_conns[conn_handle].get_cccd_handle(uuid, attr_handle)
-        if cccd_handle is None:
-            raise NordicSemiException("CCCD not found")
-
-        write_params = BLEGattcWriteParams(
-            BLEGattWriteOperation.write_req,
-            BLEGattExecWriteFlag.unused,
-            cccd_handle,
-            cccd_list,
-            0,
-        )
-
-        self.driver.ble_gattc_write(conn_handle, write_params)
-        result = self.evt_sync[conn_handle].wait(evt=BLEEvtID.gattc_evt_write_rsp)
-        return result["status"]
-
-    @NordicSemiErrorCheck(expected=BLEGattStatusCode.success)
-    def enable_indication(self, conn_handle, uuid, attr_handle=None):
-        assert isinstance(uuid, BLEUUID), "Invalid argument type"
-
-        if uuid.base.base is not None and uuid.base.type is None:
-            self.driver.ble_uuid_decode(uuid.base.base, uuid)
-
-        assert isinstance(uuid, BLEUUID), "Invalid argument type"
-
-        if uuid.base.base is not None and uuid.base.type is None:
-            self.driver.ble_uuid_decode(uuid.base.base, uuid)
-
-        cccd_list = [2, 0]
-
-        cccd_handle = self.db_conns[conn_handle].get_cccd_handle(uuid, attr_handle)
-        if cccd_handle is None:
-            raise NordicSemiException("CCCD not found")
-
-        write_params = BLEGattcWriteParams(
-            BLEGattWriteOperation.write_req,
-            BLEGattExecWriteFlag.unused,
-            cccd_handle,
-            cccd_list,
-            0,
-        )
-
-        self.driver.ble_gattc_write(conn_handle, write_params)
-        result = self.evt_sync[conn_handle].wait(evt=BLEEvtID.gattc_evt_write_rsp)
-        return result["status"]
-
-    @NordicSemiErrorCheck(expected=BLEGattStatusCode.success)
-    def disable_indication(self, conn_handle, uuid, attr_handle=None):
-        return self.disable_notification(conn_handle, uuid, attr_handle)
-
-    def conn_param_update(self, conn_handle, conn_params):
+    @connect_required
+    def conn_param_update(self, conn_params, conn_handle=None):
+        if not conn_handle:
+            conn_handle = self.conn_handle
         self.driver.ble_gap_conn_param_update(conn_handle, conn_params)
         result = self.evt_sync[conn_handle].wait(evt=BLEEvtID.gap_evt_conn_param_update)
         return result["conn_params"]
 
-    @NordicSemiErrorCheck(expected=BLEGattStatusCode.success)
-    def write_req(self, conn_handle, uuid, data, attr_handle=None):
+    @connect_required
+    def write_req(self, uuid, data, conn_handle=None, attr_handle=None):
+        if not conn_handle:
+            conn_handle = self.conn_handle
         if attr_handle is None:
             attr_handle = self.db_conns[conn_handle].get_char_value_handle(uuid)
         if attr_handle is None:
@@ -511,8 +586,10 @@ class BLEAdapter(BLEDriverObserver):
         result = self.evt_sync[conn_handle].wait(evt=BLEEvtID.gattc_evt_write_rsp)
         return result["status"]
 
-    @NordicSemiErrorCheck(expected=BLEGattStatusCode.success)
-    def write_prep(self, conn_handle, uuid, data, offset, attr_handle=None):
+    @connect_required
+    def write_prep(self, uuid, data, offset, conn_handle=None, attr_handle=None):
+        if not conn_handle:
+            conn_handle = self.conn_handle
         if attr_handle is None:
             attr_handle = self.db_conns[conn_handle].get_char_value_handle(uuid)
         if attr_handle is None:
@@ -528,8 +605,10 @@ class BLEAdapter(BLEDriverObserver):
         result = self.evt_sync[conn_handle].wait(evt=BLEEvtID.gattc_evt_write_rsp)
         return result["status"]
 
-    @NordicSemiErrorCheck(expected=BLEGattStatusCode.success)
-    def write_exec(self, conn_handle):
+    @connect_required
+    def write_exec(self, conn_handle=None):
+        if not conn_handle:
+            conn_handle = self.conn_handle
         write_params = BLEGattcWriteParams(
             BLEGattWriteOperation.execute_write_req,
             BLEGattExecWriteFlag.prepared_write,
@@ -541,7 +620,10 @@ class BLEAdapter(BLEDriverObserver):
         result = self.evt_sync[conn_handle].wait(evt=BLEEvtID.gattc_evt_write_rsp)
         return result["status"]
 
-    def read_req(self, conn_handle, uuid, offset=0, attr_handle=None):
+    @connect_required
+    def read_req(self, uuid, conn_handle=None, offset=0, attr_handle=None):
+        if not conn_handle:
+            conn_handle = self.conn_handle
         if attr_handle is None:
             attr_handle = self.db_conns[conn_handle].get_char_value_handle(uuid)
         if attr_handle is None:
@@ -554,7 +636,10 @@ class BLEAdapter(BLEDriverObserver):
         else:
             return gatt_res, None
 
-    def write_cmd(self, conn_handle, uuid, data, attr_handle=None):
+    @connect_required
+    def write_cmd(self, uuid, data, conn_handle=None, attr_handle=None):
+        if not conn_handle:
+            conn_handle = self.conn_handle
         try:
             tx_complete = BLEEvtID.evt_tx_complete
         except Exception:
@@ -591,28 +676,14 @@ class BLEAdapter(BLEDriverObserver):
                     raise e
         raise NordicSemiException("Unable to successfully call ble_gattc_write")
 
-    @NordicSemiErrorCheck(expected=BLEGapSecStatus.success)
-    def authenticate(
-        self,
-        conn_handle,
-        _role,
-        bond=False,
-        mitm=False,
-        lesc=False,
-        keypress=False,
-        io_caps=BLEGapIOCaps.none,
-        oob=False,
-        min_key_size=7,
-        max_key_size=16,
-        enc_own=True,
-        id_own=False,
-        sign_own=False,
-        link_own=False,
-        enc_peer=True,
-        id_peer=False,
-        sign_peer=False,
-        link_peer=False,
-    ):
+    @connect_required
+    def authenticate(self,_role,conn_handle=None,bond=False,mitm=False,lesc=False,
+                    keypress=False,io_caps=BLEGapIOCaps.none,oob=False,
+                    min_key_size=7,max_key_size=16,enc_own=True,id_own=False,
+                    sign_own=False,link_own=False,enc_peer=True,id_peer=False,
+                    sign_peer=False,link_peer=False):
+        if not conn_handle:
+            conn_handle = self.conn_handle
         kdist_own = BLEGapSecKDist(enc=enc_own, id=id_own, sign=sign_own, link=link_own)
         kdist_peer = BLEGapSecKDist(
             enc=enc_peer, id=id_peer, sign=sign_peer, link=link_peer
@@ -662,9 +733,12 @@ class BLEAdapter(BLEDriverObserver):
             )
         return result["auth_status"]
 
-    def encrypt(self, conn_handle, ediv, rand, ltk, auth=0, lesc=0, ltk_len=16):
+    @connect_required
+    def encrypt(self, ediv, rand, ltk, conn_handle=None, auth=0, lesc=0, ltk_len=16):
         # @assert note that sd_ble_gap_encrypt results in
         # BLE_ERROR_INVALID_ROLE if not Central.
+        if not conn_handle:
+            conn_handle = self.conn_handle
         assert (
             self.db_conns[conn_handle].role == BLEGapRoles.central
         ), "Invalid role. Encryption can only be initiated by a Central Device."
@@ -675,14 +749,22 @@ class BLEAdapter(BLEDriverObserver):
         return result["conn_sec"]
 
     # ...............................................................................................
+    def on_gap_evt_adv_report(self, ble_driver, conn_handle, peer_addr, rssi, adv_type, adv_data):
+        dict_data=dict(ble_driver=ble_driver, conn_handle=conn_handle, peer_addr=peer_addr,
+                        rssi=rssi, adv_type=adv_type, adv_data=adv_data)
+        self.scan_q.put(dict_data)
+    
+    
     def on_gap_evt_connected(
         self, ble_driver, conn_handle, peer_addr, role, conn_params
     ):
         self.db_conns[conn_handle] = Connection(peer_addr, role)
         self.evt_sync[conn_handle] = EvtSync(events=BLEEvtID)
-        self.conn_in_progress = False
+        self.is_connected = True
+        self.conn_handle = conn_handle
 
     def on_gap_evt_disconnected(self, ble_driver, conn_handle, reason):
+        self.is_connected = False
         try:
             del self.db_conns[conn_handle]
         except KeyError:
@@ -694,7 +776,9 @@ class BLEAdapter(BLEDriverObserver):
 
     def on_gap_evt_timeout(self, ble_driver, conn_handle, src):
         if src == BLEGapTimeoutSrc.conn:
-            self.conn_in_progress = False
+            self.is_connected = False
+        elif src == BLEGapTimeoutSrc.scan:
+            self.is_scan_timeout=True
 
     def on_gap_evt_sec_params_request(self, ble_driver, conn_handle, **kwargs):
         self.evt_sync[conn_handle].notify(
