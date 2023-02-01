@@ -1898,9 +1898,9 @@ class BLEDriver(object):
         self.rpc_log_severity_filter(log_severity_level_enum)
         self._keyset = self.init_keyset()
 
-        self.log_queue = queue.Queue()
-        self.status_queue = queue.Queue()
-        self.ble_event_queue = queue.Queue()
+        self.log_queue = queue.SimpleQueue()
+        self.status_queue = queue.SimpleQueue()
+        self.ble_event_queue = queue.SimpleQueue()
 
     def init_keyset(self):
         keyset = driver.ble_gap_sec_keyset_t()
