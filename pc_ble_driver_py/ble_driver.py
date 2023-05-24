@@ -222,10 +222,20 @@ class BLEVersion(object):
             0xA7: {"type": "s112", "major": 6, "minor": 0, "patch": 0},
             0xB0: {"type": "s112", "major": 6, "minor": 1, "patch": 0},
             0xB8: {"type": "s112", "major": 6, "minor": 1, "patch": 1},
+            0xC4: {"type": "s112", "major": 7, "minor": 0, "patch": 0},
+            0xCD: {"type": "s112", "major": 7, "minor": 0, "patch": 1},
+            0x103: {"type": "s112", "major": 7, "minor": 2, "patch": 0},
+            0x126: {"type": "s112", "major": 7, "minor": 3, "patch": 0},
+            0xC3: {"type": "s113", "major": 7, "minor": 0, "patch": 0},
+            0xCC: {"type": "s113", "major": 7, "minor": 0, "patch": 1},
+            0x102: {"type": "s113", "major": 7, "minor": 2, "patch": 0},
+            0x125: {"type": "s113", "major": 7, "minor": 3, "patch": 0},
+            0xEA: {"type": "s122", "major": 8, "minor": 0, "patch": 0},
+            0x112: {"type": "s122", "major": 8, "minor": 1, "patch": 1},
             0x67: {"type": "s130", "major": 1, "minor": 0, "patch": 0},
             0x80: {"type": "s130", "major": 2, "minor": 0, "patch": 0},
-            0x81: {"type": "s132", "major": 2, "minor": 0, "patch": 0},
             0x87: {"type": "s130", "major": 2, "minor": 0, "patch": 1},
+            0x81: {"type": "s132", "major": 2, "minor": 0, "patch": 0},
             0x88: {"type": "s132", "major": 2, "minor": 0, "patch": 1},
             0x8C: {"type": "s132", "major": 3, "minor": 0, "patch": 0},
             0x91: {"type": "s132", "major": 3, "minor": 1, "patch": 0},
@@ -239,12 +249,23 @@ class BLEVersion(object):
             0xA8: {"type": "s132", "major": 6, "minor": 0, "patch": 0},
             0xAF: {"type": "s132", "major": 6, "minor": 1, "patch": 0},
             0xB7: {"type": "s132", "major": 6, "minor": 1, "patch": 1},
+            0xC2: {"type": "s132", "major": 7, "minor": 0, "patch": 0},
+            0xCB: {"type": "s132", "major": 7, "minor": 0, "patch": 1},
+            0x101: {"type": "s132", "major": 7, "minor": 2, "patch": 0},
+            0x124: {"type": "s132", "major": 7, "minor": 3, "patch": 0},
             0xA9: {"type": "s140", "major": 6, "minor": 0, "patch": 0},
             0xAE: {"type": "s140", "major": 6, "minor": 1, "patch": 0},
             0xB6: {"type": "s140", "major": 6, "minor": 1, "patch": 1},
+            0xC1: {"type": "s140", "major": 7, "minor": 0, "patch": 0},
+            0xCA: {"type": "s140", "major": 7, "minor": 0, "patch": 1},
+            0x100: {"type": "s140", "major": 7, "minor": 2, "patch": 0},
+            0x123: {"type": "s140", "major": 7, "minor": 3, "patch": 0},
+            0xBC: {"type": "s212", "major": 6, "minor": 1, "patch": 1},
+            0xBA: {"type": "s332", "major": 6, "minor": 1, "patch": 1},
+            0xB9: {"type": "s340", "major": 6, "minor": 1, "patch": 1},
         }
 
-        if subversion_number not in version:
+        if subversion_number not in version.keys():
             raise ValueError(
                 "subversion_number %d does not map to a SoftDevice version",
                 subversion_number,
@@ -1208,24 +1229,13 @@ class BLEUUIDBase(object):
         assert isinstance(uuid_type, (int, type(None))), "Invalid argument type"
         if (vs_uuid_base is None) and uuid_type is None:
             self.base = [
-                0x00,
-                0x00,
-                0x00,
-                0x00,
-                0x00,
-                0x00,
-                0x10,
-                0x00,
-                0x80,
-                0x00,
-                0x00,
-                0x80,
-                0x5F,
-                0x9B,
-                0x34,
-                0xFB,
+                0x00,0x00,0x00,0x00,
+                0x00,0x00,
+                0x10,0x00,
+                0x80,0x00,
+                0x00,0x80,0x5F,0x9B,0x34,0xFB,
             ]
-            self.type = driver.BLE_UUID_TYPE_BLE
+            self.type = driver.BLE_UUID_TYPE_VENDOR_BEGIN
 
         else:
             self.base = vs_uuid_base
@@ -1248,13 +1258,19 @@ class BLEUUIDBase(object):
 class BLEUUID(object):
     class Standard(Enum):
         unknown = 0x0000
+        generic_attribute = 0x1801
+        generic_access = 0x1800
+        # Declarations
         service_primary = 0x2800
         service_secondary = 0x2801
+        service_include = 0x2802
         characteristic = 0x2803
+        # Descriptors
         cccd = 0x2902
+        device_name = 0x2A00
         battery_level = 0x2A19
         heart_rate = 0x2A37
-
+    # value: uuid16
     def __init__(self, value, base=BLEUUIDBase()):
         assert isinstance(base, BLEUUIDBase), "Invalid argument type"
         self.base = base
@@ -1281,9 +1297,9 @@ class BLEUUID(object):
 
     def __str__(self):
         if isinstance(self.value, BLEUUID.Standard):
-            return "0x{:04X} ({})".format(self.value.value, self.value)
+            return "0x{:04X} ({}) {}".format(self.value.value, self.value, self.base.type)
         else:
-            return "0x{:04X}".format(self.value)
+            return "0x{:04X} {}".format(self.value, self.base.type)
 
     def __repr__(self):
         if isinstance(self.value, BLEUUID.Standard):
@@ -2014,9 +2030,11 @@ class BLEDriver(object):
     def enum_serial_ports(cls):
         MAX_SERIAL_PORTS = 64
         c_descs = [driver.sd_rpc_serial_port_desc_t() for _ in range(MAX_SERIAL_PORTS)]
+        
         c_desc_arr = util.list_to_serial_port_desc_array(c_descs)
 
         arr_len = driver.new_uint32()
+
         driver.uint32_assign(arr_len, MAX_SERIAL_PORTS)
 
         err_code = driver.sd_rpc_serial_port_enum(c_desc_arr, arr_len)
@@ -2030,6 +2048,7 @@ class BLEDriver(object):
         dlen = driver.uint32_value(arr_len)
 
         descs = util.serial_port_desc_array_to_list(c_desc_arr, dlen)
+
         return list(map(SerialPortDescriptor.from_c, descs))
 
     @NordicSemiErrorCheck
@@ -2651,7 +2670,7 @@ class BLEDriver(object):
             )
             return
         try:
-
+            
             if evt_id == BLEEvtID.gap_evt_connected:
                 connected_evt = ble_event.evt.gap_evt.params.connected
 
@@ -3067,7 +3086,8 @@ class BLEDriver(object):
                             tx_phy=updated_phy.tx_phy,
                             rx_phy=updated_phy.rx_phy,
                         )
-
+            else:
+                logger.debug("----------evt_id: {}".format(evt_id))
         except Exception as e:
             logger.error("Exception: {}".format(str(e)))
             for line in traceback.extract_tb(sys.exc_info()[2]):
