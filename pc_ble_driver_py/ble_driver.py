@@ -1040,7 +1040,7 @@ class BLEAdvData(object):
             try:
                 ad_len = ad_list[index]
                 if ad_len == 0:
-                    logger.info(f"ad_len is zero, discarding rest of ad_list")
+                    logger.debug(f"ad_len is zero, discarding rest of ad_list")
                     return ble_adv_data
 
                 ad_type = ad_list[index + 1]
